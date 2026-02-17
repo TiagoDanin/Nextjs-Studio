@@ -1,0 +1,50 @@
+{
+    "name": "nextjs-studio",
+    "version": "0.1.0",
+    "description": "A Git-based, local-first CMS for Next.js projects",
+    "keywords": [
+        "nextjs",
+        "cms",
+        "mdx",
+        "content",
+        "studio",
+        "static-site",
+        "local-first"
+    ],
+    "homepage": "https://github.com/TiagoDanin/Nextjs-Studio",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/TiagoDanin/Nextjs-Studio.git"
+    },
+    "license": "MIT",
+    "author": "Tiago Danin",
+    "type": "module",
+    "exports": {
+        ".": {
+            "types": "./dist/core/index.d.ts",
+            "import": "./dist/core/index.js"
+        }
+    },
+    "main": "./dist/core/index.js",
+    "types": "./dist/core/index.d.ts",
+    "bin": {
+        "nextjs-studio": "./dist/bin/nextjs-studio.js"
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "dev": "tsx watch src/bin/nextjs-studio.ts",
+        "build": "tsup",
+        "lint": "eslint src/",
+        "type-check": "tsc --noEmit",
+        "test": "vitest run",
+        "test:watch": "vitest"
+    },
+    "engines": {
+        "node": ">=22.10.0"
+    },
+    "packageManager": "yarn@4.6.0"
+}
