@@ -16,6 +16,8 @@ export class FsAdapter {
     return path.resolve(this.basePath, ...segments);
   }
 
+  // --- I/O Operations ---
+
   async readFile(filePath: string): Promise<string> {
     return fs.readFile(this.resolve(filePath), "utf-8");
   }
@@ -69,7 +71,7 @@ export class FsAdapter {
           entry.isFile() &&
           filterExts.some((ext) => entry.name.endsWith(ext)),
       )
-      .map((entry) => path.join(dirPath, entry.name));
+      .map((entry) => this.join(dirPath, entry.name));
   }
 
   async listDirectories(dirPath: string): Promise<string[]> {
@@ -84,6 +86,28 @@ export class FsAdapter {
 
     return entries
       .filter((entry) => entry.isDirectory())
-      .map((entry) => path.join(dirPath, entry.name));
+      .map((entry) => this.join(dirPath, entry.name));
+  }
+
+  // --- Path Utilities ---
+
+  join(...segments: string[]): string {
+    return path.join(...segments);
+  }
+
+  basename(filePath: string): string {
+    return path.basename(filePath);
+  }
+
+  extname(filePath: string): string {
+    return path.extname(filePath);
+  }
+
+  relative(from: string, to: string): string {
+    return path.relative(from, to);
+  }
+
+  normalizeSlug(relativePath: string, ext: string): string {
+    return relativePath.replace(ext, "").split(path.sep).join("/");
   }
 }

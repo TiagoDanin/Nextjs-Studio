@@ -1,4 +1,6 @@
+import { filter, orderBy, get, slice } from "lodash-es";
 import type { ContentEntry, QueryOptions } from "../shared/types.js";
+import { getStore } from "./content-store.js";
 
 /**
  * Query builder for content collections.
@@ -11,13 +13,21 @@ import type { ContentEntry, QueryOptions } from "../shared/types.js";
  *   .limit(10)
  *   .all();
  * ```
+ *
+ * Supports dot notation for nested properties:
+ * ```ts
+ * queryCollection("pages")
+ *   .where({ "hero.title": "Welcome" })
+ *   .sort("meta.priority", "desc")
+ *   .all();
+ * ```
  */
 export class QueryBuilder {
-  private collection: string;
+  private collectionName: string;
   private options: QueryOptions = {};
 
   constructor(collection: string) {
-    this.collection = collection;
+    this.collectionName = collection;
   }
 
   where(conditions: Record<string, unknown>): this {
@@ -41,8 +51,27 @@ export class QueryBuilder {
   }
 
   all(): ContentEntry[] {
-    // TODO: implement with indexer integration
-    return [];
+    let entries = [...getStore().getCollection(this.collectionName)];
+
+    if (this.options.where) {
+      const conditions = this.options.where;
+      entries = filter(entries, (entry) =>
+        Object.entries(conditions).every(
+          ([key, value]) => get(entry.data, key) === value,
+        ),
+      );
+    }
+
+    if (this.options.sort) {
+      const { field, order } = this.options.sort;
+      entries = orderBy(entries, [(entry) => get(entry.data, field)], [order]);
+    }
+
+    const start = this.options.offset ?? 0;
+    const end = this.options.limit ? start + this.options.limit : undefined;
+    entries = slice(entries, start, end);
+
+    return entries;
   }
 
   first(): ContentEntry | undefined {
