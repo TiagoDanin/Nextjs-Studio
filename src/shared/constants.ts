@@ -12,3 +12,6 @@ export const SUPPORTED_EXTENSIONS = [".mdx", ".json"] as const;
 
 /** Collection ordering file name */
 export const COLLECTION_ORDER_FILE = "collection.json";
+
+/** Debounce interval for file watcher events (ms) */
+export const WATCHER_DEBOUNCE_MS = 5_000;

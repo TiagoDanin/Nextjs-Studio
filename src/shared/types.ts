@@ -56,3 +56,23 @@ export interface QueryOptions {
   limit?: number;
   offset?: number;
 }
+
+/**
+ * File metadata returned by the FS adapter.
+ */
+export interface FileInfo {
+  path: string;
+  size: number;
+  modifiedAt: Date;
+}
+
+/**
+ * Event emitted by the file watcher when content changes.
+ */
+export interface WatchEvent {
+  type: "add" | "change" | "delete";
+  collection: string;
+  slug: string;
+  extension: string;
+  filePath: string;
+}
