@@ -1,11 +1,11 @@
 import path from "node:path";
 import { EventEmitter } from "node:events";
 import { watch as chokidarWatch, type FSWatcher } from "chokidar";
-import type { WatchEvent } from "../shared/types.js";
+import type { WatchEvent } from "../../shared/types.js";
 import {
   SUPPORTED_EXTENSIONS,
   WATCHER_DEBOUNCE_MS,
-} from "../shared/constants.js";
+} from "../../shared/constants.js";
 
 type WatchEventType = WatchEvent["type"];
 
