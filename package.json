@@ -34,8 +34,10 @@
         "LICENSE"
     ],
     "scripts": {
-        "dev": "tsx watch src/bin/nextjs-studio.ts",
-        "build": "tsup",
+        "dev": "tsx src/bin/nextjs-studio.ts --dir example/contents",
+        "studio:dev": "cross-env STUDIO_CONTENTS_DIR=example/contents next dev --port 3030 --webpack src/cli/ui",
+        "studio:build": "next build --webpack src/cli/ui",
+        "build": "tsup && yarn studio:build",
         "lint": "eslint src/",
         "type-check": "tsc --noEmit",
         "test": "vitest run",
@@ -46,9 +48,22 @@
     },
     "packageManager": "yarn@4.6.0",
     "devDependencies": {
+        "@tailwindcss/postcss": "^4.1.18",
         "@types/lodash-es": "^4.17.12",
         "@types/node": "^25.2.3",
+        "@types/react": "^19",
+        "@types/react-dom": "^19",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "cross-env": "^10.1.0",
         "eslint": "^10.0.0",
+        "lucide-react": "^0.574.0",
+        "next": "^16.1.6",
+        "next-themes": "^0.4.6",
+        "react": "^19.2.4",
+        "react-dom": "^19.2.4",
+        "tailwind-merge": "^3.4.1",
+        "tailwindcss": "^4.1.18",
         "tsup": "^8.5.1",
         "tsx": "^4.21.0",
         "typescript": "^5.9.3",
@@ -57,6 +72,7 @@
     "dependencies": {
         "@sindresorhus/slugify": "^3.0.0",
         "chokidar": "^5.0.0",
+        "commander": "^14.0.3",
         "gray-matter": "^4.0.3",
         "lodash-es": "^4.17.23"
     }
