@@ -27,9 +27,7 @@
     },
     "main": "./dist/core/index.js",
     "types": "./dist/core/index.d.ts",
-    "bin": {
-        "nextjs-studio": "./dist/bin/nextjs-studio.js"
-    },
+    "bin": "./dist/bin/nextjs-studio.js",
     "files": [
         "dist",
         "README.md",
@@ -46,5 +44,12 @@
     "engines": {
         "node": ">=22.10.0"
     },
-    "packageManager": "yarn@4.6.0"
+    "packageManager": "yarn@4.6.0",
+    "devDependencies": {
+        "eslint": "^10.0.0",
+        "tsup": "^8.5.1",
+        "tsx": "^4.21.0",
+        "typescript": "^5.9.3",
+        "vitest": "^4.0.18"
+    }
 }
