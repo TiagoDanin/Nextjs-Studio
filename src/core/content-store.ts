@@ -14,7 +14,8 @@ export function getStore(): ContentIndex {
 }
 
 export async function loadContent(contentsDir?: string): Promise<ContentIndex> {
-  store = new ContentIndex();
-  await store.build(contentsDir ?? CONTENTS_DIR);
-  return store;
+  const idx = new ContentIndex();
+  await idx.build(contentsDir ?? CONTENTS_DIR);
+  store = idx;
+  return idx;
 }
