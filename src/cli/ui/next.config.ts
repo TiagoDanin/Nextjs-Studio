@@ -14,6 +14,7 @@ const config: NextConfig = {
       ...config.resolve.alias,
       "@core": path.resolve(import.meta.dirname, "../../core"),
       "@shared": path.resolve(import.meta.dirname, "../../shared"),
+      "@cli": path.resolve(import.meta.dirname, "../../cli"),
     };
     config.resolve.extensionAlias = {
       ...config.resolve.extensionAlias,

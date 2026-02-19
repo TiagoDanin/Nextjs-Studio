@@ -21,15 +21,12 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpDown, Eye, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface Props {
-  readOnly?: boolean;
-}
-
-export function SheetTable({ readOnly = false }: Props) {
+export function SheetTable() {
   const rows = useEditorStore((s) => s.rows);
   const sortColumn = useEditorStore((s) => s.sortColumn);
   const sortDirection = useEditorStore((s) => s.sortDirection);
   const selectedRowIndex = useEditorStore((s) => s.selectedRowIndex);
+  const isMdx = useEditorStore((s) => s.isMdx);
   const sortBy = useEditorStore((s) => s.sortBy);
   const selectRow = useEditorStore((s) => s.selectRow);
   const deleteRow = useEditorStore((s) => s.deleteRow);
@@ -86,7 +83,7 @@ export function SheetTable({ readOnly = false }: Props) {
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
-            {readOnly && (
+            {isMdx && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -109,10 +106,10 @@ export function SheetTable({ readOnly = false }: Props) {
             </Button>
           </div>
         ),
-        size: readOnly ? 72 : 40,
+        size: isMdx ? 72 : 40,
       },
     ],
-    [columnKeys, sortColumn, sortDirection, sortBy, deleteRow, readOnly],
+    [columnKeys, sortColumn, sortDirection, sortBy, deleteRow, isMdx],
   );
 
   const table = useReactTable({

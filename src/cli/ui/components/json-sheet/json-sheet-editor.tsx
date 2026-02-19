@@ -11,23 +11,26 @@ interface Props {
   collection: CollectionSummary;
   entries: SerializableEntry[];
   filePath: string;
-  readOnly?: boolean;
 }
 
-export function JsonSheetEditor({ collection, entries, filePath, readOnly = false }: Props) {
+export function JsonSheetEditor({ collection, entries, filePath }: Props) {
   const initSheet = useEditorStore((s) => s.initSheet);
   const selectedRowIndex = useEditorStore((s) => s.selectedRowIndex);
 
   useEffect(() => {
     const rows = entries.map((e) => e.data);
-    initSheet(collection.name, filePath, rows);
-  }, [collection.name, filePath, entries, initSheet]);
+    const mdxSources =
+      collection.type === "mdx"
+        ? entries.map((e) => ({ filePath: e.filePath, body: e.body ?? "" }))
+        : undefined;
+    initSheet(collection.name, filePath, rows, mdxSources);
+  }, [collection.name, collection.type, filePath, entries, initSheet]);
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      <SheetToolbar collectionName={collection.name} readOnly={readOnly} />
+      <SheetToolbar collectionName={collection.name} />
       <div className="flex-1 overflow-auto">
-        <SheetTable readOnly={readOnly} />
+        <SheetTable />
       </div>
       {selectedRowIndex !== null && <SheetRowInspector />}
     </div>

@@ -28,7 +28,7 @@ export default function RootLayout({
           <div className="flex h-screen flex-col">
             <header className="flex h-14 items-center justify-between border-b px-4">
               <h1 className="text-sm font-semibold tracking-tight">
-                nextjs-studio
+                NextJS Studio
               </h1>
               <ThemeToggle />
             </header>
