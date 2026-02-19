@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { FileText, Table, FileJson } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,11 +18,13 @@ const typeIcons = {
 
 export function AppSidebar({
   collections,
+  activeCollection,
 }: {
   collections: CollectionItem[];
+  activeCollection?: string;
 }) {
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-sidebar-border bg-sidebar-background">
+    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar-background">
       <div className="flex h-14 items-center px-4">
         <h2 className="text-sm font-semibold text-sidebar-foreground">
           Collections
@@ -37,12 +40,16 @@ export function AppSidebar({
           )}
           {collections.map((collection) => {
             const Icon = typeIcons[collection.type];
+            const isActive = activeCollection === collection.name;
             return (
-              <button
+              <Link
                 key={collection.name}
+                href={`/collection/${collection.name}`}
                 className={cn(
                   "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground transition-colors",
                   "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  isActive &&
+                    "bg-sidebar-accent text-sidebar-accent-foreground",
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -52,7 +59,7 @@ export function AppSidebar({
                 <span className="text-xs text-muted-foreground">
                   {collection.count}
                 </span>
-              </button>
+              </Link>
             );
           })}
         </nav>
