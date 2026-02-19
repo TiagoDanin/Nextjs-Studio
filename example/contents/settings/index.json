@@ -1,0 +1,14 @@
+{
+  "siteTitle": "My Website",
+  "description": "A modern site",
+  "darkMode": true,
+  "hero": {
+    "title": "Welcome",
+    "subtitle": "Build faster",
+    "ctaLabel": "Get Started"
+  },
+  "seo": {
+    "title": "My Website",
+    "description": "Best static site"
+  }
+}
