@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   useReactTable,
   getCoreRowModel,
@@ -18,15 +19,18 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Eye, Trash2 } from "lucide-react";
+import { ArrowUpDown, Eye, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function SheetTable() {
+  const router = useRouter();
   const rows = useEditorStore((s) => s.rows);
   const sortColumn = useEditorStore((s) => s.sortColumn);
   const sortDirection = useEditorStore((s) => s.sortDirection);
   const selectedRowIndex = useEditorStore((s) => s.selectedRowIndex);
   const isMdx = useEditorStore((s) => s.isMdx);
+  const collectionName = useEditorStore((s) => s.collectionName);
+  const rowSlugs = useEditorStore((s) => s.rowSlugs);
   const sortBy = useEditorStore((s) => s.sortBy);
   const selectRow = useEditorStore((s) => s.selectRow);
   const deleteRow = useEditorStore((s) => s.deleteRow);
@@ -84,14 +88,29 @@ export function SheetTable() {
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
             {isMdx && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-muted-foreground"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Eye className="h-3.5 w-3.5" />
-              </Button>
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(
+                      `/collection/${collectionName}/${rowSlugs[row.index] ?? ""}`,
+                    );
+                  }}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                </Button>
+              </>
             )}
             <Button
               variant="ghost"
@@ -106,10 +125,10 @@ export function SheetTable() {
             </Button>
           </div>
         ),
-        size: isMdx ? 72 : 40,
+        size: isMdx ? 100 : 40,
       },
     ],
-    [columnKeys, sortColumn, sortDirection, sortBy, deleteRow, isMdx],
+    [columnKeys, sortColumn, sortDirection, sortBy, deleteRow, isMdx, collectionName, rowSlugs, router],
   );
 
   const table = useReactTable({

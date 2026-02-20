@@ -21,7 +21,7 @@ export function JsonSheetEditor({ collection, entries, filePath }: Props) {
     const rows = entries.map((e) => e.data);
     const mdxSources =
       collection.type === "mdx"
-        ? entries.map((e) => ({ filePath: e.filePath, body: e.body ?? "" }))
+        ? entries.map((e) => ({ slug: e.slug, filePath: e.filePath, body: e.body ?? "" }))
         : undefined;
     initSheet(collection.name, filePath, rows, mdxSources);
   }, [collection.name, collection.type, filePath, entries, initSheet]);

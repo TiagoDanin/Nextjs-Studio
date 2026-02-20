@@ -21,6 +21,7 @@ interface EditorState {
   isMdx: boolean;
   rowFilePaths: string[];
   rowBodies: string[];
+  rowSlugs: string[];
 
   // Form state
   formData: Record<string, unknown>;
@@ -31,7 +32,7 @@ interface EditorState {
     collectionName: string,
     filePath: string,
     rows: Record<string, unknown>[],
-    mdxSources?: { filePath: string; body: string }[],
+    mdxSources?: { slug: string; filePath: string; body: string }[],
   ) => void;
   initForm: (
     collectionName: string,
@@ -72,6 +73,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   isMdx: false,
   rowFilePaths: [],
   rowBodies: [],
+  rowSlugs: [],
 
   formData: {},
   expandedSections: [],
@@ -85,6 +87,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       isMdx: !!mdxSources,
       rowFilePaths: mdxSources?.map((s) => s.filePath) ?? [],
       rowBodies: mdxSources?.map((s) => s.body) ?? [],
+      rowSlugs: mdxSources?.map((s) => s.slug) ?? [],
       isDirty: false,
       isSaving: false,
       selectedRowIndex: null,
@@ -135,6 +138,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       rows: state.rows.filter((_, i) => i !== rowIndex),
       rowFilePaths: state.rowFilePaths.filter((_, i) => i !== rowIndex),
       rowBodies: state.rowBodies.filter((_, i) => i !== rowIndex),
+      rowSlugs: state.rowSlugs.filter((_, i) => i !== rowIndex),
       selectedRowIndex:
         state.selectedRowIndex === rowIndex ? null : state.selectedRowIndex,
       isDirty: true,
@@ -152,12 +156,14 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         row,
         filePath: state.rowFilePaths[i] ?? "",
         body: state.rowBodies[i] ?? "",
+        slug: state.rowSlugs[i] ?? "",
       }));
       const sorted = orderBy(combined, [(c) => c.row[column]], [direction]);
       return {
         rows: sorted.map((c) => c.row),
         rowFilePaths: sorted.map((c) => c.filePath),
         rowBodies: sorted.map((c) => c.body),
+        rowSlugs: sorted.map((c) => c.slug),
         sortColumn: column,
         sortDirection: direction,
         selectedRowIndex: null,
