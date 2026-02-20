@@ -93,6 +93,34 @@ export async function getCollectionEntries(
   }
 }
 
+export async function getMdxEntry(
+  collectionName: string,
+  slug: string,
+): Promise<{ filePath: string; frontmatter: Record<string, unknown>; body: string } | null> {
+  try {
+    const contentsDir = getContentsDir();
+    const store = await loadContent(contentsDir);
+    const entries: ContentEntry[] = store.getCollection(collectionName);
+    const entry = entries.find((e) => e.slug === slug);
+    if (!entry) return null;
+
+    const collections = store.getCollections();
+    const col = collections.find((c) => c.name === collectionName);
+    if (!col) return null;
+
+    const fs = new FsAdapter(contentsDir);
+    const filePath = fs.join(col.basePath, slug + ".mdx");
+
+    return {
+      filePath,
+      frontmatter: entry.data,
+      body: entry.body ?? "",
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function saveCollectionJson(
   filePath: string,
   content: string,

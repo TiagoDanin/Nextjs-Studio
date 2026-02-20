@@ -21,9 +21,21 @@ export default async function CollectionPage({
 
   const { collection, entries, filePath } = result;
 
+  const collectionsWithEntries = collections.map((c) =>
+    c.name === name && c.type === "mdx"
+      ? {
+          ...c,
+          entries: entries.map((e) => ({
+            slug: e.slug,
+            title: String(e.data.title ?? e.slug),
+          })),
+        }
+      : c,
+  );
+
   return (
     <>
-      <AppSidebar collections={collections} activeCollection={name} />
+      <AppSidebar collections={collectionsWithEntries} activeCollection={name} />
       <main className="flex flex-1 flex-col overflow-hidden">
         {(collection.type === "json-array" || collection.type === "mdx") && (
           <JsonSheetEditor
