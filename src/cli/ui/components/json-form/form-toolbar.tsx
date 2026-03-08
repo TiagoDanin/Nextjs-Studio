@@ -4,7 +4,6 @@ import { useTransition } from "react";
 import { useEditorStore } from "@/stores/editor-store";
 import { saveCollectionJson } from "@/actions/collections";
 import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
 
 interface Props {
   collectionName: string;
@@ -28,21 +27,21 @@ export function FormToolbar({ collectionName }: Props) {
   }
 
   return (
-    <div className="flex h-14 items-center justify-between border-b px-4">
-      <div className="flex items-center gap-2">
-        <h2 className="text-sm font-semibold">{collectionName}</h2>
+    <div className="studio-topbar">
+      <div className="flex items-center gap-2 text-[14px]">
+        <span className="font-bold capitalize tracking-tight">{collectionName}</span>
         {isDirty && (
-          <span className="h-2 w-2 rounded-full bg-primary" />
+          <span className="h-1.5 w-1.5 rounded-full bg-foreground/40" />
         )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <Button
           size="sm"
+          className="h-7 px-3 text-xs"
           onClick={handleSave}
           disabled={!isDirty || isPending}
         >
-          <Save className="h-4 w-4" />
-          {isPending ? "Saving..." : "Save"}
+          {isPending ? "Saving…" : "Save"}
         </Button>
       </div>
     </div>

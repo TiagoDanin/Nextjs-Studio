@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   useReactTable,
@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, Eye, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SheetRowInspector } from "./sheet-row-inspector";
 
 export function SheetTable() {
   const router = useRouter();
@@ -52,7 +53,7 @@ export function SheetTable() {
           accessorKey: key,
           header: () => (
             <button
-              className="flex items-center gap-1 hover:text-foreground"
+              className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide hover:text-foreground"
               onClick={() => sortBy(key)}
             >
               {key}
@@ -72,18 +73,16 @@ export function SheetTable() {
             </button>
           ),
           cell: ({ row }) => (
-            <SheetCell
-              value={row.original[key]}
-              rowIndex={row.index}
-              column={key}
-            />
+            <SheetCell value={row.original[key]} />
           ),
         }),
       ),
       {
         id: "actions",
         header: () => (
-          <span className="text-xs text-muted-foreground">Actions</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Actions
+          </span>
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
@@ -160,31 +159,34 @@ export function SheetTable() {
           <TableRow>
             <TableCell
               colSpan={columns.length}
-              className="h-24 text-center text-muted-foreground"
+      className="h-24 text-center text-muted-foreground"
             >
               No data
             </TableCell>
           </TableRow>
         ) : (
           table.getRowModel().rows.map((row) => (
-            <TableRow
-              key={row.id}
-              data-state={
-                selectedRowIndex === row.index ? "selected" : undefined
-              }
-              className="cursor-pointer"
-              onClick={() =>
-                selectRow(
-                  selectedRowIndex === row.index ? null : row.index,
-                )
-              }
-            >
-              {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
-              ))}
-            </TableRow>
+            <Fragment key={row.id}>
+              {selectedRowIndex === row.index ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="p-0">
+                    <SheetRowInspector rowIndex={row.index} />
+                  </TableCell>
+                </TableRow>
+              ) : (
+                <TableRow
+                  data-state={undefined}
+                  className="cursor-pointer"
+                  onClick={() => selectRow(row.index)}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              )}
+            </Fragment>
           ))
         )}
       </TableBody>

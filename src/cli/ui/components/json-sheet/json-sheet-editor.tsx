@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useEditorStore } from "@/stores/editor-store";
 import { SheetToolbar } from "./sheet-toolbar";
 import { SheetTable } from "./sheet-table";
-import { SheetRowInspector } from "./sheet-row-inspector";
 import type { CollectionSummary, SerializableEntry } from "@/actions/collections";
 
 interface Props {
@@ -15,7 +14,6 @@ interface Props {
 
 export function JsonSheetEditor({ collection, entries, filePath }: Props) {
   const initSheet = useEditorStore((s) => s.initSheet);
-  const selectedRowIndex = useEditorStore((s) => s.selectedRowIndex);
 
   useEffect(() => {
     const rows = entries.map((e) => e.data);
@@ -29,10 +27,11 @@ export function JsonSheetEditor({ collection, entries, filePath }: Props) {
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <SheetToolbar collectionName={collection.name} />
-      <div className="flex-1 overflow-auto">
-        <SheetTable />
+      <div className="studio-canvas px-4 py-4 md:px-6">
+        <div className="h-full overflow-hidden rounded-xl border bg-card">
+          <SheetTable />
+        </div>
       </div>
-      {selectedRowIndex !== null && <SheetRowInspector />}
     </div>
   );
 }

@@ -10,7 +10,7 @@ export function MdxFrontmatter() {
   const updateFrontmatter = useMdxEditorStore((s) => s.updateFrontmatter);
 
   return (
-    <div className="border-b px-6 py-4">
+    <div className="border-b bg-muted/20 px-6 py-4">
       <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         Frontmatter
       </p>

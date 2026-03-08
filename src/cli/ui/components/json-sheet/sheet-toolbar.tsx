@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { useEditorStore } from "@/stores/editor-store";
 import { saveCollectionJson, saveMdxFrontmatter } from "@/actions/collections";
 import { Button } from "@/components/ui/button";
-import { Plus, Save } from "lucide-react";
+import { Plus } from "lucide-react";
 
 interface Props {
   collectionName: string;
@@ -32,25 +32,32 @@ export function SheetToolbar({ collectionName }: Props) {
   }
 
   return (
-    <div className="flex h-14 items-center justify-between border-b px-4">
-      <div className="flex items-center gap-2">
-        <h2 className="text-sm font-semibold">{collectionName}</h2>
-        {isDirty && <span className="h-2 w-2 rounded-full bg-primary" />}
+    <div className="studio-topbar">
+      <div className="flex items-center gap-2 text-[14px]">
+        <span className="font-bold capitalize tracking-tight">{collectionName}</span>
+        {isDirty && (
+          <span className="h-1.5 w-1.5 rounded-full bg-foreground/40" />
+        )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         {!isMdx && (
-          <Button variant="outline" size="sm" onClick={addRow}>
-            <Plus className="h-4 w-4" />
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 gap-1.5 px-2.5 text-xs"
+            onClick={addRow}
+          >
+            <Plus className="h-3.5 w-3.5" />
             Add Row
           </Button>
         )}
         <Button
           size="sm"
+          className="h-7 px-3 text-xs"
           onClick={handleSave}
           disabled={!isDirty || isPending}
         >
-          <Save className="h-4 w-4" />
-          {isPending ? "Saving..." : "Save"}
+          {isPending ? "Saving…" : "Save"}
         </Button>
       </div>
     </div>

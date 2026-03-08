@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { Providers } from "@/components/providers";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Separator } from "@/components/ui/separator";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -25,15 +23,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${poppins.variable} font-sans antialiased`}>
         <Providers>
-          <div className="flex h-screen flex-col">
-            <header className="flex h-14 items-center justify-between border-b px-4">
-              <h1 className="text-sm font-semibold tracking-tight">
-                NextJS Studio
-              </h1>
-              <ThemeToggle />
-            </header>
-            <div className="flex flex-1 overflow-hidden">{children}</div>
-          </div>
+          <div className="flex h-screen overflow-hidden">{children}</div>
         </Providers>
       </body>
     </html>

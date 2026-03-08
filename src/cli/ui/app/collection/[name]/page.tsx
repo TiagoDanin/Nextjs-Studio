@@ -36,7 +36,7 @@ export default async function CollectionPage({
   return (
     <>
       <AppSidebar collections={collectionsWithEntries} activeCollection={name} />
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main className="studio-main">
         {(collection.type === "json-array" || collection.type === "mdx") && (
           <JsonSheetEditor
             collection={collection}

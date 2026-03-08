@@ -5,7 +5,7 @@ import { useMdxEditorStore } from "@/stores/mdx-editor-store";
 import { saveMdxFrontmatter } from "@/actions/collections";
 import { Button } from "@/components/ui/button";
 import { PreviewDialog } from "./preview-dialog";
-import { Eye, Save } from "lucide-react";
+import { Eye, ChevronRight } from "lucide-react";
 
 export function MdxToolbar() {
   const isDirty = useMdxEditorStore((s) => s.isDirty);
@@ -18,8 +18,6 @@ export function MdxToolbar() {
   const [isPending, startTransition] = useTransition();
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  const title = `${collectionName.charAt(0).toUpperCase() + collectionName.slice(1)}: ${slug}.mdx`;
-
   function handleSave() {
     startTransition(async () => {
       const result = await saveMdxFrontmatter([{ filePath, frontmatter, body }]);
@@ -29,19 +27,32 @@ export function MdxToolbar() {
 
   return (
     <>
-      <div className="flex h-14 items-center justify-between border-b px-4">
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold">{title}</h2>
-          {isDirty && <span className="h-2 w-2 rounded-full bg-primary" />}
+      <div className="studio-topbar">
+        <div className="flex items-center gap-1.5 text-[14px]">
+          <span className="capitalize text-muted-foreground">{collectionName}</span>
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" />
+          <span className="font-bold tracking-tight">{slug}.mdx</span>
+          {isDirty && (
+            <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-foreground/40" />
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
-            <Eye className="h-4 w-4" />
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 px-2.5 text-xs"
+            onClick={() => setPreviewOpen(true)}
+          >
+            <Eye className="h-3.5 w-3.5" />
             Preview
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={!isDirty || isPending}>
-            <Save className="h-4 w-4" />
-            {isPending ? "Saving..." : "Save"}
+          <Button
+            size="sm"
+            className="h-7 px-3 text-xs"
+            onClick={handleSave}
+            disabled={!isDirty || isPending}
+          >
+            {isPending ? "Saving…" : "Save"}
           </Button>
         </div>
       </div>

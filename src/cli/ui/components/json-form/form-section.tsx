@@ -34,7 +34,7 @@ export function FormSection({
             isOpen && "rotate-90",
           )}
         />
-        <span className="text-sm font-semibold">{title}</span>
+        <span className="text-base font-bold tracking-tight">{title}</span>
       </CollapsibleTrigger>
       <Separator />
       <CollapsibleContent>

@@ -39,7 +39,7 @@ export default async function MdxEntryPage({
         activeCollection={name}
         activeSlug={slug}
       />
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main className="studio-main">
         <MdxEditor
           collectionName={name}
           slug={slug}
