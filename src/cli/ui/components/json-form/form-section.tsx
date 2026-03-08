@@ -15,13 +15,16 @@ interface Props {
   sectionKey: string;
   defaultOpen?: boolean;
   children: React.ReactNode;
+  /** Optional content rendered at the bottom of the section (e.g. Add field button). */
+  footer?: React.ReactNode;
 }
 
 export function FormSection({
   title,
-  sectionKey,
+  sectionKey: _sectionKey,
   defaultOpen = false,
   children,
+  footer,
 }: Props) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -38,7 +41,14 @@ export function FormSection({
       </CollapsibleTrigger>
       <Separator />
       <CollapsibleContent>
-        <div className="py-4">{children}</div>
+        <div className="py-4">
+          {children}
+          {footer && (
+            <div className="mt-4 border-t border-dashed pt-4">
+              {footer}
+            </div>
+          )}
+        </div>
       </CollapsibleContent>
     </Collapsible>
   );

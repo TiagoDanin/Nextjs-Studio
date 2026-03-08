@@ -6,6 +6,7 @@ import { FormToolbar } from "./form-toolbar";
 import { FormSection } from "./form-section";
 import { FormField } from "./form-field";
 import { FormAddField } from "./form-add-field";
+import { FormAddSection } from "./form-add-section";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { CollectionSummary } from "@/actions/collections";
 
@@ -46,27 +47,34 @@ export function JsonFormEditor({ collection, data, filePath }: Props) {
       <ScrollArea className="studio-canvas">
         <div className="h-full w-full px-4 py-4 md:px-6">
           <div className="studio-surface flex min-h-full flex-col gap-6 p-6">
-            {general.length > 0 && (
-              <FormSection title="General" sectionKey="" defaultOpen>
-                <div className="flex flex-col gap-4">
-                  {general.map(([key, value]) => (
-                    <FormField
-                      key={key}
-                      fieldKey={key}
-                      path={key}
-                      value={value}
-                    />
-                  ))}
-                </div>
-              </FormSection>
-            )}
 
+            {/* General fields — always rendered, even if empty, so there's always a place to add */}
+            <FormSection
+              title="General"
+              sectionKey=""
+              defaultOpen
+              footer={<FormAddField path="" />}
+            >
+              <div className="flex flex-col gap-4">
+                {general.map(([key, value]) => (
+                  <FormField
+                    key={key}
+                    fieldKey={key}
+                    path={key}
+                    value={value}
+                  />
+                ))}
+              </div>
+            </FormSection>
+
+            {/* Named sections */}
             {sections.map(([key, sectionData]) => (
               <FormSection
                 key={key}
                 title={key.charAt(0).toUpperCase() + key.slice(1)}
                 sectionKey={key}
                 defaultOpen
+                footer={<FormAddField path={key} />}
               >
                 <div className="flex flex-col gap-4">
                   {Object.entries(sectionData).map(([fieldKey, value]) => (
@@ -81,7 +89,9 @@ export function JsonFormEditor({ collection, data, filePath }: Props) {
               </FormSection>
             ))}
 
-            <FormAddField />
+            {/* Only "Add section" at the bottom — intent is clear */}
+            <FormAddSection />
+
           </div>
         </div>
       </ScrollArea>

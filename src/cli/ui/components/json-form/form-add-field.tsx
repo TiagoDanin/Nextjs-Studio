@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useEditorStore } from "@/stores/editor-store";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const typeDefaults: Record<string, unknown> = {
   string: "",
@@ -12,7 +12,12 @@ const typeDefaults: Record<string, unknown> = {
   boolean: false,
 };
 
-export function FormAddField() {
+interface Props {
+  /** The section path to add the field into. Empty string = General (top-level). */
+  path?: string;
+}
+
+export function FormAddField({ path = "" }: Props) {
   const addField = useEditorStore((s) => s.addField);
   const [isAdding, setIsAdding] = useState(false);
   const [fieldName, setFieldName] = useState("");
@@ -20,7 +25,7 @@ export function FormAddField() {
 
   function handleAdd() {
     if (!fieldName.trim()) return;
-    addField("", fieldName.trim(), typeDefaults[fieldType] ?? "");
+    addField(path, fieldName.trim(), typeDefaults[fieldType] ?? "");
     setFieldName("");
     setFieldType("string");
     setIsAdding(false);
@@ -28,15 +33,18 @@ export function FormAddField() {
 
   if (!isAdding) {
     return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-fit"
+      <button
+        type="button"
         onClick={() => setIsAdding(true)}
+        className={cn(
+          "flex w-fit items-center gap-1.5 rounded-md border border-dashed px-2.5 py-1.5",
+          "text-xs text-muted-foreground transition-colors",
+          "hover:border-foreground/30 hover:text-foreground",
+        )}
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="h-3.5 w-3.5" />
         Add field
-      </Button>
+      </button>
     );
   }
 
@@ -50,29 +58,32 @@ export function FormAddField() {
           if (e.key === "Enter") handleAdd();
           if (e.key === "Escape") setIsAdding(false);
         }}
-        className="h-8 w-48"
+        className="h-8 w-44"
         autoFocus
       />
       <select
         value={fieldType}
         onChange={(e) => setFieldType(e.target.value)}
-        className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+        className="h-8 rounded-md border border-input bg-background px-2 text-xs"
       >
         <option value="string">String</option>
         <option value="number">Number</option>
         <option value="boolean">Boolean</option>
       </select>
-      <Button size="sm" variant="outline" className="h-8" onClick={handleAdd}>
-        Add
-      </Button>
-      <Button
-        size="icon"
-        variant="ghost"
-        className="h-8 w-8"
-        onClick={() => setIsAdding(false)}
+      <button
+        type="button"
+        onClick={handleAdd}
+        className="h-8 rounded-md border px-3 text-xs hover:bg-accent"
       >
-        <X className="h-4 w-4" />
-      </Button>
+        Add
+      </button>
+      <button
+        type="button"
+        onClick={() => setIsAdding(false)}
+        className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }
