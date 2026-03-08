@@ -1,3 +1,5 @@
+import type { CollectionSchema } from "./fields.js";
+
 /**
  * Core content entry representing a single piece of content.
  */
@@ -26,6 +28,8 @@ export interface Collection {
   count: number;
   /** Filesystem path to the collection folder */
   basePath: string;
+  /** Optional schema that describes the fields in this collection. */
+  schema?: CollectionSchema;
 }
 
 /**
@@ -40,6 +44,8 @@ export interface StudioConfig {
  * Per-collection configuration options.
  */
 export interface CollectionConfig {
+  /** Field schema that describes the shape of each entry. */
+  schema?: CollectionSchema;
   /** Import/sync scripts for the collection */
   scripts?: {
     import?: string;

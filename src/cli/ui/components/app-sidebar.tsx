@@ -70,7 +70,7 @@ export function AppSidebar({
                   >
                     <Icon
                       className={cn(
-                        "h-[15px] w-[15px] shrink-0 transition-colors",
+                        "h-3.75 w-3.75 shrink-0 transition-colors",
                         isActive && !activeSlug
                           ? "text-sidebar-foreground"
                           : "text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70",

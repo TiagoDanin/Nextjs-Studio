@@ -1,16 +1,17 @@
 import slugify from "@sindresorhus/slugify";
-import type { ContentEntry, Collection } from "../shared/types.js";
+import type { ContentEntry, Collection, StudioConfig } from "../shared/types.js";
 import { COLLECTION_ORDER_FILE } from "../shared/constants.js";
 import { FsAdapter } from "../cli/adapters/fs-adapter.js";
 import { parseMdx } from "./parsers/parser-mdx.js";
 import { parseJson } from "./parsers/parser-json.js";
+import { inferSchema } from "./schema-inferrer.js";
 
 export class ContentIndex {
   private entries = new Map<string, ContentEntry[]>();
   private collections = new Map<string, Collection>();
   private fs!: FsAdapter;
 
-  async build(contentsDir: string): Promise<void> {
+  async build(contentsDir: string, config?: StudioConfig): Promise<void> {
     this.clear();
     this.fs = new FsAdapter(contentsDir);
 
@@ -19,7 +20,8 @@ export class ContentIndex {
     for (const dir of dirs) {
       const dirName = this.fs.basename(dir);
       const collectionName = slugify(dirName);
-      await this.indexCollection(dirName, collectionName);
+      const collectionConfig = config?.collections?.[collectionName];
+      await this.indexCollection(dirName, collectionName, collectionConfig?.schema);
     }
   }
 
@@ -36,7 +38,11 @@ export class ContentIndex {
     this.collections.clear();
   }
 
-  private async indexCollection(dirName: string, collectionName: string): Promise<void> {
+  private async indexCollection(
+    dirName: string,
+    collectionName: string,
+    manualSchema?: import("../shared/fields.js").CollectionSchema,
+  ): Promise<void> {
     const entries: ContentEntry[] = [];
 
     await this.scanDir(dirName, collectionName, dirName, entries);
@@ -48,6 +54,7 @@ export class ContentIndex {
     }
 
     const collectionType = this.detectCollectionType(entries);
+    const schema = manualSchema ?? inferSchema(entries, collectionName);
 
     this.entries.set(collectionName, entries);
     this.collections.set(collectionName, {
@@ -55,6 +62,7 @@ export class ContentIndex {
       type: collectionType,
       count: entries.length,
       basePath: dirName,
+      schema,
     });
   }
 
@@ -134,7 +142,7 @@ export class ContentIndex {
         return parsed as string[];
       }
     } catch (error) {
-      console.warn(`[nextjs-studio] Failed to parse ordering file: ${orderPath}`, error);
+      console.warn(`[Nextjs Studio] Failed to parse ordering file: ${orderPath}`, error);
     }
     return null;
   }
