@@ -28,12 +28,12 @@ export function AppSidebar({
 }) {
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar-background">
-      <div className="flex h-[58px] shrink-0 items-center gap-3 border-b border-sidebar-border px-5">
+      <div className="flex h-14.5 shrink-0 items-center gap-3 border-b border-sidebar-border px-5">
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-accent">
           <Layers className="h-4 w-4 text-sidebar-primary" />
         </div>
         <span className="text-[14px] font-semibold tracking-tight text-sidebar-foreground">
-          nextjs-studio
+        Nextjs Studio
         </span>
       </div>
 

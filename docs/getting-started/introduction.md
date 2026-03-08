@@ -1,10 +1,10 @@
 # Introduction
 
-**nextjs-studio** is a Git-based, local-first CMS for Next.js projects. It works with any Next.js setup, and with support for static export (`output: "export"`).
+**Nextjs Studio** is a Git-based, local-first CMS for Next.js projects. It works with any Next.js setup, and with support for static export (`output: "export"`).
 
-## What is nextjs-studio?
+## What is Nextjs Studio?
 
-nextjs-studio is divided into two main parts:
+Nextjs Studio is divided into two main parts:
 
 ### 1. Core — Build-time Content Engine
 
@@ -71,5 +71,5 @@ JSON files are handled based on their structure:
 
 ## Next Steps
 
-- [Installation](./installation.md) — Set up nextjs-studio in your project
+- [Installation](./installation.md) — Set up Nextjs Studio in your project
 - [Configuration](./configuration.md) — Configure collections and scripts

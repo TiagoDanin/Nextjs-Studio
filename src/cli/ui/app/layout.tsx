@@ -10,7 +10,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "nextjs-studio",
+  title: "Nextjs Studio",
   description: "A Git-based, local-first CMS for Next.js projects",
 };
 

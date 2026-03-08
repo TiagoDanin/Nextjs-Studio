@@ -7,7 +7,7 @@ import { Command } from "commander";
 import { CLI_PORT, CONTENTS_DIR } from "../shared/constants.js";
 
 const program = new Command()
-  .name("nextjs-studio")
+  .name("Nextjs Studio")
   .description("A Git-based, local-first CMS for Next.js projects")
   .version("0.1.0")
   .option("-d, --dir <path>", "Path to contents directory", CONTENTS_DIR)
@@ -28,7 +28,7 @@ const env = {
   HOSTNAME: "0.0.0.0",
 };
 
-console.log("nextjs-studio v0.1.0");
+console.log("Nextjs Studio v0.1.0");
 console.log(`Contents dir: ${dir}`);
 console.log(`Starting on http://localhost:${port}`);
 
