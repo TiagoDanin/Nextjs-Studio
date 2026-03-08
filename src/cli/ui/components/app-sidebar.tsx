@@ -9,6 +9,7 @@ interface CollectionItem {
   name: string;
   type: "mdx" | "json-array" | "json-object";
   count: number;
+  sectionCount?: number;
   entries?: { slug: string; title: string }[];
 }
 
@@ -89,7 +90,7 @@ export function AppSidebar({
                           : "text-sidebar-foreground/30",
                       )}
                     >
-                      {collection.count}
+                      {collection.sectionCount ?? collection.count}
                     </span>
                   </Link>
 

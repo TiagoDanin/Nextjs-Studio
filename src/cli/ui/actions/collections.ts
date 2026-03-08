@@ -13,9 +13,24 @@ export interface CollectionSummary {
   name: string;
   type: "mdx" | "json-array" | "json-object";
   count: number;
+  /** Number of form sections — only set for json-object collections. */
+  sectionCount?: number;
   basePath: string;
   /** Schema field definitions, populated when entry data is loaded. */
   fields?: FieldDefinition[];
+}
+
+function countFormSections(data: Record<string, unknown>): number {
+  let hasFlatEntries = false;
+  let objectCount = 0;
+  for (const value of Object.values(data)) {
+    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      objectCount++;
+    } else {
+      hasFlatEntries = true;
+    }
+  }
+  return (hasFlatEntries ? 1 : 0) + objectCount;
 }
 
 export interface CollectionEntriesResult {
@@ -39,12 +54,14 @@ export async function getCollections(): Promise<CollectionSummary[]> {
     const contentsDir = getContentsDir();
     const store = await loadContent(new FsAdapter(contentsDir));
 
-    return store.getCollections().map((c) => ({
-      name: c.name,
-      type: c.type,
-      count: c.count,
-      basePath: c.basePath,
-    }));
+    return store.getCollections().map((c) => {
+      const base = { name: c.name, type: c.type, count: c.count, basePath: c.basePath };
+      if (c.type === "json-object") {
+        const data = store.getCollection(c.name)[0]?.data ?? {};
+        return { ...base, sectionCount: countFormSections(data) };
+      }
+      return base;
+    });
   } catch {
     return [];
   }
