@@ -27,7 +27,9 @@
     },
     "main": "./dist/core/index.js",
     "types": "./dist/core/index.d.ts",
-    "bin": "./dist/bin/nextjs-studio.js",
+    "bin": {
+        "nextjs-studio": "./dist/bin/nextjs-studio.js"
+    },
     "files": [
         "dist",
         "README.md",
