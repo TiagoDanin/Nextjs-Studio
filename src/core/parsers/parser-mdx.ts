@@ -1,3 +1,11 @@
+/**
+ * @context  Core layer — MDX parser/serializer at src/core/parsers/parser-mdx.ts
+ * @does     Parses .mdx content into frontmatter + body, and serializes them back to MDX strings
+ * @depends  none (gray-matter is an external dep)
+ * @do       Add MDX transform steps here; both parse and serialize live here intentionally
+ * @dont     Access the filesystem; import from CLI or UI; handle JSON content
+ */
+
 import matter from "gray-matter";
 
 export interface ParsedMdx {

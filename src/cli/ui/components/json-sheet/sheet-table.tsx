@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { keyLabel } from "@shared/fields";
+import { keyLabel } from "@shared/field-utils";
 import { SheetRowInspector } from "./sheet-row-inspector";
 
 export function SheetTable() {

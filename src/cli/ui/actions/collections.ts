@@ -3,7 +3,7 @@
 import { loadContent } from "@core/content-store";
 import { writeJsonFile, writeMdxEntries } from "@core/content-writer.js";
 import { inferSchema } from "@core/schema-inferrer.js";
-import { fieldLabel } from "@shared/fields.js";
+import { fieldLabel } from "@shared/field-utils.js";
 import { FsAdapter } from "@cli/adapters/fs-adapter";
 import { getContentsDir } from "../lib/env";
 import type { ContentEntry } from "@shared/types";
@@ -37,7 +37,7 @@ export interface SerializableEntry {
 export async function getCollections(): Promise<CollectionSummary[]> {
   try {
     const contentsDir = getContentsDir();
-    const store = await loadContent(contentsDir);
+    const store = await loadContent(new FsAdapter(contentsDir));
 
     return store.getCollections().map((c) => ({
       name: c.name,
@@ -55,7 +55,7 @@ export async function getCollectionEntries(
 ): Promise<CollectionEntriesResult | null> {
   try {
     const contentsDir = getContentsDir();
-    const store = await loadContent(contentsDir);
+    const store = await loadContent(new FsAdapter(contentsDir));
     const collections = store.getCollections();
     const col = collections.find((c) => c.name === name);
 
@@ -112,7 +112,7 @@ export async function getMdxEntry(
 ): Promise<{ filePath: string; frontmatter: Record<string, unknown>; body: string } | null> {
   try {
     const contentsDir = getContentsDir();
-    const store = await loadContent(contentsDir);
+    const store = await loadContent(new FsAdapter(contentsDir));
     const entries: ContentEntry[] = store.getCollection(collectionName);
     const entry = entries.find((e) => e.slug === slug);
     if (!entry) return null;

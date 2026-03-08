@@ -8,7 +8,7 @@ import { FormField } from "./form-field";
 import { FormAddField } from "./form-add-field";
 import { FormAddSection } from "./form-add-section";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { keyLabel } from "@shared/fields";
+import { keyLabel } from "@shared/field-utils";
 import type { CollectionSummary } from "@/actions/collections";
 
 interface Props {

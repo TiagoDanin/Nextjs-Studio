@@ -1,3 +1,11 @@
+/**
+ * @context  Core layer — JSON parser at src/core/parsers/parser-json.ts
+ * @does     Parses JSON content strings into typed ParsedJson results (array or object)
+ * @depends  none
+ * @do       Extend ParsedJson variants here if new JSON structures are supported
+ * @dont     Access the filesystem; import from CLI or UI; contain serialization logic
+ */
+
 export interface ParsedJsonArray {
   type: "json-array";
   entries: Record<string, unknown>[];

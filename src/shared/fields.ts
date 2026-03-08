@@ -1,43 +1,24 @@
 /**
- * Field type system for nextjs-studio.
- *
- * Each field type is a discriminated union member keyed by `type`.
- * UI components and the type generator both derive behavior from this shape,
- * so adding a new type here automatically propagates to both.
+ * @context  Shared layer — field type system at src/shared/fields.ts
+ * @does     Defines every field interface, the FieldDefinition union, and CollectionSchema
+ * @depends  none
+ * @do       Add new field types here; the UI and type-generator derive behavior from this shape
+ * @dont     Import from CLI or UI; contain runtime logic beyond fieldLabel utilities
  */
 
-// ---------------------------------------------------------------------------
-// Branded scalar types
-// ---------------------------------------------------------------------------
-// These are structurally strings/numbers at runtime but carry a type-level
-// brand so the editor and consumer API can distinguish them semantically.
-// Use the helper `brand()` at runtime to cast raw values.
-
+// Branded scalar types — structurally strings/numbers at runtime but semantically distinct.
+// Use a type cast at runtime to assign branded values.
 declare const __brand: unique symbol;
 type Brand<T, B extends string> = T & { readonly [__brand]: B };
 
-/** A valid email address string, e.g. `"user@example.com"`. */
 export type Email = Brand<string, "Email">;
-
-/** A valid URL string, e.g. `"https://example.com"`. */
 export type HttpUrl = Brand<string, "HttpUrl">;
-
-/** An ISO 8601 date string without time, e.g. `"2025-03-08"`. */
 export type ISODate = Brand<string, "ISODate">;
-
-
-/** A relative file path or URL pointing to a media asset. */
 export type MediaPath = Brand<string, "MediaPath">;
-
-/** An auto-generated unique identifier (UUID / nanoid / cuid). */
 export type ID = Brand<string, "ID">;
-
-/** A URL-friendly slug, e.g. `"my-post-title"`. */
 export type Slug = Brand<string, "Slug">;
 
-// ---------------------------------------------------------------------------
 // Shared primitives
-// ---------------------------------------------------------------------------
 
 export interface SelectOption {
   label: string;
@@ -52,11 +33,9 @@ export interface StatusOption {
   color?: "gray" | "red" | "yellow" | "green" | "blue" | "purple";
 }
 
-// ---------------------------------------------------------------------------
 // Base — properties shared by every field
-// ---------------------------------------------------------------------------
 
-interface BaseField {
+export interface BaseField {
   /** Machine-readable key used in the data object / JSON key. */
   name: string;
   /** Human-readable label shown in the editor. Defaults to `name`. */
@@ -69,9 +48,7 @@ interface BaseField {
   defaultValue?: unknown;
 }
 
-// ---------------------------------------------------------------------------
-// Core types
-// ---------------------------------------------------------------------------
+// Scalar field types
 
 export interface TextField extends BaseField {
   type: "text";
@@ -136,9 +113,7 @@ export interface MediaField extends BaseField {
   accept?: string[];
 }
 
-// ---------------------------------------------------------------------------
-// Structured types
-// ---------------------------------------------------------------------------
+// Structured field types
 
 export interface ObjectField extends BaseField {
   type: "object";
@@ -164,9 +139,7 @@ export interface SlugField extends BaseField {
   from: string;
 }
 
-// ---------------------------------------------------------------------------
-// Others / advanced
-// ---------------------------------------------------------------------------
+// Advanced field types
 
 export interface RelationField extends BaseField {
   type: "relation";
@@ -201,9 +174,7 @@ export interface UpdatedTimeField extends BaseField {
   type: "updated-time";
 }
 
-// ---------------------------------------------------------------------------
 // Union
-// ---------------------------------------------------------------------------
 
 export type FieldDefinition =
   | TextField
@@ -228,9 +199,7 @@ export type FieldDefinition =
 
 export type FieldType = FieldDefinition["type"];
 
-// ---------------------------------------------------------------------------
 // Collection schema
-// ---------------------------------------------------------------------------
 
 export interface CollectionSchema {
   /** Collection name — must match the folder name under /contents. */
@@ -242,121 +211,4 @@ export interface CollectionSchema {
   label?: string;
   /** Field definitions that describe the shape of each entry. */
   fields: FieldDefinition[];
-}
-
-// ---------------------------------------------------------------------------
-// TypeScript inference utilities
-// ---------------------------------------------------------------------------
-// These allow the consume API (queryCollection) to return fully-typed data
-// when the caller passes a schema reference.
-
-/** Infer the TypeScript value type for a single field definition. */
-export type InferFieldValue<F extends FieldDefinition> =
-  // Plain text — no semantic meaning beyond "a string"
-  F extends TextField ? string
-  : F extends LongTextField ? string
-  // Numerics
-  : F extends NumberField ? number
-  : F extends BooleanField ? boolean
-  // Date: includeTime drives which branded type is returned
-  : F extends DateField
-    ? F["includeTime"] extends true
-      ? Date
-      : ISODate
-  // Select options become a string literal union when options are known
-  : F extends SelectField
-    ? F["options"][number]["value"]
-  : F extends MultiSelectField
-    ? Array<F["options"][number]["value"]>
-  // Semantically distinct string types
-  : F extends UrlField ? HttpUrl
-  : F extends EmailField ? Email
-  : F extends MediaField ? MediaPath
-  // Structured
-  : F extends ObjectField ? InferObjectFields<F["fields"]>
-  : F extends ArrayField ? Array<InferObjectFields<F["itemFields"]>>
-  // Generated
-  : F extends IdField ? ID
-  : F extends SlugField ? Slug
-  // Relations use plain string IDs (branded would require cross-schema refs)
-  : F extends RelationField
-    ? F["multiple"] extends true
-      ? ID[]
-      : ID
-  // Formula result depends on declared resultType
-  : F extends FormulaField
-    ? F["resultType"] extends "number"
-      ? number
-      : F["resultType"] extends "boolean"
-        ? boolean
-        : string
-  : F extends StatusField
-    ? F["options"][number]["value"]
-  // System timestamps are always full datetime
-  : F extends CreatedTimeField ? Date
-  : F extends UpdatedTimeField ? Date
-  : never;
-
-/**
- * Infer a record type from an array of field definitions.
- * Fields marked `required: false` become optional (`T | undefined`).
- */
-export type InferObjectFields<Fields extends FieldDefinition[]> = {
-  [F in Fields[number] as F["name"]]: F extends { required: false }
-    ? InferFieldValue<F> | undefined
-    : InferFieldValue<F>;
-};
-
-/**
- * Infer the full data shape of a collection from its schema.
- *
- * @example
- * ```ts
- * const blogSchema = {
- *   collection: "blog",
- *   fields: [
- *     { name: "title", type: "text", required: true },
- *     { name: "published", type: "boolean" },
- *   ],
- * } satisfies CollectionSchema;
- *
- * type BlogData = InferSchemaData<typeof blogSchema>;
- * // => { title: string; published: boolean }
- * ```
- */
-export type InferSchemaData<S extends CollectionSchema> = InferObjectFields<
-  S["fields"]
->;
-
-// ---------------------------------------------------------------------------
-// Label utility
-// ---------------------------------------------------------------------------
-
-/**
- * Resolve the human-readable label for a field.
- *
- * When the field definition has an explicit `label`, that is returned as-is.
- * Otherwise the `name` (or any camelCase / kebab-case / snake_case key) is
- * converted to a Title Case phrase:
- *
- * @example
- * fieldLabel({ name: "siteName", type: "text" }) // "Site Name"
- * fieldLabel({ name: "created_at", type: "date" }) // "Created At"
- * fieldLabel({ name: "bio", type: "long-text", label: "About" }) // "About"
- */
-export function fieldLabel(field: Pick<BaseField, "name" | "label">): string {
-  if (field.label) return field.label;
-  return field.name
-    .replace(/[-_](.)/g, (_, c: string) => ` ${c.toUpperCase()}`)
-    .replace(/([A-Z])/g, " $1")
-    .trim()
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-/**
- * Resolve the label for a raw key string (no field definition available).
- * Useful for dynamic keys that have no schema entry.
- */
-export function keyLabel(name: string): string {
-  return fieldLabel({ name });
 }

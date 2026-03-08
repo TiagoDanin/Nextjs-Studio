@@ -1,20 +1,31 @@
+/**
+ * @context  Core layer — content indexer at src/core/indexer.ts
+ * @does     Scans the contents directory, parses MDX/JSON files, and builds an in-memory index
+ * @depends  src/shared/types.ts, src/shared/constants.ts, src/shared/fs-adapter.interface.ts, src/core/parsers/, src/core/schema-inferrer.ts
+ * @do       Add new file type handling here; extend indexCollection for new collection behaviors
+ * @dont     Import from CLI or UI; instantiate FsAdapter; access the filesystem directly
+ */
+
 import slugify from "@sindresorhus/slugify";
+import type { CollectionSchema } from "../shared/fields.js";
 import type { ContentEntry, Collection, StudioConfig } from "../shared/types.js";
+import type { IFsAdapter } from "../shared/fs-adapter.interface.js";
 import { COLLECTION_ORDER_FILE } from "../shared/constants.js";
-import { FsAdapter } from "../cli/adapters/fs-adapter.js";
 import { parseMdx } from "./parsers/parser-mdx.js";
 import { parseJson } from "./parsers/parser-json.js";
 import { inferSchema } from "./schema-inferrer.js";
 
 export class ContentIndex {
-  private entries = new Map<string, ContentEntry[]>();
-  private collections = new Map<string, Collection>();
-  private fs!: FsAdapter;
+  private readonly entries = new Map<string, ContentEntry[]>();
+  private readonly collections = new Map<string, Collection>();
+  private readonly fs: IFsAdapter;
 
-  async build(contentsDir: string, config?: StudioConfig): Promise<void> {
+  constructor(fsAdapter: IFsAdapter) {
+    this.fs = fsAdapter;
+  }
+
+  async build(config?: StudioConfig): Promise<void> {
     this.clear();
-    this.fs = new FsAdapter(contentsDir);
-
     const dirs = await this.fs.listDirectories(".");
 
     for (const dir of dirs) {
@@ -41,10 +52,9 @@ export class ContentIndex {
   private async indexCollection(
     dirName: string,
     collectionName: string,
-    manualSchema?: import("../shared/fields.js").CollectionSchema,
+    manualSchema?: CollectionSchema,
   ): Promise<void> {
     const entries: ContentEntry[] = [];
-
     await this.scanDir(dirName, collectionName, dirName, entries);
 
     const orderPath = this.fs.join(dirName, COLLECTION_ORDER_FILE);
@@ -53,13 +63,12 @@ export class ContentIndex {
       this.applyOrdering(entries, ordering);
     }
 
-    const collectionType = this.detectCollectionType(entries);
     const schema = manualSchema ?? inferSchema(entries, collectionName);
 
     this.entries.set(collectionName, entries);
     this.collections.set(collectionName, {
       name: collectionName,
-      type: collectionType,
+      type: this.detectCollectionType(entries),
       count: entries.length,
       basePath: dirName,
       schema,
@@ -78,7 +87,6 @@ export class ContentIndex {
     }
 
     const files = await this.fs.listFiles(dirPath);
-
     for (const filePath of files) {
       const fileName = this.fs.basename(filePath);
       if (fileName === COLLECTION_ORDER_FILE) continue;
@@ -86,50 +94,48 @@ export class ContentIndex {
       const ext = this.fs.extname(fileName);
       const content = await this.fs.readFile(filePath);
       const relativePath = this.fs.relative(dirName, filePath);
-      const rawSlug = this.fs.normalizeSlug(relativePath, ext);
-      const slug = rawSlug
+      const slug = this.fs
+        .normalizeSlug(relativePath, ext)
         .split("/")
         .map((segment) => slugify(segment))
         .join("/");
-      const contentPath = `/${collectionName}/${slug}`;
 
       if (ext === ".mdx") {
-        const parsed = parseMdx(content);
-        entries.push({
-          collection: collectionName,
-          slug,
-          path: contentPath,
-          body: parsed.body,
-          data: parsed.data,
-        });
+        entries.push(this.buildMdxEntry(collectionName, slug, content));
       } else if (ext === ".json") {
-        const parsed = parseJson(content);
-
-        if (parsed.type === "json-array") {
-          for (let i = 0; i < parsed.entries.length; i++) {
-            const entryData = parsed.entries[i];
-            const entrySlug =
-              typeof entryData["slug"] === "string"
-                ? slugify(entryData["slug"])
-                : `${slug}/${i}`;
-
-            entries.push({
-              collection: collectionName,
-              slug: entrySlug,
-              path: `/${collectionName}/${entrySlug}`,
-              data: entryData,
-            });
-          }
-        } else {
-          entries.push({
-            collection: collectionName,
-            slug,
-            path: contentPath,
-            data: parsed.data,
-          });
-        }
+        entries.push(...this.buildJsonEntries(collectionName, slug, content));
       }
     }
+  }
+
+  private buildMdxEntry(collectionName: string, slug: string, content: string): ContentEntry {
+    const parsed = parseMdx(content);
+    return {
+      collection: collectionName,
+      slug,
+      path: `/${collectionName}/${slug}`,
+      body: parsed.body,
+      data: parsed.data,
+    };
+  }
+
+  private buildJsonEntries(collectionName: string, slug: string, content: string): ContentEntry[] {
+    const parsed = parseJson(content);
+
+    if (parsed.type === "json-array") {
+      return parsed.entries.map((data, index) => {
+        const entrySlug =
+          typeof data["slug"] === "string" ? slugify(data["slug"]) : `${slug}/${index}`;
+        return {
+          collection: collectionName,
+          slug: entrySlug,
+          path: `/${collectionName}/${entrySlug}`,
+          data,
+        };
+      });
+    }
+
+    return [{ collection: collectionName, slug, path: `/${collectionName}/${slug}`, data: parsed.data }];
   }
 
   private async readOrdering(orderPath: string): Promise<string[] | null> {
@@ -138,9 +144,7 @@ export class ContentIndex {
     try {
       const content = await this.fs.readFile(orderPath);
       const parsed: unknown = JSON.parse(content);
-      if (Array.isArray(parsed)) {
-        return parsed as string[];
-      }
+      if (Array.isArray(parsed)) return parsed as string[];
     } catch (error) {
       console.warn(`[Nextjs Studio] Failed to parse ordering file: ${orderPath}`, error);
     }
@@ -148,7 +152,7 @@ export class ContentIndex {
   }
 
   private applyOrdering(entries: ContentEntry[], ordering: string[]): void {
-    const orderMap = new Map(ordering.map((slug, i) => [slug, i]));
+    const orderMap = new Map(ordering.map((slug, index) => [slug, index]));
     entries.sort((a, b) => {
       const aIndex = orderMap.get(a.slug) ?? Infinity;
       const bIndex = orderMap.get(b.slug) ?? Infinity;
@@ -156,18 +160,11 @@ export class ContentIndex {
     });
   }
 
-  private detectCollectionType(
-    entries: ContentEntry[],
-  ): Collection["type"] {
+  private detectCollectionType(entries: ContentEntry[]): Collection["type"] {
     if (entries.length === 0) return "mdx";
-
     const first = entries[0];
     if (first.body !== undefined) return "mdx";
-
-    if (entries.length === 1 && !first.slug.includes("/")) {
-      return "json-object";
-    }
-
+    if (entries.length === 1 && !first.slug.includes("/")) return "json-object";
     return "json-array";
   }
 }

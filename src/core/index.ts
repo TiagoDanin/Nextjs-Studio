@@ -1,3 +1,11 @@
+/**
+ * @context  Core layer — public API barrel at src/core/index.ts
+ * @does     Re-exports the public surface of the core content engine for consumer use
+ * @depends  src/core/*, src/shared/*
+ * @do       Add new public exports here when extending the core API
+ * @dont     Contain logic; import from CLI or UI
+ */
+
 export { queryCollection } from "./query-builder.js";
 export { loadContent } from "./content-store.js";
 export { ContentIndex } from "./indexer.js";
@@ -14,8 +22,8 @@ export type {
   CollectionSchema,
   FieldDefinition,
   FieldType,
-  InferSchemaData,
-  InferFieldValue,
 } from "../shared/fields.js";
 
-export { fieldLabel, keyLabel } from "../shared/fields.js";
+export type { InferSchemaData, InferFieldValue } from "../shared/schema-types.js";
+
+export { fieldLabel, keyLabel } from "../shared/field-utils.js";

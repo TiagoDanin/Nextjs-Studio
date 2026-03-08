@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { keyLabel } from "@shared/fields";
+import { keyLabel } from "@shared/field-utils";
 import type {
   FieldDefinition,
   SelectField,

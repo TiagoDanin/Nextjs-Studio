@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { keyLabel } from "@shared/fields";
+import { keyLabel } from "@shared/field-utils";
 import type {
   FieldDefinition,
   SelectField,
@@ -281,7 +281,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
           <X className="h-4 w-4" />
         </Button>
       </div>
-      <div className="flex max-h-[320px] flex-col gap-2 overflow-auto px-4 py-3">
+      <div className="flex max-h-80 flex-col gap-2 overflow-auto px-4 py-3">
         {entries.map(([key, value]) => renderCell(key, value))}
       </div>
     </div>

@@ -1,3 +1,11 @@
+/**
+ * @context  Shared layer — domain types at src/shared/types.ts
+ * @does     Defines core domain interfaces shared across core, CLI, and UI layers
+ * @depends  src/shared/fields.ts
+ * @do       Add new shared domain types here
+ * @dont     Import from CLI or UI; contain runtime logic; import framework-specific code
+ */
+
 import type { CollectionSchema } from "./fields.js";
 
 /**
@@ -68,6 +76,16 @@ export interface QueryOptions {
  */
 export interface FileInfo {
   path: string;
+  size: number;
+  modifiedAt: Date;
+}
+
+/**
+ * A file entry returned by a flat directory listing (non-recursive).
+ */
+export interface DirectoryFileEntry {
+  name: string;
+  relativePath: string;
   size: number;
   modifiedAt: Date;
 }

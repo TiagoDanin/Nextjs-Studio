@@ -1,11 +1,16 @@
+/**
+ * @context  CLI layer — file watcher at src/cli/adapters/watcher.ts
+ * @does     Watches the contents directory with chokidar and emits typed WatchEvents on file changes
+ * @depends  src/shared/types.ts, src/shared/constants.ts
+ * @do       Add new event types here if new chokidar events need to be handled
+ * @dont     Import from UI; perform I/O beyond chokidar; contain business logic
+ */
+
 import path from "node:path";
 import { EventEmitter } from "node:events";
 import { watch as chokidarWatch, type FSWatcher } from "chokidar";
 import type { WatchEvent } from "../../shared/types.js";
-import {
-  SUPPORTED_EXTENSIONS,
-  WATCHER_DEBOUNCE_MS,
-} from "../../shared/constants.js";
+import { SUPPORTED_EXTENSIONS, WATCHER_DEBOUNCE_MS } from "../../shared/constants.js";
 
 type WatchEventType = WatchEvent["type"];
 
@@ -18,8 +23,8 @@ interface ContentWatcherEvents {
 
 export class ContentWatcher extends EventEmitter<ContentWatcherEvents> {
   private watcher: FSWatcher | null = null;
-  private contentsDir: string;
-  private debounceTimers = new Map<string, NodeJS.Timeout>();
+  private readonly contentsDir: string;
+  private readonly debounceTimers = new Map<string, NodeJS.Timeout>();
 
   constructor(contentsDir: string) {
     super();
@@ -38,12 +43,8 @@ export class ContentWatcher extends EventEmitter<ContentWatcherEvents> {
     });
 
     this.watcher.on("add", (filePath) => this.handleEvent("add", filePath));
-    this.watcher.on("change", (filePath) =>
-      this.handleEvent("change", filePath),
-    );
-    this.watcher.on("unlink", (filePath) =>
-      this.handleEvent("delete", filePath),
-    );
+    this.watcher.on("change", (filePath) => this.handleEvent("change", filePath));
+    this.watcher.on("unlink", (filePath) => this.handleEvent("delete", filePath));
     this.watcher.on("error", (error) =>
       this.emit("error", error instanceof Error ? error : new Error(String(error))),
     );
@@ -63,9 +64,7 @@ export class ContentWatcher extends EventEmitter<ContentWatcherEvents> {
 
   private handleEvent(type: WatchEventType, filePath: string): void {
     const ext = path.extname(filePath);
-    if (!SUPPORTED_EXTENSIONS.includes(ext as (typeof SUPPORTED_EXTENSIONS)[number])) {
-      return;
-    }
+    if (!SUPPORTED_EXTENSIONS.includes(ext as (typeof SUPPORTED_EXTENSIONS)[number])) return;
 
     const key = `${type}:${filePath}`;
     const existing = this.debounceTimers.get(key);
@@ -74,18 +73,13 @@ export class ContentWatcher extends EventEmitter<ContentWatcherEvents> {
     const timer = setTimeout(() => {
       this.debounceTimers.delete(key);
       const event = this.parseFilePath(type, filePath);
-      if (event) {
-        this.emit(`content:${type}`, event);
-      }
+      if (event) this.emit(`content:${type}`, event);
     }, WATCHER_DEBOUNCE_MS);
 
     this.debounceTimers.set(key, timer);
   }
 
-  private parseFilePath(
-    type: WatchEventType,
-    filePath: string,
-  ): WatchEvent | null {
+  private parseFilePath(type: WatchEventType, filePath: string): WatchEvent | null {
     const relative = path.relative(this.contentsDir, filePath);
     const parts = relative.split(path.sep);
 
@@ -94,12 +88,11 @@ export class ContentWatcher extends EventEmitter<ContentWatcherEvents> {
     const collection = parts[0];
     const fileName = parts[parts.length - 1];
     const ext = path.extname(fileName);
-    const slug = fileName.replace(ext, "");
 
     return {
       type,
       collection,
-      slug,
+      slug: fileName.replace(ext, ""),
       extension: ext,
       filePath: relative,
     };

@@ -1,20 +1,12 @@
 /**
- * Type generator — converts CollectionSchema definitions into TypeScript
- * declaration strings that can be written to a `.d.ts` file.
- *
- * Generated types are consumed by the user's Next.js project so that
- * `queryCollection("blog").all()` returns fully-typed entries.
+ * @context  Core layer — type generator at src/core/type-generator.ts
+ * @does     Converts CollectionSchema definitions into TypeScript declaration strings for .d.ts output
+ * @depends  src/shared/fields.ts
+ * @do       Add new field-to-type mappings here as new field types are introduced
+ * @dont     Import from CLI or UI; access the filesystem; perform I/O
  */
 
-import type {
-  FieldDefinition,
-  CollectionSchema,
-  FormulaField,
-} from "../shared/fields.js";
-
-// ---------------------------------------------------------------------------
-// Internal helpers
-// ---------------------------------------------------------------------------
+import type { FieldDefinition, CollectionSchema } from "../shared/fields.js";
 
 function indent(code: string, spaces = 2): string {
   return code
@@ -29,13 +21,8 @@ function toPascalCase(str: string): string {
     .replace(/^(.)/, (_, c: string) => c.toUpperCase());
 }
 
-// ---------------------------------------------------------------------------
-// Field → TypeScript type string
-// ---------------------------------------------------------------------------
-
 function fieldToTsType(field: FieldDefinition): string {
   switch (field.type) {
-    // Plain text — no semantic constraint
     case "text":
     case "long-text":
       return "string";
@@ -89,12 +76,10 @@ function fieldToTsType(field: FieldDefinition): string {
     case "relation":
       return field.multiple === true ? "ID[]" : "ID";
 
-    case "formula": {
-      const f = field as FormulaField;
-      if (f.resultType === "number") return "number";
-      if (f.resultType === "boolean") return "boolean";
+    case "formula":
+      if (field.resultType === "number") return "number";
+      if (field.resultType === "boolean") return "boolean";
       return "string";
-    }
 
     default:
       return "unknown";
@@ -104,31 +89,22 @@ function fieldToTsType(field: FieldDefinition): string {
 function generateObjectType(fields: FieldDefinition[]): string {
   if (fields.length === 0) return "Record<string, unknown>";
 
-  const lines = fields.map((f) => {
-    const optional = f.required === false ? "?" : "";
-    const tsType = fieldToTsType(f);
-    const comment = f.description ? `/** ${f.description} */\n` : "";
-    return `${comment}${f.name}${optional}: ${tsType};`;
+  const lines = fields.map((field) => {
+    const optional = field.required === false ? "?" : "";
+    const tsType = fieldToTsType(field);
+    const comment = field.description ? `/** ${field.description} */\n` : "";
+    return `${comment}${field.name}${optional}: ${tsType};`;
   });
 
   return `{\n${indent(lines.join("\n"))}\n}`;
 }
 
-// ---------------------------------------------------------------------------
-// Schema → interface declaration
-// ---------------------------------------------------------------------------
-
 export function generateInterfaceForSchema(schema: CollectionSchema): string {
   const name = toPascalCase(schema.collection) + "Entry";
   const label = schema.label ?? schema.collection;
   const body = generateObjectType(schema.fields);
-
   return `/** Data shape for the "${label}" collection. */\nexport interface ${name} ${body}`;
 }
-
-// ---------------------------------------------------------------------------
-// Multiple schemas → full .d.ts file
-// ---------------------------------------------------------------------------
 
 /**
  * Generate a complete TypeScript declaration file for all provided schemas.
@@ -159,10 +135,7 @@ export function generateCollectionTypes(schemas: CollectionSchema[]): string {
   const interfaces = schemas.map(generateInterfaceForSchema).join("\n\n");
 
   const collectionMap = schemas
-    .map((s) => {
-      const name = toPascalCase(s.collection) + "Entry";
-      return `  ${JSON.stringify(s.collection)}: ${name};`;
-    })
+    .map((schema) => `  ${JSON.stringify(schema.collection)}: ${toPascalCase(schema.collection)}Entry;`)
     .join("\n");
 
   const collectionRegistry = [

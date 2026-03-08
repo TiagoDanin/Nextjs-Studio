@@ -1,11 +1,18 @@
+/**
+ * @context  Core layer — query builder at src/core/query-builder.ts
+ * @does     Provides a fluent API to filter, sort, and paginate content entries from a collection
+ * @depends  src/shared/types.ts, src/core/content-store.ts
+ * @do       Add new query capabilities here (e.g. search, groupBy)
+ * @dont     Import from CLI or UI; access the filesystem; perform I/O
+ */
+
 import { filter, orderBy, get, slice } from "lodash-es";
 import type { ContentEntry, QueryOptions } from "../shared/types.js";
 import { getStore } from "./content-store.js";
 
 /**
- * Query builder for content collections.
+ * Fluent query builder for content collections.
  *
- * Usage:
  * ```ts
  * const posts = queryCollection("blog")
  *   .where({ published: true })
@@ -16,14 +23,11 @@ import { getStore } from "./content-store.js";
  *
  * Supports dot notation for nested properties:
  * ```ts
- * queryCollection("pages")
- *   .where({ "hero.title": "Welcome" })
- *   .sort("meta.priority", "desc")
- *   .all();
+ * queryCollection("pages").where({ "hero.title": "Welcome" }).all();
  * ```
  */
 export class QueryBuilder {
-  private collectionName: string;
+  private readonly collectionName: string;
   private options: QueryOptions = {};
 
   constructor(collection: string) {
@@ -56,9 +60,7 @@ export class QueryBuilder {
     if (this.options.where) {
       const conditions = this.options.where;
       entries = filter(entries, (entry) =>
-        Object.entries(conditions).every(
-          ([key, value]) => get(entry.data, key) === value,
-        ),
+        Object.entries(conditions).every(([key, value]) => get(entry.data, key) === value),
       );
     }
 
@@ -69,9 +71,7 @@ export class QueryBuilder {
 
     const start = this.options.offset ?? 0;
     const end = this.options.limit ? start + this.options.limit : undefined;
-    entries = slice(entries, start, end);
-
-    return entries;
+    return slice(entries, start, end);
   }
 
   first(): ContentEntry | undefined {

@@ -1,13 +1,20 @@
+/**
+ * @context  CLI layer — filesystem adapter at src/cli/adapters/fs-adapter.ts
+ * @does     Implements IFsAdapter; abstracts all file read/write/list operations behind a single interface
+ * @depends  src/shared/types.ts, src/shared/constants.ts, src/shared/fs-adapter.interface.ts
+ * @do       Add new I/O operations here; all file access must go through this adapter
+ * @dont     Import UI components, run HTTP requests, or contain business logic
+ */
+
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { FileInfo } from "../../shared/types.js";
-import { SUPPORTED_EXTENSIONS } from "../../shared/constants.js";
 import type { Dirent } from "node:fs";
+import type { FileInfo, DirectoryFileEntry } from "../../shared/types.js";
+import type { IFsAdapter } from "../../shared/fs-adapter.interface.js";
+import { SUPPORTED_EXTENSIONS } from "../../shared/constants.js";
 
-type SupportedExtension = (typeof SUPPORTED_EXTENSIONS)[number];
-
-export class FsAdapter {
-  private basePath: string;
+export class FsAdapter implements IFsAdapter {
+  private readonly basePath: string;
 
   constructor(basePath: string) {
     this.basePath = path.resolve(basePath);
@@ -16,8 +23,6 @@ export class FsAdapter {
   private resolve(...segments: string[]): string {
     return path.resolve(this.basePath, ...segments);
   }
-
-  // --- I/O Operations ---
 
   async readFile(filePath: string): Promise<string> {
     return fs.readFile(this.resolve(filePath), "utf-8");
@@ -45,21 +50,14 @@ export class FsAdapter {
   async getStats(filePath: string): Promise<FileInfo> {
     const fullPath = this.resolve(filePath);
     const stats = await fs.stat(fullPath);
-    return {
-      path: filePath,
-      size: stats.size,
-      modifiedAt: stats.mtime,
-    };
+    return { path: filePath, size: stats.size, modifiedAt: stats.mtime };
   }
 
-  async listFiles(
-    dirPath: string,
-    extensions?: readonly SupportedExtension[],
-  ): Promise<string[]> {
+  async listFiles(dirPath: string, extensions?: readonly string[]): Promise<string[]> {
     const fullPath = this.resolve(dirPath);
     const filterExts = extensions ?? SUPPORTED_EXTENSIONS;
 
-    let entries: import("node:fs").Dirent[];
+    let entries: Dirent[];
     try {
       entries = await fs.readdir(fullPath, { withFileTypes: true });
     } catch {
@@ -67,11 +65,7 @@ export class FsAdapter {
     }
 
     return entries
-      .filter(
-        (entry) =>
-          entry.isFile() &&
-          filterExts.some((ext) => entry.name.endsWith(ext)),
-      )
+      .filter((entry) => entry.isFile() && filterExts.some((ext) => entry.name.endsWith(ext)))
       .map((entry) => this.join(dirPath, entry.name));
   }
 
@@ -100,7 +94,7 @@ export class FsAdapter {
     await fs.writeFile(fullPath, data);
   }
 
-  async listAllFiles(dirPath: string): Promise<Array<{ name: string; relativePath: string; size: number; modifiedAt: Date }>> {
+  async listAllFiles(dirPath: string): Promise<DirectoryFileEntry[]> {
     const fullPath = this.resolve(dirPath);
 
     let entries: Dirent[];
@@ -110,17 +104,15 @@ export class FsAdapter {
       return [];
     }
 
-    const results: Array<{ name: string; relativePath: string; size: number; modifiedAt: Date }> = [];
+    const results: DirectoryFileEntry[] = [];
     for (const entry of entries) {
       if (!entry.isFile()) continue;
-      const rel = this.join(dirPath, entry.name);
-      const stats = await fs.stat(this.resolve(rel));
-      results.push({ name: entry.name, relativePath: rel, size: stats.size, modifiedAt: stats.mtime });
+      const relativePath = this.join(dirPath, entry.name);
+      const stats = await fs.stat(this.resolve(relativePath));
+      results.push({ name: entry.name, relativePath, size: stats.size, modifiedAt: stats.mtime });
     }
     return results;
   }
-
-  // --- Path Utilities ---
 
   join(...segments: string[]): string {
     return path.join(...segments);
