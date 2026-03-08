@@ -15,6 +15,7 @@ import {
   Quote,
   Code2,
   Minus,
+  GitBranch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   "Blockquote": <Quote className="h-[15px] w-[15px]" />,
   "Code Block": <Code2 className="h-[15px] w-[15px]" />,
   "Divider": <Minus className="h-[15px] w-[15px]" />,
+  "Mermaid Diagram": <GitBranch className="h-[15px] w-[15px]" />,
 };
 
 interface Props {

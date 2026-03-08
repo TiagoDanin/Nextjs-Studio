@@ -61,6 +61,17 @@ const COMMANDS: SlashCommandItem[] = [
         .setHorizontalRule()
         .run(),
   },
+  {
+    title: "Mermaid Diagram",
+    description: "Flowchart, sequence, or graph",
+    command: (editor: any, range: any) =>
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent({ type: "mermaidBlock", content: [] })
+        .run(),
+  },
 ];
 
 function filterCommands(query: string): SlashCommandItem[] {
