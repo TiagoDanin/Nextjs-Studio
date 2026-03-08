@@ -73,6 +73,26 @@ export interface FileInfo {
 }
 
 /**
+ * A media asset stored inside a collection's media folder.
+ */
+export interface MediaAsset {
+  /** Original filename, e.g. "cover.png" */
+  name: string;
+  /** Relative path inside the contents directory, e.g. "blog/media/cover.png" */
+  path: string;
+  /** Public API URL to fetch the file, e.g. "/api/media/blog/cover.png" */
+  url: string;
+  /** File size in bytes */
+  size: number;
+  /** MIME type, e.g. "image/png" */
+  mimeType: string;
+  /** "image" | "video" | "audio" | "file" */
+  kind: "image" | "video" | "audio" | "file";
+  /** Last modification timestamp */
+  modifiedAt: string;
+}
+
+/**
  * Event emitted by the file watcher when content changes.
  */
 export interface WatchEvent {

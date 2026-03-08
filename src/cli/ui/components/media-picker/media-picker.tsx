@@ -1,0 +1,259 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useMdxEditorStore } from "@/stores/mdx-editor-store";
+import { useMediaStore } from "@/stores/media-store";
+import { Upload, X, FileVideo, FileAudio, File } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { MediaAsset } from "@shared/types";
+
+export function MediaPicker() {
+  const open = useMediaStore((s) => s.open);
+  const insertType = useMediaStore((s) => s.insertType);
+  const onInsert = useMediaStore((s) => s.onInsert);
+  const closePicker = useMediaStore((s) => s.closePicker);
+  const collection = useMdxEditorStore((s) => s.collectionName);
+
+  const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const [selected, setSelected] = useState<MediaAsset | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const fetchAssets = useCallback(async () => {
+    if (!collection) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/media/${collection}`);
+      if (res.ok) {
+        const data: MediaAsset[] = await res.json();
+        const filtered =
+          insertType === "any"
+            ? data
+            : data.filter((a) => a.kind === insertType);
+        setAssets(filtered);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [collection, insertType]);
+
+  useEffect(() => {
+    if (open) {
+      setSelected(null);
+      fetchAssets();
+    }
+  }, [open, fetchAssets]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closePicker();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, closePicker]);
+
+  async function handleUpload(files: FileList | null) {
+    if (!files?.length || !collection) return;
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const form = new FormData();
+        form.append("file", file);
+        const res = await fetch(`/api/media/${collection}`, {
+          method: "POST",
+          body: form,
+        });
+        if (res.ok) {
+          const asset: MediaAsset = await res.json();
+          setAssets((prev) => {
+            const filtered = prev.filter((a) => a.name !== asset.name);
+            return [asset, ...filtered];
+          });
+          setSelected(asset);
+        }
+      }
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function handleInsert() {
+    if (!selected || !onInsert) return;
+    onInsert(selected.url, selected.name, selected.mimeType);
+    closePicker();
+  }
+
+  if (!open) return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={closePicker}
+    >
+      <div
+        className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border bg-background shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex h-12 shrink-0 items-center justify-between border-b px-4">
+          <span className="text-sm font-semibold">
+            {insertType === "image"
+              ? "Insert Image"
+              : insertType === "video"
+                ? "Insert Video"
+                : insertType === "audio"
+                  ? "Insert Audio"
+                  : "Insert Media"}
+          </span>
+          <button
+            type="button"
+            onClick={closePicker}
+            className="rounded-sm p-1 hover:bg-accent"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Upload area */}
+        <div
+          className="mx-4 mt-4 flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border py-5 transition-colors hover:border-foreground/30 hover:bg-accent/30"
+          onClick={() => fileInputRef.current?.click()}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            handleUpload(e.dataTransfer.files);
+          }}
+        >
+          <div className="flex flex-col items-center gap-1.5 text-muted-foreground">
+            <Upload className="h-5 w-5" />
+            <span className="text-xs">
+              {uploading ? "Uploading…" : "Drop files here or click to upload"}
+            </span>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept={
+              insertType === "image"
+                ? "image/*"
+                : insertType === "video"
+                  ? "video/*"
+                  : insertType === "audio"
+                    ? "audio/*"
+                    : "*/*"
+            }
+            multiple
+            onChange={(e) => handleUpload(e.target.files)}
+          />
+        </div>
+
+        {/* Grid */}
+        <div className="mt-3 min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+          {loading ? (
+            <p className="py-6 text-center text-xs text-muted-foreground">Loading…</p>
+          ) : assets.length === 0 ? (
+            <p className="py-6 text-center text-xs text-muted-foreground">
+              No media found. Upload a file to get started.
+            </p>
+          ) : (
+            <div className="grid grid-cols-4 gap-2 pt-1 sm:grid-cols-5">
+              {assets.map((asset) => (
+                <AssetThumb
+                  key={asset.path}
+                  asset={asset}
+                  isSelected={selected?.path === asset.path}
+                  onSelect={() => setSelected(asset)}
+                  onDoubleClick={() => {
+                    setSelected(asset);
+                    if (onInsert) {
+                      onInsert(asset.url, asset.name, asset.mimeType);
+                      closePicker();
+                    }
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex h-12 shrink-0 items-center justify-between border-t px-4">
+          <span className="truncate text-xs text-muted-foreground">
+            {selected ? selected.name : "No file selected"}
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={closePicker}
+              className="h-7 rounded px-3 text-xs hover:bg-accent"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={!selected}
+              onClick={handleInsert}
+              className={cn(
+                "h-7 rounded bg-foreground px-3 text-xs text-background transition-opacity",
+                !selected && "cursor-not-allowed opacity-40",
+              )}
+            >
+              Insert
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function AssetThumb({
+  asset,
+  isSelected,
+  onSelect,
+  onDoubleClick,
+}: {
+  asset: MediaAsset;
+  isSelected: boolean;
+  onSelect: () => void;
+  onDoubleClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      onDoubleClick={onDoubleClick}
+      className={cn(
+        "group flex flex-col items-center gap-1 rounded-lg border p-1.5 text-left transition-colors",
+        isSelected
+          ? "border-foreground bg-accent"
+          : "border-transparent hover:border-border hover:bg-accent/50",
+      )}
+    >
+      <div className="flex h-16 w-full items-center justify-center overflow-hidden rounded bg-muted">
+        {asset.kind === "image" ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={asset.url}
+            alt={asset.name}
+            className="h-full w-full object-cover"
+          />
+        ) : asset.kind === "video" ? (
+          <FileVideo className="h-6 w-6 text-muted-foreground" />
+        ) : asset.kind === "audio" ? (
+          <FileAudio className="h-6 w-6 text-muted-foreground" />
+        ) : (
+          <File className="h-6 w-6 text-muted-foreground" />
+        )}
+      </div>
+      <span className="w-full truncate text-center text-[10px] text-muted-foreground">
+        {asset.name}
+      </span>
+    </button>
+  );
+}

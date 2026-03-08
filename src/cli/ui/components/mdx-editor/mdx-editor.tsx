@@ -5,6 +5,7 @@ import { useMdxEditorStore } from "@/stores/mdx-editor-store";
 import { MdxToolbar } from "./mdx-toolbar";
 import { MdxFrontmatter } from "./mdx-frontmatter";
 import { MdxTiptap } from "./mdx-tiptap";
+import { MediaPicker } from "@/components/media-picker/media-picker";
 
 interface Props {
   collectionName: string;
@@ -38,6 +39,7 @@ export function MdxEditor({
           </div>
         </div>
       </div>
+      <MediaPicker />
     </div>
   );
 }

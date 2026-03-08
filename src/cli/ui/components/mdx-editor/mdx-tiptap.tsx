@@ -15,6 +15,7 @@ import GlobalDragHandle from "tiptap-extension-global-drag-handle";
 import type { Editor } from "@tiptap/core";
 import type { Fragment } from "@tiptap/pm/model";
 import { useMdxEditorStore } from "@/stores/mdx-editor-store";
+import { useMediaStore } from "@/stores/media-store";
 import { SlashCommand } from "./slash-command";
 import { MermaidBlock } from "./mermaid-block";
 import {
@@ -31,6 +32,7 @@ import {
   Type,
   Download,
   ChevronDown,
+  ImagePlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -65,7 +67,7 @@ function convertMermaidCodeBlocks(editor: Editor) {
 }
 
 // ---------------------------------------------------------------------------
-// Accepted image MIME types for the file handler
+// Accepted media MIME types for the file handler
 // ---------------------------------------------------------------------------
 
 const IMAGE_MIME_TYPES = [
@@ -74,7 +76,57 @@ const IMAGE_MIME_TYPES = [
   "image/gif",
   "image/webp",
   "image/svg+xml",
+  "image/avif",
 ];
+
+const VIDEO_MIME_TYPES = ["video/mp4", "video/webm", "video/ogg"];
+
+const AUDIO_MIME_TYPES = [
+  "audio/mpeg",
+  "audio/ogg",
+  "audio/wav",
+  "audio/webm",
+  "audio/aac",
+  "audio/flac",
+];
+
+async function uploadMediaFile(
+  file: File,
+  collection: string,
+): Promise<{ url: string; name: string; mimeType: string } | null> {
+  const form = new FormData();
+  form.append("file", file);
+  try {
+    const res = await fetch(`/api/media/${collection}`, { method: "POST", body: form });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+function insertAsset(
+  editor: Editor,
+  url: string,
+  name: string,
+  mimeType: string,
+) {
+  if (
+    IMAGE_MIME_TYPES.includes(mimeType) ||
+    VIDEO_MIME_TYPES.includes(mimeType) ||
+    AUDIO_MIME_TYPES.includes(mimeType)
+  ) {
+    // Images, videos and audio all embed as ![name](url) in markdown
+    editor.chain().focus().setImage({ src: url, alt: name }).run();
+  } else {
+    // Generic file — insert as a markdown link [name](url)
+    editor
+      .chain()
+      .focus()
+      .insertContent(`<a href="${url}">${name}</a>`)
+      .run();
+  }
+}
 
 export function MdxTiptap() {
   const slug = useMdxEditorStore((s) => s.slug);
@@ -92,13 +144,24 @@ export function MdxTiptap() {
       CodeBlockLowlight.configure({ lowlight }),
       Image.configure({ inline: false }),
       FileHandler.configure({
-        allowedMimeTypes: IMAGE_MIME_TYPES,
-        // TODO: implement file upload via media system
-        onDrop(_editor, files) {
-          console.log("[FileHandler] dropped files:", files);
+        allowedMimeTypes: [...IMAGE_MIME_TYPES, ...VIDEO_MIME_TYPES, ...AUDIO_MIME_TYPES],
+        onDrop(editor, files) {
+          const collection = useMdxEditorStore.getState().collectionName;
+          for (const file of files) {
+            uploadMediaFile(file, collection).then((asset) => {
+              if (!asset) return;
+              insertAsset(editor, asset.url, asset.name, asset.mimeType);
+            });
+          }
         },
-        onPaste(_editor, files) {
-          console.log("[FileHandler] pasted files:", files);
+        onPaste(editor, files) {
+          const collection = useMdxEditorStore.getState().collectionName;
+          for (const file of files) {
+            uploadMediaFile(file, collection).then((asset) => {
+              if (!asset) return;
+              insertAsset(editor, asset.url, asset.name, asset.mimeType);
+            });
+          }
         },
       }),
       Markdown.configure({ transformPastedText: true }),
@@ -251,6 +314,21 @@ function FixedToolbar({ editor }: { editor: Editor }) {
         {/* Link */}
         <TBtn onClick={setLink} active={editor.isActive("link")} title="Link">
           <LinkIcon className="h-3.5 w-3.5" />
+        </TBtn>
+
+        <Sep />
+
+        {/* Media */}
+        <TBtn
+          onClick={() => {
+            useMediaStore.getState().openPicker("any", (url, name, mimeType) => {
+              insertAsset(editor, url, name, mimeType);
+            });
+          }}
+          active={false}
+          title="Insert media"
+        >
+          <ImagePlus className="h-3.5 w-3.5" />
         </TBtn>
 
         {/* Spacer */}

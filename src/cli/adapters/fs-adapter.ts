@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { FileInfo } from "../../shared/types.js";
 import { SUPPORTED_EXTENSIONS } from "../../shared/constants.js";
+import type { Dirent } from "node:fs";
 
 type SupportedExtension = (typeof SUPPORTED_EXTENSIONS)[number];
 
@@ -77,7 +78,7 @@ export class FsAdapter {
   async listDirectories(dirPath: string): Promise<string[]> {
     const fullPath = this.resolve(dirPath);
 
-    let entries: import("node:fs").Dirent[];
+    let entries: Dirent[];
     try {
       entries = await fs.readdir(fullPath, { withFileTypes: true });
     } catch {
@@ -87,6 +88,36 @@ export class FsAdapter {
     return entries
       .filter((entry) => entry.isDirectory())
       .map((entry) => this.join(dirPath, entry.name));
+  }
+
+  async readBuffer(filePath: string): Promise<Buffer> {
+    return fs.readFile(this.resolve(filePath));
+  }
+
+  async writeBuffer(filePath: string, data: Buffer): Promise<void> {
+    const fullPath = this.resolve(filePath);
+    await fs.mkdir(path.dirname(fullPath), { recursive: true });
+    await fs.writeFile(fullPath, data);
+  }
+
+  async listAllFiles(dirPath: string): Promise<Array<{ name: string; relativePath: string; size: number; modifiedAt: Date }>> {
+    const fullPath = this.resolve(dirPath);
+
+    let entries: Dirent[];
+    try {
+      entries = await fs.readdir(fullPath, { withFileTypes: true });
+    } catch {
+      return [];
+    }
+
+    const results: Array<{ name: string; relativePath: string; size: number; modifiedAt: Date }> = [];
+    for (const entry of entries) {
+      if (!entry.isFile()) continue;
+      const rel = this.join(dirPath, entry.name);
+      const stats = await fs.stat(this.resolve(rel));
+      results.push({ name: entry.name, relativePath: rel, size: stats.size, modifiedAt: stats.mtime });
+    }
+    return results;
   }
 
   // --- Path Utilities ---

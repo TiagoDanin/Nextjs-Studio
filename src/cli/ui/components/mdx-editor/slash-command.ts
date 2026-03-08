@@ -6,6 +6,7 @@ import {
   SlashCommandList,
   type SlashCommandItem,
 } from "./slash-command-list";
+import { useMediaStore } from "@/stores/media-store";
 
 const COMMANDS: SlashCommandItem[] = [
   {
@@ -71,6 +72,36 @@ const COMMANDS: SlashCommandItem[] = [
         .deleteRange(range)
         .insertContent({ type: "mermaidBlock", content: [] })
         .run(),
+  },
+  {
+    title: "Image",
+    description: "Insert an image from media",
+    command: (editor: any, range: any) => {
+      editor.chain().focus().deleteRange(range).run();
+      useMediaStore.getState().openPicker("image", (url, name) => {
+        editor.chain().focus().setImage({ src: url, alt: name }).run();
+      });
+    },
+  },
+  {
+    title: "Video",
+    description: "Insert a video from media",
+    command: (editor: any, range: any) => {
+      editor.chain().focus().deleteRange(range).run();
+      useMediaStore.getState().openPicker("video", (url, name) => {
+        editor.chain().focus().setImage({ src: url, alt: name }).run();
+      });
+    },
+  },
+  {
+    title: "Audio",
+    description: "Insert an audio file from media",
+    command: (editor: any, range: any) => {
+      editor.chain().focus().deleteRange(range).run();
+      useMediaStore.getState().openPicker("audio", (url, name) => {
+        editor.chain().focus().setImage({ src: url, alt: name }).run();
+      });
+    },
   },
 ];
 

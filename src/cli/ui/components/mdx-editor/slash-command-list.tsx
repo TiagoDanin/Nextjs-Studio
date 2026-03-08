@@ -16,6 +16,9 @@ import {
   Code2,
   Minus,
   GitBranch,
+  Image,
+  FileVideo,
+  FileAudio,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +38,9 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   "Code Block": <Code2 className="h-[15px] w-[15px]" />,
   "Divider": <Minus className="h-[15px] w-[15px]" />,
   "Mermaid Diagram": <GitBranch className="h-[15px] w-[15px]" />,
+  "Image": <Image className="h-[15px] w-[15px]" />,
+  "Video": <FileVideo className="h-[15px] w-[15px]" />,
+  "Audio": <FileAudio className="h-[15px] w-[15px]" />,
 };
 
 interface Props {

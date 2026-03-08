@@ -25,7 +25,7 @@ The CLI server is a standalone application that runs at `http://localhost:3030`.
 - **MDX Visual Editor** — Rich text editing powered by TipTap with slash commands, drag & drop blocks, React component insertion, and frontmatter binding
 - **JSON Sheet Editor** — Spreadsheet-style view for JSON arrays with inline editing, sorting, and validation
 - **JSON Form Editor** — Auto-generated forms for JSON objects with nested object support and type-aware inputs
-- **Media Library** — Browse and pick images/files from your project
+- **Media System** — Upload images and videos per-collection, insert via drag & drop, paste, toolbar button, or `/image` / `/video` slash commands
 - **Script Runner** — Execute import/sync scripts directly from the UI
 - **File Watcher** — Live updates when files change on disk
 
@@ -39,7 +39,10 @@ Content lives in the `/contents` directory at your project root. Each folder bec
 contents/
 ├── blog/                       # "blog" collection (MDX)
 │   ├── hello-world.mdx
-│   └── getting-started.mdx
+│   ├── getting-started.mdx
+│   └── media/                  # media assets for this collection
+│       ├── cover.png
+│       └── demo.mp4
 ├── products/                   # "products" collection (JSON array)
 │   └── index.json
 └── settings/                   # "settings" collection (JSON object)
@@ -73,3 +76,4 @@ JSON files are handled based on their structure:
 
 - [Installation](./installation.md) — Set up Nextjs Studio in your project
 - [Configuration](./configuration.md) — Configure collections and scripts
+- [Media](../media.md) — Upload and manage media assets per-collection
