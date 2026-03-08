@@ -56,6 +56,7 @@ interface EditorState {
   updateField: (path: string, value: unknown) => void;
   addField: (path: string, key: string, defaultValue: unknown) => void;
   toggleSection: (section: string) => void;
+  reorderSection: (key: string, direction: "up" | "down") => void;
 
   // Shared actions
   markClean: () => void;
@@ -215,6 +216,46 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         ? state.expandedSections.filter((s) => s !== section)
         : [...state.expandedSections, section];
       return { expandedSections: expanded };
+    }),
+
+  reorderSection: (key, direction) =>
+    set((state) => {
+      const entries = Object.entries(state.formData);
+
+      // Build contiguous blocks: flat entries group together, each object is its own block
+      const blocks: number[][] = [];
+      let flatAccum: number[] = [];
+      for (let i = 0; i < entries.length; i++) {
+        const v = entries[i]![1];
+        const isObj = typeof v === "object" && v !== null && !Array.isArray(v);
+        if (isObj) {
+          if (flatAccum.length > 0) { blocks.push(flatAccum); flatAccum = []; }
+          blocks.push([i]);
+        } else {
+          flatAccum.push(i);
+        }
+      }
+      if (flatAccum.length > 0) blocks.push(flatAccum);
+
+      // Find which block corresponds to the given key
+      const blockIdx = blocks.findIndex((block) =>
+        key === "__flat__"
+          ? block.some((i) => {
+              const v = entries[i]![1];
+              return !(typeof v === "object" && v !== null && !Array.isArray(v));
+            })
+          : block.some((i) => entries[i]![0] === key),
+      );
+      if (blockIdx === -1) return {};
+      const swapIdx = direction === "up" ? blockIdx - 1 : blockIdx + 1;
+      if (swapIdx < 0 || swapIdx >= blocks.length) return {};
+
+      const next = [...blocks];
+      [next[blockIdx], next[swapIdx]] = [next[swapIdx]!, next[blockIdx]!];
+      return {
+        formData: Object.fromEntries(next.flat().map((i) => entries[i]!)),
+        isDirty: true,
+      };
     }),
 
   markClean: () => set({ isDirty: false, isSaving: false }),

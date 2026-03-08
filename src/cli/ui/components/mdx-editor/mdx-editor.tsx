@@ -31,9 +31,9 @@ export function MdxEditor({
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <MdxToolbar />
-      <div className="studio-canvas">
-        <div className="h-full px-4 py-4">
-          <div className="studio-surface flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="studio-canvas overflow-y-auto">
+        <div className="min-h-full px-4 py-4">
+          <div className="studio-surface flex min-h-full flex-col">
             <MdxFrontmatter />
             <MdxTiptap />
           </div>

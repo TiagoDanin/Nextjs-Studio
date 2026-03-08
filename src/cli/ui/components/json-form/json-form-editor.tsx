@@ -17,30 +17,44 @@ interface Props {
   filePath: string;
 }
 
-function groupFields(data: Record<string, unknown>) {
-  const general: [string, unknown][] = [];
-  const sections: [string, Record<string, unknown>][] = [];
+type DisplaySection =
+  | { kind: "flat"; entries: [string, unknown][] }
+  | { kind: "object"; key: string; data: Record<string, unknown> };
+
+/** Build an ordered list of sections preserving the original key order. */
+function buildSections(data: Record<string, unknown>): DisplaySection[] {
+  const sections: DisplaySection[] = [];
+  let flatBuf: [string, unknown][] = [];
 
   for (const [key, value] of Object.entries(data)) {
     if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-      sections.push([key, value as Record<string, unknown>]);
+      if (flatBuf.length > 0) {
+        sections.push({ kind: "flat", entries: flatBuf });
+        flatBuf = [];
+      }
+      sections.push({ kind: "object", key, data: value as Record<string, unknown> });
     } else {
-      general.push([key, value]);
+      flatBuf.push([key, value]);
     }
   }
 
-  return { general, sections };
+  if (flatBuf.length > 0) {
+    sections.push({ kind: "flat", entries: flatBuf });
+  }
+
+  return sections;
 }
 
 export function JsonFormEditor({ collection, data, filePath }: Props) {
   const initForm = useEditorStore((s) => s.initForm);
   const formData = useEditorStore((s) => s.formData);
+  const reorderSection = useEditorStore((s) => s.reorderSection);
 
   useEffect(() => {
     initForm(collection.name, filePath, data, collection.fields);
   }, [collection.name, filePath, data, collection.fields, initForm]);
 
-  const { general, sections } = groupFields(formData);
+  const sections = buildSections(formData);
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
@@ -49,48 +63,58 @@ export function JsonFormEditor({ collection, data, filePath }: Props) {
         <div className="h-full w-full px-4 py-4 md:px-6">
           <div className="studio-surface flex min-h-full flex-col gap-6 p-6">
 
-            {/* General fields — always rendered, even if empty, so there's always a place to add */}
-            <FormSection
-              title="General"
-              sectionKey=""
-              defaultOpen
-              footer={<FormAddField path="" />}
-            >
-              <div className="flex flex-col gap-4">
-                {general.map(([key, value]) => (
-                  <FormField
-                    key={key}
-                    fieldKey={key}
-                    path={key}
-                    value={value}
-                  />
-                ))}
-              </div>
-            </FormSection>
+            {sections.map((section, idx) => {
+              const canUp = idx > 0
+                ? () => reorderSection(section.kind === "flat" ? "__flat__" : section.key, "up")
+                : undefined;
+              const canDown = idx < sections.length - 1
+                ? () => reorderSection(section.kind === "flat" ? "__flat__" : section.key, "down")
+                : undefined;
 
-            {/* Named sections */}
-            {sections.map(([key, sectionData]) => (
-              <FormSection
-                key={key}
-                title={keyLabel(key)}
-                sectionKey={key}
-                defaultOpen
-                footer={<FormAddField path={key} />}
-              >
-                <div className="flex flex-col gap-4">
-                  {Object.entries(sectionData).map(([fieldKey, value]) => (
-                    <FormField
-                      key={fieldKey}
-                      fieldKey={fieldKey}
-                      path={`${key}.${fieldKey}`}
-                      value={value}
-                    />
-                  ))}
-                </div>
-              </FormSection>
-            ))}
+              if (section.kind === "flat") {
+                return (
+                  <FormSection
+                    key="__flat__"
+                    title="General"
+                    sectionKey="__flat__"
+                    defaultOpen
+                    footer={<FormAddField path="" />}
+                    onMoveUp={canUp}
+                    onMoveDown={canDown}
+                  >
+                    <div className="flex flex-col gap-4">
+                      {section.entries.map(([key, value]) => (
+                        <FormField key={key} fieldKey={key} path={key} value={value} />
+                      ))}
+                    </div>
+                  </FormSection>
+                );
+              }
 
-            {/* Only "Add section" at the bottom — intent is clear */}
+              return (
+                <FormSection
+                  key={section.key}
+                  title={keyLabel(section.key)}
+                  sectionKey={section.key}
+                  defaultOpen
+                  footer={<FormAddField path={section.key} />}
+                  onMoveUp={canUp}
+                  onMoveDown={canDown}
+                >
+                  <div className="flex flex-col gap-4">
+                    {Object.entries(section.data).map(([fieldKey, value]) => (
+                      <FormField
+                        key={fieldKey}
+                        fieldKey={fieldKey}
+                        path={`${section.key}.${fieldKey}`}
+                        value={value}
+                      />
+                    ))}
+                  </div>
+                </FormSection>
+              );
+            })}
+
             <FormAddSection />
 
           </div>

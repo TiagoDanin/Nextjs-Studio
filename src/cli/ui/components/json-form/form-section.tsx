@@ -7,7 +7,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -17,6 +17,9 @@ interface Props {
   children: React.ReactNode;
   /** Optional content rendered at the bottom of the section (e.g. Add field button). */
   footer?: React.ReactNode;
+  /** When set, renders up/down reorder buttons. */
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
 }
 
 export function FormSection({
@@ -25,28 +28,55 @@ export function FormSection({
   defaultOpen = false,
   children,
   footer,
+  onMoveUp,
+  onMoveDown,
 }: Props) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const canReorder = onMoveUp !== undefined || onMoveDown !== undefined;
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger className="flex w-full items-center gap-2 py-2">
-        <ChevronRight
-          className={cn(
-            "h-4 w-4 text-muted-foreground transition-transform",
-            isOpen && "rotate-90",
-          )}
-        />
-        <span className="text-base font-bold tracking-tight">{title}</span>
-      </CollapsibleTrigger>
+      <div className="flex items-center gap-1">
+        <CollapsibleTrigger className="flex flex-1 items-center gap-2 py-2">
+          <ChevronRight
+            className={cn(
+              "h-4 w-4 text-muted-foreground transition-transform",
+              isOpen && "rotate-90",
+            )}
+          />
+          <span className="text-base font-bold tracking-tight">{title}</span>
+        </CollapsibleTrigger>
+
+        {canReorder && (
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onMoveUp?.(); }}
+              disabled={!onMoveUp}
+              title="Move section up"
+              className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+            >
+              <ChevronUp className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onMoveDown?.(); }}
+              disabled={!onMoveDown}
+              title="Move section down"
+              className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+      </div>
+
       <Separator />
       <CollapsibleContent>
         <div className="py-4">
           {children}
           {footer && (
-            <div className="mt-4 border-t border-dashed pt-4">
-              {footer}
-            </div>
+            <div className="mt-4 border-t border-dashed pt-4">{footer}</div>
           )}
         </div>
       </CollapsibleContent>

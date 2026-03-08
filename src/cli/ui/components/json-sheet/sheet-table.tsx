@@ -19,7 +19,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Eye, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpDown, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { keyLabel } from "@shared/fields";
 import { SheetRowInspector } from "./sheet-row-inspector";
@@ -103,14 +103,6 @@ export function SheetTable() {
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-muted-foreground"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                </Button>
               </>
             )}
             <Button
@@ -126,7 +118,7 @@ export function SheetTable() {
             </Button>
           </div>
         ),
-        size: isMdx ? 100 : 40,
+        size: isMdx ? 72 : 40,
       },
     ],
     [columnKeys, sortColumn, sortDirection, sortBy, deleteRow, isMdx, collectionName, rowSlugs, router, fieldDefs],
