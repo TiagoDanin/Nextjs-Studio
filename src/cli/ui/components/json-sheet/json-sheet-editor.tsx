@@ -21,8 +21,8 @@ export function JsonSheetEditor({ collection, entries, filePath }: Props) {
       collection.type === "mdx"
         ? entries.map((e) => ({ slug: e.slug, filePath: e.filePath, body: e.body ?? "" }))
         : undefined;
-    initSheet(collection.name, filePath, rows, mdxSources);
-  }, [collection.name, collection.type, filePath, entries, initSheet]);
+    initSheet(collection.name, filePath, rows, mdxSources, collection.fields);
+  }, [collection.name, collection.type, collection.fields, filePath, entries, initSheet]);
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">

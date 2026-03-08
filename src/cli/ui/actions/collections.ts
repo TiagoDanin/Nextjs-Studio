@@ -2,15 +2,20 @@
 
 import { loadContent } from "@core/content-store";
 import { writeJsonFile, writeMdxEntries } from "@core/content-writer.js";
+import { inferSchema } from "@core/schema-inferrer.js";
+import { fieldLabel } from "@shared/fields.js";
 import { FsAdapter } from "@cli/adapters/fs-adapter";
 import { getContentsDir } from "../lib/env";
 import type { ContentEntry } from "@shared/types";
+import type { FieldDefinition } from "@shared/fields";
 
 export interface CollectionSummary {
   name: string;
   type: "mdx" | "json-array" | "json-object";
   count: number;
   basePath: string;
+  /** Schema field definitions, populated when entry data is loaded. */
+  fields?: FieldDefinition[];
 }
 
 export interface CollectionEntriesResult {
@@ -69,12 +74,20 @@ export async function getCollectionEntries(
       filePath = jsonFile;
     }
 
+    const schema = inferSchema(entries, col.name);
+    // Ensure every field has a resolved label so consumers never need to compute it.
+    const fields: FieldDefinition[] = schema.fields.map((f) => ({
+      ...f,
+      label: fieldLabel(f),
+    }));
+
     return {
       collection: {
         name: col.name,
         type: col.type,
         count: col.count,
         basePath: col.basePath,
+        fields,
       },
       entries: entries.map((e) => ({
         collection: e.collection,

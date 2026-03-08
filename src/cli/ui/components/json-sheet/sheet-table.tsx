@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, Eye, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { keyLabel } from "@shared/fields";
 import { SheetRowInspector } from "./sheet-row-inspector";
 
 export function SheetTable() {
@@ -31,6 +32,7 @@ export function SheetTable() {
   const selectedRowIndex = useEditorStore((s) => s.selectedRowIndex);
   const isMdx = useEditorStore((s) => s.isMdx);
   const collectionName = useEditorStore((s) => s.collectionName);
+  const fieldDefs = useEditorStore((s) => s.fieldDefs);
   const rowSlugs = useEditorStore((s) => s.rowSlugs);
   const sortBy = useEditorStore((s) => s.sortBy);
   const selectRow = useEditorStore((s) => s.selectRow);
@@ -56,7 +58,7 @@ export function SheetTable() {
               className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide hover:text-foreground"
               onClick={() => sortBy(key)}
             >
-              {key}
+              {fieldDefs[key]?.label ?? keyLabel(key)}
               <ArrowUpDown
                 className={cn(
                   "h-3 w-3",
@@ -127,7 +129,7 @@ export function SheetTable() {
         size: isMdx ? 100 : 40,
       },
     ],
-    [columnKeys, sortColumn, sortDirection, sortBy, deleteRow, isMdx, collectionName, rowSlugs, router],
+    [columnKeys, sortColumn, sortDirection, sortBy, deleteRow, isMdx, collectionName, rowSlugs, router, fieldDefs],
   );
 
   const table = useReactTable({

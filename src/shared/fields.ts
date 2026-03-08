@@ -327,3 +327,36 @@ export type InferObjectFields<Fields extends FieldDefinition[]> = {
 export type InferSchemaData<S extends CollectionSchema> = InferObjectFields<
   S["fields"]
 >;
+
+// ---------------------------------------------------------------------------
+// Label utility
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve the human-readable label for a field.
+ *
+ * When the field definition has an explicit `label`, that is returned as-is.
+ * Otherwise the `name` (or any camelCase / kebab-case / snake_case key) is
+ * converted to a Title Case phrase:
+ *
+ * @example
+ * fieldLabel({ name: "siteName", type: "text" }) // "Site Name"
+ * fieldLabel({ name: "created_at", type: "date" }) // "Created At"
+ * fieldLabel({ name: "bio", type: "long-text", label: "About" }) // "About"
+ */
+export function fieldLabel(field: Pick<BaseField, "name" | "label">): string {
+  if (field.label) return field.label;
+  return field.name
+    .replace(/[-_](.)/g, (_, c: string) => ` ${c.toUpperCase()}`)
+    .replace(/([A-Z])/g, " $1")
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Resolve the label for a raw key string (no field definition available).
+ * Useful for dynamic keys that have no schema entry.
+ */
+export function keyLabel(name: string): string {
+  return fieldLabel({ name });
+}

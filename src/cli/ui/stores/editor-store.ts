@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { orderBy } from "lodash-es";
+import type { FieldDefinition } from "@shared/fields";
 
 interface EditorState {
   // Shared
@@ -10,6 +11,8 @@ interface EditorState {
   collectionName: string;
   filePath: string;
   editorType: "sheet" | "form" | null;
+  /** Field definitions keyed by field name. */
+  fieldDefs: Record<string, FieldDefinition>;
 
   // Sheet state
   rows: Record<string, unknown>[];
@@ -33,11 +36,13 @@ interface EditorState {
     filePath: string,
     rows: Record<string, unknown>[],
     mdxSources?: { slug: string; filePath: string; body: string }[],
+    fields?: FieldDefinition[],
   ) => void;
   initForm: (
     collectionName: string,
     filePath: string,
     data: Record<string, unknown>,
+    fields?: FieldDefinition[],
   ) => void;
 
   // Sheet actions
@@ -64,6 +69,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   collectionName: "",
   filePath: "",
   editorType: null,
+  fieldDefs: {},
 
   rows: [],
   selectedRowIndex: null,
@@ -78,7 +84,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   formData: {},
   expandedSections: [],
 
-  initSheet: (collectionName, filePath, rows, mdxSources) =>
+  initSheet: (collectionName, filePath, rows, mdxSources, fields) =>
     set({
       editorType: "sheet",
       collectionName,
@@ -93,9 +99,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       selectedRowIndex: null,
       sortColumn: null,
       sortDirection: "asc",
+      fieldDefs: Object.fromEntries((fields ?? []).map((f) => [f.name, f])),
     }),
 
-  initForm: (collectionName, filePath, data) => {
+  initForm: (collectionName, filePath, data, fields) => {
     const sections = Object.entries(data)
       .filter(
         ([, v]) => typeof v === "object" && v !== null && !Array.isArray(v),
@@ -109,6 +116,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       expandedSections: sections,
       isDirty: false,
       isSaving: false,
+      fieldDefs: Object.fromEntries((fields ?? []).map((f) => [f.name, f])),
     });
   },
 

@@ -17,3 +17,5 @@ export type {
   InferSchemaData,
   InferFieldValue,
 } from "../shared/fields.js";
+
+export { fieldLabel, keyLabel } from "../shared/fields.js";

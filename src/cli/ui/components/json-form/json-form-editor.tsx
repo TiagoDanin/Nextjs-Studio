@@ -8,6 +8,7 @@ import { FormField } from "./form-field";
 import { FormAddField } from "./form-add-field";
 import { FormAddSection } from "./form-add-section";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { keyLabel } from "@shared/fields";
 import type { CollectionSummary } from "@/actions/collections";
 
 interface Props {
@@ -36,8 +37,8 @@ export function JsonFormEditor({ collection, data, filePath }: Props) {
   const formData = useEditorStore((s) => s.formData);
 
   useEffect(() => {
-    initForm(collection.name, filePath, data);
-  }, [collection.name, filePath, data, initForm]);
+    initForm(collection.name, filePath, data, collection.fields);
+  }, [collection.name, filePath, data, collection.fields, initForm]);
 
   const { general, sections } = groupFields(formData);
 
@@ -71,7 +72,7 @@ export function JsonFormEditor({ collection, data, filePath }: Props) {
             {sections.map(([key, sectionData]) => (
               <FormSection
                 key={key}
-                title={key.charAt(0).toUpperCase() + key.slice(1)}
+                title={keyLabel(key)}
                 sectionKey={key}
                 defaultOpen
                 footer={<FormAddField path={key} />}

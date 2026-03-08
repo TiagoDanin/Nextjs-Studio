@@ -6,13 +6,39 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { keyLabel } from "@shared/fields";
+import type {
+  FieldDefinition,
+  SelectField,
+  MultiSelectField,
+  StatusField,
+} from "@shared/fields";
 
-function coerceValue(original: unknown, newValue: string): unknown {
-  if (typeof original === "number") {
-    const num = Number(newValue);
-    return Number.isNaN(num) ? newValue : num;
-  }
-  return newValue;
+function NativeSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { label: string; value: string }[];
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={cn(
+        "h-7 w-40 rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+      )}
+    >
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  );
 }
 
 interface Props {
@@ -23,11 +49,222 @@ export function SheetRowInspector({ rowIndex }: Props) {
   const rows = useEditorStore((s) => s.rows);
   const updateCell = useEditorStore((s) => s.updateCell);
   const selectRow = useEditorStore((s) => s.selectRow);
+  const fieldDefs = useEditorStore((s) => s.fieldDefs);
 
   if (!rows[rowIndex]) return null;
 
   const row = rows[rowIndex];
   const entries = Object.entries(row);
+
+  function renderCell(key: string, value: unknown) {
+    const fieldDef: FieldDefinition | undefined = fieldDefs[key];
+    const type = fieldDef?.type;
+    const label = fieldDef?.label ?? keyLabel(key);
+
+    // boolean
+    if (type === "boolean" || (!type && typeof value === "boolean")) {
+      return (
+        <div key={key} className="flex items-center gap-3">
+          <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <Switch
+            checked={Boolean(value)}
+            onCheckedChange={(checked) => updateCell(rowIndex, key, checked)}
+          />
+        </div>
+      );
+    }
+
+    // date / datetime
+    if (type === "date") {
+      const includeTime = (fieldDef as { includeTime?: boolean }).includeTime;
+      return (
+        <div key={key} className="flex items-center gap-3">
+          <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <Input
+            type={includeTime ? "datetime-local" : "date"}
+            value={String(value ?? "")}
+            onChange={(e) => updateCell(rowIndex, key, e.target.value)}
+            className="h-7 w-40 text-sm"
+          />
+        </div>
+      );
+    }
+
+    // created-time / updated-time (read-only)
+    if (type === "created-time" || type === "updated-time") {
+      return (
+        <div key={key} className="flex items-center gap-3">
+          <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <Input
+            type="text"
+            value={String(value ?? "")}
+            readOnly
+            className="h-7 w-40 cursor-default text-sm opacity-60"
+          />
+        </div>
+      );
+    }
+
+    // email
+    if (type === "email") {
+      return (
+        <div key={key} className="flex items-center gap-3">
+          <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <Input
+            type="email"
+            value={String(value ?? "")}
+            onChange={(e) => updateCell(rowIndex, key, e.target.value)}
+            className="h-7 w-40 text-sm"
+          />
+        </div>
+      );
+    }
+
+    // url
+    if (type === "url") {
+      return (
+        <div key={key} className="flex items-center gap-3">
+          <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <Input
+            type="url"
+            value={String(value ?? "")}
+            onChange={(e) => updateCell(rowIndex, key, e.target.value)}
+            className="h-7 w-40 text-sm"
+          />
+        </div>
+      );
+    }
+
+    // select
+    if (type === "select") {
+      const opts = (fieldDef as SelectField).options ?? [];
+      return (
+        <div key={key} className="flex items-center gap-3">
+          <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <NativeSelect
+            value={String(value ?? "")}
+            onChange={(v) => updateCell(rowIndex, key, v)}
+            options={[{ label: "—", value: "" }, ...opts]}
+          />
+        </div>
+      );
+    }
+
+    // status
+    if (type === "status") {
+      const opts = (fieldDef as StatusField).options ?? [];
+      return (
+        <div key={key} className="flex items-center gap-3">
+          <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <NativeSelect
+            value={String(value ?? "")}
+            onChange={(v) => updateCell(rowIndex, key, v)}
+            options={[{ label: "—", value: "" }, ...opts]}
+          />
+        </div>
+      );
+    }
+
+    // multi-select
+    if (type === "multi-select") {
+      const opts = (fieldDef as MultiSelectField).options ?? [];
+      const selected = Array.isArray(value) ? (value as string[]) : [];
+      return (
+        <div key={key} className="flex items-start gap-3">
+          <Label className="w-36 shrink-0 truncate pt-1 text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <div className="flex flex-wrap gap-2">
+            {opts.map((o) => {
+              const checked = selected.includes(o.value);
+              return (
+                <label
+                  key={o.value}
+                  className="flex cursor-pointer items-center gap-1 text-xs"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => {
+                      const next = checked
+                        ? selected.filter((v) => v !== o.value)
+                        : [...selected, o.value];
+                      updateCell(rowIndex, key, next);
+                    }}
+                    className="h-3 w-3 rounded border-input accent-foreground"
+                  />
+                  {o.label}
+                </label>
+              );
+            })}
+            {opts.length === 0 && (
+              <Input
+                type="text"
+                value={selected.join(", ")}
+                onChange={(e) =>
+                  updateCell(
+                    rowIndex,
+                    key,
+                    e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                  )
+                }
+                className="h-7 w-40 text-sm"
+              />
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // number
+    if (type === "number" || (!type && typeof value === "number")) {
+      return (
+        <div key={key} className="flex items-center gap-3">
+          <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <Input
+            type="number"
+            value={String(value ?? 0)}
+            onChange={(e) => {
+              const num = Number(e.target.value);
+              updateCell(rowIndex, key, Number.isNaN(num) ? 0 : num);
+            }}
+            className="h-7 w-40 text-sm"
+          />
+        </div>
+      );
+    }
+
+    // default text
+    return (
+      <div key={key} className="flex items-center gap-3">
+        <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+          {label}
+        </Label>
+        <Input
+          type="text"
+          value={String(value ?? "")}
+          onChange={(e) => updateCell(rowIndex, key, e.target.value)}
+          className="h-7 w-40 text-sm"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="border-l-2 border-l-foreground/20 bg-muted/40">
@@ -45,28 +282,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
         </Button>
       </div>
       <div className="flex max-h-[320px] flex-col gap-2 overflow-auto px-4 py-3">
-        {entries.map(([key, value]) => (
-          <div key={key} className="flex items-center gap-3">
-            <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
-              {key}
-            </Label>
-            {typeof value === "boolean" ? (
-              <Switch
-                checked={value}
-                onCheckedChange={(checked) => updateCell(rowIndex, key, checked)}
-              />
-            ) : (
-              <Input
-                type={typeof value === "number" ? "number" : "text"}
-                value={String(value ?? "")}
-                onChange={(e) =>
-                  updateCell(rowIndex, key, coerceValue(value, e.target.value))
-                }
-                className="h-7 w-40 text-sm"
-              />
-            )}
-          </div>
-        ))}
+        {entries.map(([key, value]) => renderCell(key, value))}
       </div>
     </div>
   );
