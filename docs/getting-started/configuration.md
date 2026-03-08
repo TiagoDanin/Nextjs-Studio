@@ -1,23 +1,30 @@
 # Configuration
 
-nextjs-studio works with zero configuration — collections are auto-detected from the `/contents` directory. For advanced features like import scripts, create a `studio.config.ts` file in your project root.
+Collections are auto-detected from `/contents`. No config file needed for basic usage.
+
+Create `studio.config.ts` at your project root to add schemas, import scripts, or sync scripts.
 
 ## studio.config.ts
 
 ```ts
+// studio.config.ts
 import type { StudioConfig } from "nextjs-studio";
 
 const config: StudioConfig = {
   collections: {
-    products: {
-      scripts: {
-        import: "node scripts/import-products.js",
-        sync: "node scripts/sync-products.js",
+    blog: {
+      schema: {
+        collection: "blog",
+        label: "Blog Posts",
+        fields: [
+          { name: "title",     type: "text",    required: true  },
+          { name: "published", type: "boolean", defaultValue: false },
+          { name: "date",      type: "date"                     },
+        ],
       },
-    },
-    analytics: {
       scripts: {
-        import: "node scripts/import-analytics.js",
+        import: "node scripts/import-posts.js",
+        sync:   "node scripts/sync-posts.js",
       },
     },
   },
@@ -26,87 +33,82 @@ const config: StudioConfig = {
 export default config;
 ```
 
-## Collection Configuration
+## Collection options
 
-### Scripts
+| Property | Type | Description |
+|----------|------|-------------|
+| `schema` | `CollectionSchema` | Field definitions. Used for validation, typed output, and editor inputs |
+| `scripts.import` | `string` | Shell command to import external data. Triggered from the CMS UI |
+| `scripts.sync` | `string` | Shell command to sync with an external source |
 
-Each collection can define import and sync scripts. These are shell commands executed when the user clicks **Import** or **Sync** in the CMS UI.
+## Schemas in separate files
 
-| Property | Description |
-|----------|-------------|
-| `scripts.import` | Command to import external data into the collection |
-| `scripts.sync` | Command to synchronize the collection with an external source |
+For larger projects, keep schemas in their own files:
 
-**How import works:**
+```ts
+// studio.config.ts
+import type { StudioConfig } from "nextjs-studio";
+import { blogSchema } from "./schemas/blog";
+import { authorsSchema } from "./schemas/authors";
 
-1. User clicks **Import** in the collection UI
-2. CLI executes the script using `child_process`
-3. Script outputs valid JSON to stdout
-4. CLI validates and writes the output to the collection JSON file
-5. UI refreshes automatically
+const config: StudioConfig = {
+  collections: {
+    blog:    { schema: blogSchema    },
+    authors: { schema: authorsSchema },
+  },
+};
 
-Only JSON collections support import scripts. MDX collections do not support this feature.
-
-### Example Import Script
-
-```js
-// scripts/import-products.js
-const response = await fetch("https://api.example.com/products");
-const products = await response.json();
-
-// Output must be valid JSON to stdout
-console.log(JSON.stringify(products, null, 2));
+export default config;
 ```
 
-## Content Collections
+```ts
+// schemas/blog.ts
+import type { CollectionSchema } from "nextjs-studio";
 
-Collections are auto-detected from the filesystem. No configuration is needed for basic usage.
-
-### Collection Types
-
-| Structure | Type | CMS View |
-|-----------|------|----------|
-| Folder with `.mdx` files | MDX Collection | Rich text editor |
-| `index.json` with array | JSON Array | Spreadsheet/table |
-| `index.json` with object | JSON Object | Form editor |
-
-### Collection Ordering
-
-Add a `collection.json` file inside a collection folder to control entry ordering:
-
-```json
-["post-3", "post-1", "post-2"]
+export const blogSchema: CollectionSchema = {
+  collection: "blog",
+  label: "Blog Posts",
+  fields: [
+    { name: "title",       type: "text",      required: true },
+    { name: "slug",        type: "slug",       from: "title" },
+    { name: "excerpt",     type: "long-text",  rows: 3, required: false },
+    { name: "coverImage",  type: "media",      accept: ["image/*"] },
+    { name: "status",      type: "status",
+      options: [
+        { label: "Draft",     value: "draft",     color: "gray"  },
+        { label: "Published", value: "published", color: "green" },
+      ],
+      defaultValue: "draft",
+    },
+    { name: "publishedAt", type: "date",       includeTime: true },
+    { name: "author",      type: "relation",   collection: "authors" },
+    { name: "createdAt",   type: "created-time" },
+    { name: "updatedAt",   type: "updated-time" },
+  ],
+};
 ```
 
-This defines the display and query order for entries in that collection.
+## Generate TypeScript types
 
-### Nested Collections
+After defining your schemas, generate a `.d.ts` file with fully-typed interfaces for every collection:
 
-Folders can be nested to create hierarchical collections:
-
-```
-contents/
-└── docs/
-    ├── guides/
-    │   ├── getting-started.mdx
-    │   └── advanced.mdx
-    └── api/
-        └── reference.mdx
+```bash
+npx nextjs-studio --generate-types
 ```
 
-This creates paths like `/docs/guides/getting-started` and `/docs/api/reference`.
+This creates `.studio/types.d.ts` with a typed interface per collection and a `CollectionTypeMap` for use with `queryCollection()`.
 
-## Default Behavior
+## Default behavior (no config file)
 
-Without a `studio.config.ts`, nextjs-studio:
+Without `studio.config.ts`, the CMS:
 
-- Scans `/contents` for all collections
-- Auto-detects collection types from file structure
-- Serves the CMS UI on port 3030
-- Watches for file changes via chokidar
-- Supports MDX frontmatter parsing with gray-matter
+- Scans `/contents` and auto-detects all collections
+- Infers types from the file structure (MDX, JSON array, JSON object)
+- Serves the editing UI on port `3030`
+- Watches files via chokidar and pushes updates over WebSocket
 
-## Next Steps
+## Next steps
 
-- [Introduction](./introduction.md) — Overview of nextjs-studio architecture
-- [Installation](./installation.md) — Setup guide
+- [Field Types](../reference/fields.md) — every available field type and its options
+- [Collections](../collections/overview.md) — MDX, JSON, ordering, nested structure
+- [Import Scripts](../collections/import-scripts.md) — automate data imports from external sources

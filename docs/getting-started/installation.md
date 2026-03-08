@@ -3,47 +3,44 @@
 ## Requirements
 
 - **Node.js** >= 22.10.0
-- **Next.js 16**
+- **Next.js** 16
 
-## Install the Package
+## Install
 
 ```bash
 yarn add nextjs-studio
 ```
 
-## Project Setup
+## Setup
 
-### 1. Create the Contents Directory
-
-Create a `/contents` directory at the root of your project. Each subfolder becomes a collection:
+### 1. Create the contents directory
 
 ```bash
 mkdir -p contents/blog
 ```
 
-### 3. Add Your First Content
+Each subfolder becomes a collection. No config needed.
 
-Create an MDX file in your collection:
+### 2. Add your first entry
+
+Create `contents/blog/hello-world.mdx`:
 
 ```mdx
 ---
-title: My First Post
-date: 2026-01-01
+title: Hello World
+date: 2024-01-15
 published: true
 ---
 
-# My First Post
+# Hello World
 
-Welcome to nextjs-studio!
+Your first post.
 ```
 
-Save this as `contents/blog/my-first-post.mdx`.
-
-### 4. Query Content in Your Pages
-
-Use the `queryCollection` API in your Next.js pages:
+### 3. Query content in your pages
 
 ```tsx
+// app/blog/page.tsx
 import { queryCollection } from "nextjs-studio";
 
 export default function BlogPage() {
@@ -53,45 +50,37 @@ export default function BlogPage() {
     .all();
 
   return (
-    <div>
-      <h1>Blog</h1>
+    <ul>
       {posts.map((post) => (
-        <article key={post.slug}>
-          <h2>{post.data.title}</h2>
-          <p>{post.path}</p>
-        </article>
+        <li key={post.slug}>{post.data.title as string}</li>
       ))}
-    </div>
+    </ul>
   );
 }
 ```
 
-### 5. Start the CMS
-
-Run the CLI server to open the editing interface:
+### 4. Start the CMS
 
 ```bash
 npx nextjs-studio
 ```
 
-The CMS will be available at [http://localhost:3030](http://localhost:3030).
+Open [http://localhost:3030](http://localhost:3030). Your `blog` collection appears in the sidebar.
 
-## Verify Installation
-
-After setup, your project structure should look like:
+## Project structure after setup
 
 ```
 your-project/
 ├── contents/
 │   └── blog/
-│       └── my-first-post.mdx
+│       └── hello-world.mdx
 ├── next.config.js
 ├── package.json
-└── studio.config.ts          # optional
+└── studio.config.ts      # optional — add for schemas and scripts
 ```
 
-Run `npx nextjs-studio` and verify the CMS loads in your browser with the blog collection visible in the sidebar.
+## Next steps
 
-## Next Steps
-
-- [Configuration](./configuration.md) — Set up `studio.config.ts` for advanced features
+- [Configuration](./configuration.md) — define schemas and import scripts
+- [Collections](../collections/overview.md) — MDX, JSON array, and JSON object collections
+- [Query API](../reference/query-api.md) — filtering, sorting, pagination
