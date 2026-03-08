@@ -13,8 +13,9 @@ import path from "node:path";
 import { spawn, type ChildProcess } from "node:child_process";
 import { Command } from "commander";
 import { CLI_PORT, CONTENTS_DIR } from "../shared/constants.js";
+import pkg from "../../package.json" with { type: "json" };
 
-const { version } = await import("../../package.json", { with: { type: "json" } });
+const { version } = pkg;
 
 const program = new Command()
   .name("Nextjs Studio")

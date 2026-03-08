@@ -7,6 +7,7 @@
  */
 
 export { queryCollection } from "./query-builder.js";
+export { initStudio, isStudioInitialized } from "./init.js";
 export { loadContent } from "./content-store.js";
 export { ContentIndex } from "./indexer.js";
 
