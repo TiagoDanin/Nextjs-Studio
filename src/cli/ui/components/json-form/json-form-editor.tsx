@@ -21,6 +21,35 @@ type DisplaySection =
   | { kind: "flat"; entries: [string, unknown][] }
   | { kind: "object"; key: string; data: Record<string, unknown> };
 
+const RICH_TEXT_PRIORITY = ["description", "descriptions", "text", "content"];
+const LONG_TEXT_THRESHOLD = 200;
+
+/** Determine which field should get the TipTap rich text editor. */
+function getPrimaryRichTextField(
+  data: Record<string, unknown>,
+  fieldDefs: Record<string, { type?: string }>,
+): string | null {
+  const flatKeys = Object.entries(data)
+    .filter(([, v]) => typeof v === "string")
+    .map(([k]) => k);
+
+  // Check priority names first
+  for (const candidate of RICH_TEXT_PRIORITY) {
+    if (flatKeys.includes(candidate)) return candidate;
+  }
+
+  // Fallback: first field marked as long-text, or first long string
+  for (const key of flatKeys) {
+    if (fieldDefs[key]?.type === "long-text") return key;
+  }
+  for (const key of flatKeys) {
+    const val = data[key] as string;
+    if (val.length > LONG_TEXT_THRESHOLD || val.includes("\n")) return key;
+  }
+
+  return null;
+}
+
 /** Build an ordered list of sections preserving the original key order. */
 function buildSections(data: Record<string, unknown>): DisplaySection[] {
   const sections: DisplaySection[] = [];
@@ -48,6 +77,7 @@ function buildSections(data: Record<string, unknown>): DisplaySection[] {
 export function JsonFormEditor({ collection, data, filePath }: Props) {
   const initForm = useEditorStore((s) => s.initForm);
   const formData = useEditorStore((s) => s.formData);
+  const fieldDefs = useEditorStore((s) => s.fieldDefs);
   const reorderSection = useEditorStore((s) => s.reorderSection);
 
   useEffect(() => {
@@ -55,6 +85,7 @@ export function JsonFormEditor({ collection, data, filePath }: Props) {
   }, [collection.name, filePath, data, collection.fields, initForm]);
 
   const sections = buildSections(formData);
+  const primaryRichTextField = getPrimaryRichTextField(formData, fieldDefs);
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
@@ -84,7 +115,13 @@ export function JsonFormEditor({ collection, data, filePath }: Props) {
                   >
                     <div className="flex flex-col gap-4">
                       {section.entries.map(([key, value]) => (
-                        <FormField key={key} fieldKey={key} path={key} value={value} />
+                        <FormField
+                          key={key}
+                          fieldKey={key}
+                          path={key}
+                          value={value}
+                          isRichText={key === primaryRichTextField}
+                        />
                       ))}
                     </div>
                   </FormSection>

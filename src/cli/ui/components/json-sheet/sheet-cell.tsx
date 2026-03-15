@@ -4,6 +4,22 @@ interface Props {
   value: unknown;
 }
 
+function formatArrayPreview(arr: unknown[]): string {
+  if (arr.length === 0) return "[]";
+  if (arr.every((item) => typeof item !== "object" || item === null)) {
+    const joined = arr.join(", ");
+    return joined.length > 60 ? `${joined.slice(0, 57)}…` : joined;
+  }
+  return `${arr.length} item${arr.length !== 1 ? "s" : ""}`;
+}
+
+function formatObjectPreview(obj: object): string {
+  const keys = Object.keys(obj);
+  if (keys.length === 0) return "{}";
+  if (keys.length <= 3) return `{ ${keys.join(", ")} }`;
+  return `{ ${keys.slice(0, 2).join(", ")}, +${keys.length - 2} }`;
+}
+
 export function SheetCell({ value }: Props) {
   return (
     <span className="block truncate px-1 py-0.5">
@@ -11,6 +27,10 @@ export function SheetCell({ value }: Props) {
         <span className="text-muted-foreground">—</span>
       ) : typeof value === "boolean" ? (
         value ? "true" : "false"
+      ) : Array.isArray(value) ? (
+        <span className="text-muted-foreground">{formatArrayPreview(value)}</span>
+      ) : typeof value === "object" ? (
+        <span className="text-muted-foreground">{formatObjectPreview(value)}</span>
       ) : (
         String(value)
       )}

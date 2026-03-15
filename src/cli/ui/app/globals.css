@@ -230,3 +230,11 @@
 
 .dark .tiptap pre { background-color: #161b22; color: #e6edf3; }
 .dark .tiptap code { background-color: var(--color-muted); }
+
+/* Rich text field inside JSON form — override MDX-specific constraints */
+.rich-text-field .tiptap {
+  max-width: none;
+  min-height: 200px;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}

@@ -250,6 +250,107 @@ export function SheetRowInspector({ rowIndex }: Props) {
       );
     }
 
+    // array (runtime)
+    if (Array.isArray(value)) {
+      const items = value as unknown[];
+      const allPrimitive = items.every((v) => typeof v !== "object" || v === null);
+      if (allPrimitive) {
+        return (
+          <div key={key} className="flex items-center gap-3">
+            <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+              {label}
+            </Label>
+            <Input
+              type="text"
+              value={items.join(", ")}
+              onChange={(e) =>
+                updateCell(
+                  rowIndex,
+                  key,
+                  e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                )
+              }
+              className="h-7 w-40 text-sm"
+            />
+          </div>
+        );
+      }
+      return (
+        <div key={key} className="flex items-start gap-3">
+          <Label className="w-36 shrink-0 truncate pt-1 text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <pre className="max-h-32 flex-1 overflow-auto rounded border bg-muted/50 px-2 py-1 text-xs">
+            {JSON.stringify(value, null, 2)}
+          </pre>
+        </div>
+      );
+    }
+
+    // object (runtime - nested)
+    if (typeof value === "object" && value !== null) {
+      return (
+        <div key={key} className="flex items-start gap-3">
+          <Label className="w-36 shrink-0 truncate pt-1 text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <div className="flex flex-1 flex-col gap-1.5 border-l pl-3">
+            {Object.entries(value as Record<string, unknown>).map(([subKey, subVal]) => {
+              if (typeof subVal === "object" && subVal !== null) {
+                return (
+                  <div key={subKey} className="flex items-start gap-2">
+                    <Label className="w-24 shrink-0 truncate pt-1 text-xs text-muted-foreground">
+                      {keyLabel(subKey)}
+                    </Label>
+                    <pre className="max-h-24 flex-1 overflow-auto rounded border bg-muted/50 px-2 py-1 text-xs">
+                      {JSON.stringify(subVal, null, 2)}
+                    </pre>
+                  </div>
+                );
+              }
+              return (
+                <div key={subKey} className="flex items-center gap-2">
+                  <Label className="w-24 shrink-0 truncate text-xs text-muted-foreground">
+                    {keyLabel(subKey)}
+                  </Label>
+                  {typeof subVal === "boolean" ? (
+                    <Switch
+                      checked={subVal}
+                      onCheckedChange={(checked) => {
+                        const updated = { ...(value as Record<string, unknown>), [subKey]: checked };
+                        updateCell(rowIndex, key, updated);
+                      }}
+                    />
+                  ) : typeof subVal === "number" ? (
+                    <Input
+                      type="number"
+                      value={String(subVal)}
+                      onChange={(e) => {
+                        const num = Number(e.target.value);
+                        const updated = { ...(value as Record<string, unknown>), [subKey]: Number.isNaN(num) ? 0 : num };
+                        updateCell(rowIndex, key, updated);
+                      }}
+                      className="h-6 w-32 text-xs"
+                    />
+                  ) : (
+                    <Input
+                      type="text"
+                      value={String(subVal ?? "")}
+                      onChange={(e) => {
+                        const updated = { ...(value as Record<string, unknown>), [subKey]: e.target.value };
+                        updateCell(rowIndex, key, updated);
+                      }}
+                      className="h-6 w-32 text-xs"
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
     // default text
     return (
       <div key={key} className="flex items-center gap-3">

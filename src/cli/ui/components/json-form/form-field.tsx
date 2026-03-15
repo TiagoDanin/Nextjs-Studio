@@ -1,9 +1,17 @@
 "use client";
 
+import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useEditorStore } from "@/stores/editor-store";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { keyLabel } from "@shared/field-utils";
 import type {
@@ -13,10 +21,16 @@ import type {
   StatusField,
 } from "@shared/fields";
 
+const RichTextField = dynamic(() => import("./rich-text-field").then((m) => m.RichTextField), {
+  ssr: false,
+  loading: () => <div className="h-[200px] animate-pulse rounded-md border bg-muted/30" />,
+});
+
 interface Props {
   fieldKey: string;
   path: string;
   value: unknown;
+  isRichText?: boolean;
 }
 
 // Shared label + wrapper layout
@@ -67,7 +81,7 @@ function NativeSelect({
   );
 }
 
-export function FormField({ fieldKey, path, value }: Props) {
+export function FormField({ fieldKey, path, value, isRichText }: Props) {
   const updateField = useEditorStore((s) => s.updateField);
   const fieldDefs = useEditorStore((s) => s.fieldDefs);
 
@@ -77,6 +91,20 @@ export function FormField({ fieldKey, path, value }: Props) {
   // label is pre-resolved by the server action; fall back to keyLabel for dynamic fields
   const label = fieldDef?.label ?? keyLabel(fieldKey);
   const type = fieldDef?.type;
+
+  // --- rich text (primary long-text field with TipTap) ---
+  if (isRichText && typeof value === "string") {
+    return (
+      <div className="flex flex-col gap-2">
+        <Label className="text-sm text-muted-foreground">{label}</Label>
+        <RichTextField
+          value={value}
+          onChange={(md) => updateField(path, md)}
+          placeholder="Start writing..."
+        />
+      </div>
+    );
+  }
 
   // --- boolean ---
   if (type === "boolean" || (!type && typeof value === "boolean")) {
@@ -283,6 +311,22 @@ export function FormField({ fieldKey, path, value }: Props) {
     );
   }
 
+  // --- nested object ---
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    type !== "array"
+  ) {
+    return (
+      <NestedObjectField
+        label={label}
+        path={path}
+        entries={Object.entries(value as Record<string, unknown>)}
+      />
+    );
+  }
+
   // --- array fallback (comma-separated) ---
   if (type === "array" || Array.isArray(value)) {
     return (
@@ -310,5 +354,50 @@ export function FormField({ fieldKey, path, value }: Props) {
         placeholder={(fieldDef as { placeholder?: string } | undefined)?.placeholder}
       />
     </FieldRow>
+  );
+}
+
+// ─── Nested object (collapsible, recursive) ──────────────────────────────────
+
+function NestedObjectField({
+  label,
+  path,
+  entries,
+}: {
+  label: string;
+  path: string;
+  entries: [string, unknown][];
+}) {
+  const [isOpen, setIsOpen] = useState(true);
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger className="flex items-center gap-2 py-1">
+        <ChevronRight
+          className={cn(
+            "h-3.5 w-3.5 text-muted-foreground transition-transform",
+            isOpen && "rotate-90",
+          )}
+        />
+        <Label className="cursor-pointer text-sm text-muted-foreground">
+          {label}
+        </Label>
+        <span className="text-xs text-muted-foreground">
+          ({entries.length} field{entries.length !== 1 ? "s" : ""})
+        </span>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="ml-6 flex flex-col gap-3 border-l pl-4 pt-2">
+          {entries.map(([key, val]) => (
+            <FormField
+              key={key}
+              fieldKey={key}
+              path={`${path}.${key}`}
+              value={val}
+            />
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
