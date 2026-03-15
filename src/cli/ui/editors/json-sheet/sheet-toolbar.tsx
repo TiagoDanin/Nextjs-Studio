@@ -1,25 +1,38 @@
 "use client";
 
+/**
+ * @context  UI editor — sheet toolbar at src/cli/ui/editors/json-sheet/sheet-toolbar.tsx
+ * @does     Renders the top bar with collection name, add row button, and save button
+ * @depends  @/stores/editor-store, @/actions/collections
+ * @do       Add sheet-level actions (import CSV, export) to this toolbar
+ * @dont     Put editor state logic here — that belongs in the store
+ */
+
 import { useTransition } from "react";
 import { useEditorStore } from "@/stores/editor-store";
-import { saveCollectionJson } from "@/actions/collections";
+import { saveCollectionJson, saveMdxFrontmatter } from "@/actions/collections";
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 interface Props {
   collectionName: string;
 }
 
-export function FormToolbar({ collectionName }: Props) {
+export function SheetToolbar({ collectionName }: Props) {
   const isDirty = useEditorStore((s) => s.isDirty);
   const filePath = useEditorStore((s) => s.filePath);
+  const isMdx = useEditorStore((s) => s.isMdx);
+  const addRow = useEditorStore((s) => s.addRow);
   const getSerializedJson = useEditorStore((s) => s.getSerializedJson);
+  const getMdxSources = useEditorStore((s) => s.getMdxSources);
   const markClean = useEditorStore((s) => s.markClean);
   const [isPending, startTransition] = useTransition();
 
   function handleSave() {
     startTransition(async () => {
-      const json = getSerializedJson();
-      const result = await saveCollectionJson(filePath, json);
+      const result = isMdx
+        ? await saveMdxFrontmatter(getMdxSources())
+        : await saveCollectionJson(filePath, getSerializedJson());
       if (result.success) {
         markClean();
       }
@@ -35,6 +48,17 @@ export function FormToolbar({ collectionName }: Props) {
         )}
       </div>
       <div className="flex items-center gap-1.5">
+        {!isMdx && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 gap-1.5 px-2.5 text-xs"
+            onClick={addRow}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Row
+          </Button>
+        )}
         <Button
           size="sm"
           className="h-7 px-3 text-xs"

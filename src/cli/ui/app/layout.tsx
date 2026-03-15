@@ -1,3 +1,11 @@
+/**
+ * @context  Root layout for the studio UI Next.js app (cli/ui/app).
+ * @does     Sets up the Poppins font, HTML metadata, theme provider, and the full-height flex shell.
+ * @depends  components/providers for ThemeProvider wrapping; globals.css for base styles.
+ * @do       Add global providers (e.g. Toaster, QueryClient) that every page needs.
+ * @dont     Never add page-specific logic or data fetching here — keep it layout-only.
+ */
+
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { Providers } from "@/components/providers";

@@ -1,14 +1,20 @@
 "use client";
 
+/**
+ * @context  Sidebar loading skeleton rendered during page transitions (cli/ui/components).
+ * @does     Shows a cached or placeholder sidebar shell so the layout never flashes blank during navigation.
+ * @depends  lib/sidebar-cache for reading cached collection names, components/theme-toggle.
+ * @do       Keep the skeleton visually identical to the real sidebar to prevent layout shift.
+ * @dont     Never fetch data or perform side effects here — this is a pure loading placeholder.
+ */
+
 import { useMemo } from "react";
 import { Layers } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { readSidebarCache } from "@/lib/sidebar-cache";
 
-// Widths cycle to give the skeleton items a natural varied look
 const FALLBACK_WIDTHS = [72, 56, 88, 64];
 
-/** Sidebar shell rendered during page transitions so the layout never flashes. */
 export function AppSidebarSkeleton() {
   const cached = useMemo(() => readSidebarCache(), []);
   const items = cached.length > 0 ? cached : FALLBACK_WIDTHS.map(() => null);
@@ -29,21 +35,20 @@ export function AppSidebarSkeleton() {
           Content
         </p>
         <div className="flex flex-col gap-1 px-3">
-          {items.map((item, i) => (
+          {items.map((item, index) => (
             <div
-              key={i}
+              key={index}
               className="flex items-center gap-2.5 rounded-lg px-3 py-2"
             >
               <div className="h-3.5 w-3.5 shrink-0 rounded bg-sidebar-foreground/10" />
               {item ? (
-                // Show the actual collection name dimmed
                 <span className="truncate text-[13px] capitalize text-sidebar-foreground/20">
                   {item.name}
                 </span>
               ) : (
                 <div
                   className="h-3 rounded bg-sidebar-foreground/10"
-                  style={{ width: FALLBACK_WIDTHS[i % FALLBACK_WIDTHS.length] }}
+                  style={{ width: FALLBACK_WIDTHS[index % FALLBACK_WIDTHS.length] }}
                 />
               )}
             </div>

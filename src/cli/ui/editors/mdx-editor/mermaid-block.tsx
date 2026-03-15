@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  UI editor — TipTap node extension at src/cli/ui/editors/mdx-editor/mermaid-block.tsx
+ * @does     Defines the mermaidBlock TipTap node with live SVG preview and markdown serialization
+ * @depends  @tiptap/core, @tiptap/react, @tiptap/pm
+ * @do       Improve mermaid rendering (themes, error recovery) here
+ * @dont     Import other editor components — this is a self-contained TipTap extension
+ */
+
 import { useEffect, useRef, useState } from "react";
 import { Node, mergeAttributes } from "@tiptap/core";
 import { Plugin } from "@tiptap/pm/state";
@@ -10,10 +18,6 @@ import {
 } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import { cn } from "@/lib/utils";
-
-// ---------------------------------------------------------------------------
-// Node view — renders mermaid code + live SVG preview
-// ---------------------------------------------------------------------------
 
 function MermaidNodeView({ node }: NodeViewProps) {
   const [svg, setSvg] = useState<string>("");
@@ -58,7 +62,6 @@ function MermaidNodeView({ node }: NodeViewProps) {
 
   return (
     <NodeViewWrapper className="my-4 rounded-xl border bg-muted/40">
-      {/* Editable code area */}
       <div className="relative px-4 pt-3 pb-2">
         <span className="absolute right-3 top-2 select-none text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
           mermaid
@@ -69,7 +72,6 @@ function MermaidNodeView({ node }: NodeViewProps) {
         />
       </div>
 
-      {/* Live preview */}
       <div
         className={cn(
           "border-t px-4 py-4",
@@ -98,10 +100,6 @@ function MermaidNodeView({ node }: NodeViewProps) {
     </NodeViewWrapper>
   );
 }
-
-// ---------------------------------------------------------------------------
-// TipTap node definition
-// ---------------------------------------------------------------------------
 
 export const MermaidBlock = Node.create({
   name: "mermaidBlock",

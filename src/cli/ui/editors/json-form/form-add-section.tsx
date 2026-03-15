@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  UI editor — add section control at src/cli/ui/editors/json-form/form-add-section.tsx
+ * @does     Renders a button that expands into an inline form for adding new object sections
+ * @depends  @/stores/editor-store, @/components/ui/input, @/components/ui/button
+ * @do       Add section templates or presets here
+ * @dont     Put section rendering logic here — that belongs in form-section.tsx
+ */
+
 import { useState } from "react";
 import { useEditorStore } from "@/stores/editor-store";
 import { Input } from "@/components/ui/input";

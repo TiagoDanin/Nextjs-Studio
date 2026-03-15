@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  UI editor — MDX page toolbar at src/cli/ui/editors/mdx-editor/mdx-toolbar.tsx
+ * @does     Renders the top bar with breadcrumb, save button, and preview toggle for an MDX entry
+ * @depends  @/stores/mdx-editor-store, @/actions/collections, ./preview-dialog
+ * @do       Add entry-level actions (delete, duplicate, history) to this toolbar
+ * @dont     Put formatting toolbar buttons here — those belong in toolbar.tsx
+ */
+
 import { useState, useTransition } from "react";
 import { useMdxEditorStore } from "@/stores/mdx-editor-store";
 import { saveMdxFrontmatter } from "@/actions/collections";

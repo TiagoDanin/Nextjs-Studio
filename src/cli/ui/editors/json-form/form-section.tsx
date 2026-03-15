@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  UI editor — collapsible section at src/cli/ui/editors/json-form/form-section.tsx
+ * @does     Wraps a group of form fields in a collapsible panel with reorder controls
+ * @depends  @/components/ui/collapsible, @/components/ui/separator
+ * @do       Add section-level actions (delete section, rename) here
+ * @dont     Put field rendering logic here — that belongs in form-field.tsx
+ */
+
 import { useState } from "react";
 import {
   Collapsible,

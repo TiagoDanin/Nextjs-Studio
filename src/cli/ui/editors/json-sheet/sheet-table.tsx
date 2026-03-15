@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  UI editor — data table at src/cli/ui/editors/json-sheet/sheet-table.tsx
+ * @does     Renders the TanStack Table with sortable columns, row selection, and inline inspector
+ * @depends  @tanstack/react-table, @/stores/editor-store, ./sheet-cell, ./sheet-row-inspector
+ * @do       Add column features (resize, reorder, hide) here
+ * @dont     Put row editing UI here — that belongs in sheet-row-inspector.tsx
+ */
+
 import { Fragment, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {

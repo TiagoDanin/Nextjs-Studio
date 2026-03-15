@@ -1,6 +1,14 @@
+/**
+ * @context  MDX entry page in the studio UI (cli/ui/app/collection/[name]/[slug]).
+ * @does     Loads a single MDX entry's frontmatter and body, then renders the full MDX editor.
+ * @depends  actions/collections for getMdxEntry, editors/mdx-editor for the TipTap-based editor.
+ * @do       Add entry-level metadata (word count, last saved) to this page.
+ * @dont     Never render JSON editors here — this page is exclusively for MDX entries.
+ */
+
 import { notFound } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
-import { MdxEditor } from "@/components/mdx-editor/mdx-editor";
+import { MdxEditor } from "@/editors/mdx-editor/mdx-editor";
 import { getCollections, getMdxEntry, getCollectionEntries } from "@/actions/collections";
 
 export const dynamic = "force-dynamic";
@@ -20,16 +28,16 @@ export default async function MdxEntryPage({
 
   if (!entry) notFound();
 
-  const collectionsWithEntries = collections.map((c) =>
-    c.name === name && c.type === "mdx" && collectionResult
+  const collectionsWithEntries = collections.map((collection) =>
+    collection.name === name && collection.type === "mdx" && collectionResult
       ? {
-          ...c,
-          entries: collectionResult.entries.map((e) => ({
-            slug: e.slug,
-            title: String(e.data.title ?? e.slug),
+          ...collection,
+          entries: collectionResult.entries.map((entry) => ({
+            slug: entry.slug,
+            title: String(entry.data.title ?? entry.slug),
           })),
         }
-      : c,
+      : collection,
   );
 
   return (

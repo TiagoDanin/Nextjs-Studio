@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  UI editor — add field control at src/cli/ui/editors/json-form/form-add-field.tsx
+ * @does     Renders a button that expands into an inline form for adding new fields to a JSON section
+ * @depends  @/stores/editor-store, @/components/ui/input
+ * @do       Add new default value types or field templates here
+ * @dont     Put field rendering logic here — that belongs in form-field.tsx
+ */
+
 import { useState } from "react";
 import { useEditorStore } from "@/stores/editor-store";
 import { Input } from "@/components/ui/input";

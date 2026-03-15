@@ -1,3 +1,11 @@
+/**
+ * @context  Loading skeleton for the collection page (cli/ui/app/collection/[name]).
+ * @does     Renders a sidebar skeleton and a loading placeholder while the collection data streams in.
+ * @depends  components/app-sidebar-skeleton for the sidebar shell.
+ * @do       Enhance the skeleton to match the shape of the actual editor being loaded.
+ * @dont     Never fetch data or use client state here — this is a pure loading UI.
+ */
+
 import { AppSidebarSkeleton } from "@/components/app-sidebar-skeleton";
 
 export default function Loading() {

@@ -1,11 +1,20 @@
 "use client";
 
+/**
+ * @context  UI editor — media library modal at src/cli/ui/editors/media-picker/media-picker.tsx
+ * @does     Renders a full-screen picker for browsing, uploading, and inserting media assets
+ * @depends  @/stores/mdx-editor-store, @/stores/media-store, @/services/media-api
+ * @do       Add media management features (rename, delete, folders) here
+ * @dont     Put media serving logic here — that belongs in the API routes
+ */
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMdxEditorStore } from "@/stores/mdx-editor-store";
 import { useMediaStore } from "@/stores/media-store";
 import { Upload, X, FileVideo, FileAudio, File } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { fetchMediaAssets, uploadMediaFile } from "@/services/media-api";
 import type { MediaAsset } from "@shared/types";
 
 export function MediaPicker() {
@@ -25,15 +34,12 @@ export function MediaPicker() {
     if (!collection) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/media/${collection}`);
-      if (res.ok) {
-        const data: MediaAsset[] = await res.json();
-        const filtered =
-          insertType === "any"
-            ? data
-            : data.filter((a) => a.kind === insertType);
-        setAssets(filtered);
-      }
+      const data = await fetchMediaAssets(collection);
+      const filtered =
+        insertType === "any"
+          ? data
+          : data.filter((a) => a.kind === insertType);
+      setAssets(filtered);
     } finally {
       setLoading(false);
     }
@@ -60,14 +66,8 @@ export function MediaPicker() {
     setUploading(true);
     try {
       for (const file of Array.from(files)) {
-        const form = new FormData();
-        form.append("file", file);
-        const res = await fetch(`/api/media/${collection}`, {
-          method: "POST",
-          body: form,
-        });
-        if (res.ok) {
-          const asset: MediaAsset = await res.json();
+        const asset = await uploadMediaFile(file, collection);
+        if (asset) {
           setAssets((prev) => {
             const filtered = prev.filter((a) => a.name !== asset.name);
             return [asset, ...filtered];
@@ -97,7 +97,6 @@ export function MediaPicker() {
         className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border bg-background shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex h-12 shrink-0 items-center justify-between border-b px-4">
           <span className="text-sm font-semibold">
             {insertType === "image"
@@ -117,7 +116,6 @@ export function MediaPicker() {
           </button>
         </div>
 
-        {/* Upload area */}
         <div
           className="mx-4 mt-4 flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border py-5 transition-colors hover:border-foreground/30 hover:bg-accent/30"
           onClick={() => fileInputRef.current?.click()}
@@ -151,7 +149,6 @@ export function MediaPicker() {
           />
         </div>
 
-        {/* Grid */}
         <div className="mt-3 min-h-0 flex-1 overflow-y-auto px-4 pb-4">
           {loading ? (
             <p className="py-6 text-center text-xs text-muted-foreground">Loading…</p>
@@ -180,7 +177,6 @@ export function MediaPicker() {
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex h-12 shrink-0 items-center justify-between border-t px-4">
           <span className="truncate text-xs text-muted-foreground">
             {selected ? selected.name : "No file selected"}

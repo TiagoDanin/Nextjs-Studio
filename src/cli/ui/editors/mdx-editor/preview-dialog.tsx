@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  UI editor — preview modal at src/cli/ui/editors/mdx-editor/preview-dialog.tsx
+ * @does     Renders the MDX content as HTML in a full-screen dialog overlay
+ * @depends  @/stores/mdx-editor-store for rendered HTML
+ * @do       Add print support or external preview window option here
+ * @dont     Re-render MDX here — use the pre-rendered HTML from the store
+ */
+
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useMdxEditorStore } from "@/stores/mdx-editor-store";

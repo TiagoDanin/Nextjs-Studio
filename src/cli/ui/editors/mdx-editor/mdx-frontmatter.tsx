@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  UI editor — frontmatter panel at src/cli/ui/editors/mdx-editor/mdx-frontmatter.tsx
+ * @does     Renders key-value fields for editing MDX frontmatter (title, date, tags, etc.)
+ * @depends  @/stores/mdx-editor-store, @/components/ui/input, @/components/ui/label, @/components/ui/switch
+ * @do       Add new frontmatter field types (e.g. date picker, select) here
+ * @dont     Parse or validate frontmatter — that belongs in core parsers
+ */
+
 import { useMdxEditorStore } from "@/stores/mdx-editor-store";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  Zustand store for the JSON sheet and form editors (cli/ui/stores).
+ * @does     Manages rows, form data, sorting, dirty state, and serialization for both sheet and form editor modes.
+ * @depends  zustand, lodash-es, @shared/fields for FieldDefinition types.
+ * @do       Add new editor actions (e.g. undo/redo, bulk edit) that mutate sheet or form state.
+ * @dont     Never perform I/O (fetch, file access) inside the store — delegate to server actions.
+ */
+
 import { create } from "zustand";
 import { orderBy } from "lodash-es";
 import type { FieldDefinition } from "@shared/fields";
@@ -92,23 +100,23 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       filePath,
       rows,
       isMdx: !!mdxSources,
-      rowFilePaths: mdxSources?.map((s) => s.filePath) ?? [],
-      rowBodies: mdxSources?.map((s) => s.body) ?? [],
-      rowSlugs: mdxSources?.map((s) => s.slug) ?? [],
+      rowFilePaths: mdxSources?.map((source) => source.filePath) ?? [],
+      rowBodies: mdxSources?.map((source) => source.body) ?? [],
+      rowSlugs: mdxSources?.map((source) => source.slug) ?? [],
       isDirty: false,
       isSaving: false,
       selectedRowIndex: null,
       sortColumn: null,
       sortDirection: "asc",
-      fieldDefs: Object.fromEntries((fields ?? []).map((f) => [f.name, f])),
+      fieldDefs: Object.fromEntries((fields ?? []).map((field) => [field.name, field])),
     }),
 
   initForm: (collectionName, filePath, data, fields) => {
     const sections = Object.entries(data)
       .filter(
-        ([, v]) => typeof v === "object" && v !== null && !Array.isArray(v),
+        ([, value]) => typeof value === "object" && value !== null && !Array.isArray(value),
       )
-      .map(([k]) => k);
+      .map(([key]) => key);
     set({
       editorType: "form",
       collectionName,
@@ -117,7 +125,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       expandedSections: sections,
       isDirty: false,
       isSaving: false,
-      fieldDefs: Object.fromEntries((fields ?? []).map((f) => [f.name, f])),
+      fieldDefs: Object.fromEntries((fields ?? []).map((field) => [field.name, field])),
     });
   },
 
@@ -144,10 +152,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   deleteRow: (rowIndex) =>
     set((state) => ({
-      rows: state.rows.filter((_, i) => i !== rowIndex),
-      rowFilePaths: state.rowFilePaths.filter((_, i) => i !== rowIndex),
-      rowBodies: state.rowBodies.filter((_, i) => i !== rowIndex),
-      rowSlugs: state.rowSlugs.filter((_, i) => i !== rowIndex),
+      rows: state.rows.filter((_, index) => index !== rowIndex),
+      rowFilePaths: state.rowFilePaths.filter((_, index) => index !== rowIndex),
+      rowBodies: state.rowBodies.filter((_, index) => index !== rowIndex),
+      rowSlugs: state.rowSlugs.filter((_, index) => index !== rowIndex),
       selectedRowIndex:
         state.selectedRowIndex === rowIndex ? null : state.selectedRowIndex,
       isDirty: true,
@@ -161,18 +169,18 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         state.sortColumn === column && state.sortDirection === "asc"
           ? "desc"
           : "asc";
-      const combined = state.rows.map((row, i) => ({
+      const combined = state.rows.map((row, index) => ({
         row,
-        filePath: state.rowFilePaths[i] ?? "",
-        body: state.rowBodies[i] ?? "",
-        slug: state.rowSlugs[i] ?? "",
+        filePath: state.rowFilePaths[index] ?? "",
+        body: state.rowBodies[index] ?? "",
+        slug: state.rowSlugs[index] ?? "",
       }));
-      const sorted = orderBy(combined, [(c) => c.row[column]], [direction]);
+      const sorted = orderBy(combined, [(item) => item.row[column]], [direction]);
       return {
-        rows: sorted.map((c) => c.row),
-        rowFilePaths: sorted.map((c) => c.filePath),
-        rowBodies: sorted.map((c) => c.body),
-        rowSlugs: sorted.map((c) => c.slug),
+        rows: sorted.map((item) => item.row),
+        rowFilePaths: sorted.map((item) => item.filePath),
+        rowBodies: sorted.map((item) => item.body),
+        rowSlugs: sorted.map((item) => item.slug),
         sortColumn: column,
         sortDirection: direction,
         selectedRowIndex: null,
@@ -200,8 +208,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       if (path) {
         const keys = path.split(".");
         let obj: Record<string, unknown> = data;
-        for (const k of keys) {
-          obj = obj[k] as Record<string, unknown>;
+        for (const segment of keys) {
+          obj = obj[segment] as Record<string, unknown>;
         }
         obj[key] = defaultValue;
       } else {
@@ -213,7 +221,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   toggleSection: (section) =>
     set((state) => {
       const expanded = state.expandedSections.includes(section)
-        ? state.expandedSections.filter((s) => s !== section)
+        ? state.expandedSections.filter((item) => item !== section)
         : [...state.expandedSections, section];
       return { expandedSections: expanded };
     }),
@@ -226,8 +234,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       const blocks: number[][] = [];
       let flatAccum: number[] = [];
       for (let i = 0; i < entries.length; i++) {
-        const v = entries[i]![1];
-        const isObj = typeof v === "object" && v !== null && !Array.isArray(v);
+        const value = entries[i]![1];
+        const isObj = typeof value === "object" && value !== null && !Array.isArray(value);
         if (isObj) {
           if (flatAccum.length > 0) { blocks.push(flatAccum); flatAccum = []; }
           blocks.push([i]);
@@ -240,11 +248,11 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       // Find which block corresponds to the given key
       const blockIdx = blocks.findIndex((block) =>
         key === "__flat__"
-          ? block.some((i) => {
-              const v = entries[i]![1];
-              return !(typeof v === "object" && v !== null && !Array.isArray(v));
+          ? block.some((idx) => {
+              const value = entries[idx]![1];
+              return !(typeof value === "object" && value !== null && !Array.isArray(value));
             })
-          : block.some((i) => entries[i]![0] === key),
+          : block.some((idx) => entries[idx]![0] === key),
       );
       if (blockIdx === -1) return {};
       const swapIdx = direction === "up" ? blockIdx - 1 : blockIdx + 1;
@@ -253,7 +261,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       const next = [...blocks];
       [next[blockIdx], next[swapIdx]] = [next[swapIdx]!, next[blockIdx]!];
       return {
-        formData: Object.fromEntries(next.flat().map((i) => entries[i]!)),
+        formData: Object.fromEntries(next.flat().map((entryIndex) => entries[entryIndex]!)),
         isDirty: true,
       };
     }),
@@ -270,10 +278,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   getMdxSources: () => {
     const state = get();
-    return state.rows.map((row, i) => ({
-      filePath: state.rowFilePaths[i] ?? "",
+    return state.rows.map((row, index) => ({
+      filePath: state.rowFilePaths[index] ?? "",
       frontmatter: row,
-      body: state.rowBodies[i] ?? "",
+      body: state.rowBodies[index] ?? "",
     }));
   },
 }));

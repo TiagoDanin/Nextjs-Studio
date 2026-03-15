@@ -1,5 +1,13 @@
 "use server";
 
+/**
+ * @context  Server actions for the UI layer (cli/ui/actions), executed on the Next.js server side.
+ * @does     Loads, queries, and persists content collections by delegating to the core content engine.
+ * @depends  @core/content-store, @core/content-writer, @core/schema-inferrer, @cli/adapters/fs-adapter, lib/env.
+ * @do       Add new server actions that read or write content through the core API.
+ * @dont     Never import client components or use browser APIs here — this is server-only code.
+ */
+
 import { loadContent } from "@core/content-store";
 import { writeJsonFile, writeMdxEntries } from "@core/content-writer.js";
 import { inferSchema } from "@core/schema-inferrer.js";
@@ -54,10 +62,10 @@ export async function getCollections(): Promise<CollectionSummary[]> {
     const contentsDir = getContentsDir();
     const store = await loadContent(new FsAdapter(contentsDir));
 
-    return store.getCollections().map((c) => {
-      const base = { name: c.name, type: c.type, count: c.count, basePath: c.basePath };
-      if (c.type === "json-object") {
-        const data = store.getCollection(c.name)[0]?.data ?? {};
+    return store.getCollections().map((collection) => {
+      const base = { name: collection.name, type: collection.type, count: collection.count, basePath: collection.basePath };
+      if (collection.type === "json-object") {
+        const data = store.getCollection(collection.name)[0]?.data ?? {};
         return { ...base, sectionCount: countFormSections(data) };
       }
       return base;
@@ -74,7 +82,7 @@ export async function getCollectionEntries(
     const contentsDir = getContentsDir();
     const store = await loadContent(new FsAdapter(contentsDir));
     const collections = store.getCollections();
-    const col = collections.find((c) => c.name === name);
+    const col = collections.find((collection) => collection.name === name);
 
     if (!col) return null;
 
@@ -82,7 +90,7 @@ export async function getCollectionEntries(
 
     const fs = new FsAdapter(contentsDir);
     const files = await fs.listFiles(col.basePath);
-    const jsonFile = files.find((f) => f.endsWith(".json"));
+    const jsonFile = files.find((file) => file.endsWith(".json"));
 
     let rawJson = "";
     let filePath = "";
@@ -93,9 +101,9 @@ export async function getCollectionEntries(
 
     const schema = inferSchema(entries, col.name);
     // Ensure every field has a resolved label so consumers never need to compute it.
-    const fields: FieldDefinition[] = schema.fields.map((f) => ({
-      ...f,
-      label: fieldLabel(f),
+    const fields: FieldDefinition[] = schema.fields.map((field) => ({
+      ...field,
+      label: fieldLabel(field),
     }));
 
     return {
@@ -106,14 +114,14 @@ export async function getCollectionEntries(
         basePath: col.basePath,
         fields,
       },
-      entries: entries.map((e) => ({
-        collection: e.collection,
-        slug: e.slug,
-        path: e.path,
+      entries: entries.map((entry) => ({
+        collection: entry.collection,
+        slug: entry.slug,
+        path: entry.path,
         filePath:
-          col.type === "mdx" ? fs.join(col.basePath, e.slug + ".mdx") : "",
-        body: e.body,
-        data: e.data,
+          col.type === "mdx" ? fs.join(col.basePath, entry.slug + ".mdx") : "",
+        body: entry.body,
+        data: entry.data,
       })),
       rawJson,
       filePath,
@@ -131,11 +139,11 @@ export async function getMdxEntry(
     const contentsDir = getContentsDir();
     const store = await loadContent(new FsAdapter(contentsDir));
     const entries: ContentEntry[] = store.getCollection(collectionName);
-    const entry = entries.find((e) => e.slug === slug);
+    const entry = entries.find((entry) => entry.slug === slug);
     if (!entry) return null;
 
     const collections = store.getCollections();
-    const col = collections.find((c) => c.name === collectionName);
+    const col = collections.find((collection) => collection.name === collectionName);
     if (!col) return null;
 
     const fs = new FsAdapter(contentsDir);

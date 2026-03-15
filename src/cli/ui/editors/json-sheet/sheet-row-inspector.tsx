@@ -1,12 +1,20 @@
 "use client";
 
+/**
+ * @context  UI editor — row detail panel at src/cli/ui/editors/json-sheet/sheet-row-inspector.tsx
+ * @does     Renders an inline editing panel for all fields of a selected table row
+ * @depends  @/stores/editor-store, @/components/ui/*, @shared/fields, @shared/field-utils
+ * @do       Add new field type editors matching those in form-field.tsx
+ * @dont     Put table structure or column definitions here — that belongs in sheet-table.tsx
+ */
+
 import { useEditorStore } from "@/stores/editor-store";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { NativeSelect } from "@/components/ui/native-select";
 import { keyLabel } from "@shared/field-utils";
 import type {
   FieldDefinition,
@@ -14,32 +22,6 @@ import type {
   MultiSelectField,
   StatusField,
 } from "@shared/fields";
-
-function NativeSelect({
-  value,
-  onChange,
-  options,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: { label: string; value: string }[];
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={cn(
-        "h-7 w-40 rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-      )}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
-  );
-}
 
 interface Props {
   rowIndex: number;
@@ -61,7 +43,6 @@ export function SheetRowInspector({ rowIndex }: Props) {
     const type = fieldDef?.type;
     const label = fieldDef?.label ?? keyLabel(key);
 
-    // boolean
     if (type === "boolean" || (!type && typeof value === "boolean")) {
       return (
         <div key={key} className="flex items-center gap-3">
@@ -76,7 +57,6 @@ export function SheetRowInspector({ rowIndex }: Props) {
       );
     }
 
-    // date / datetime
     if (type === "date") {
       const includeTime = (fieldDef as { includeTime?: boolean }).includeTime;
       return (
@@ -94,7 +74,6 @@ export function SheetRowInspector({ rowIndex }: Props) {
       );
     }
 
-    // created-time / updated-time (read-only)
     if (type === "created-time" || type === "updated-time") {
       return (
         <div key={key} className="flex items-center gap-3">
@@ -111,7 +90,6 @@ export function SheetRowInspector({ rowIndex }: Props) {
       );
     }
 
-    // email
     if (type === "email") {
       return (
         <div key={key} className="flex items-center gap-3">
@@ -128,7 +106,6 @@ export function SheetRowInspector({ rowIndex }: Props) {
       );
     }
 
-    // url
     if (type === "url") {
       return (
         <div key={key} className="flex items-center gap-3">
@@ -145,7 +122,6 @@ export function SheetRowInspector({ rowIndex }: Props) {
       );
     }
 
-    // select
     if (type === "select") {
       const opts = (fieldDef as SelectField).options ?? [];
       return (
@@ -157,12 +133,12 @@ export function SheetRowInspector({ rowIndex }: Props) {
             value={String(value ?? "")}
             onChange={(v) => updateCell(rowIndex, key, v)}
             options={[{ label: "—", value: "" }, ...opts]}
+            className="h-7 w-40 px-2"
           />
         </div>
       );
     }
 
-    // status
     if (type === "status") {
       const opts = (fieldDef as StatusField).options ?? [];
       return (
@@ -174,12 +150,12 @@ export function SheetRowInspector({ rowIndex }: Props) {
             value={String(value ?? "")}
             onChange={(v) => updateCell(rowIndex, key, v)}
             options={[{ label: "—", value: "" }, ...opts]}
+            className="h-7 w-40 px-2"
           />
         </div>
       );
     }
 
-    // multi-select
     if (type === "multi-select") {
       const opts = (fieldDef as MultiSelectField).options ?? [];
       const selected = Array.isArray(value) ? (value as string[]) : [];
@@ -230,7 +206,6 @@ export function SheetRowInspector({ rowIndex }: Props) {
       );
     }
 
-    // number
     if (type === "number" || (!type && typeof value === "number")) {
       return (
         <div key={key} className="flex items-center gap-3">
@@ -250,7 +225,6 @@ export function SheetRowInspector({ rowIndex }: Props) {
       );
     }
 
-    // array (runtime)
     if (Array.isArray(value)) {
       const items = value as unknown[];
       const allPrimitive = items.every((v) => typeof v !== "object" || v === null);
@@ -287,7 +261,6 @@ export function SheetRowInspector({ rowIndex }: Props) {
       );
     }
 
-    // object (runtime - nested)
     if (typeof value === "object" && value !== null) {
       return (
         <div key={key} className="flex items-start gap-3">
@@ -351,7 +324,6 @@ export function SheetRowInspector({ rowIndex }: Props) {
       );
     }
 
-    // default text
     return (
       <div key={key} className="flex items-center gap-3">
         <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">

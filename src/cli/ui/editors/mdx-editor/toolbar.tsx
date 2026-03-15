@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  UI editor — toolbar components at src/cli/ui/editors/mdx-editor/toolbar.tsx
+ * @does     Provides FixedToolbar, BubbleToolbar, and export functionality for the MDX editor
+ * @depends  @/stores/media-store, ./editor-actions for BLOCK_ACTIONS
+ * @do       Add new toolbar sections or formatting buttons here
+ * @dont     Put editor extension logic here — that belongs in mdx-tiptap.tsx
+ */
+
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Editor } from "@tiptap/core";
@@ -19,8 +27,6 @@ import {
 import { cn } from "@/lib/utils";
 import { useMediaStore } from "@/stores/media-store";
 import { BLOCK_ACTIONS } from "./editor-actions";
-
-// ─── Shared primitive ─────────────────────────────────────────────────────────
 
 export function ToolbarBtn({
   onClick,
@@ -53,8 +59,6 @@ export function Sep() {
   return <div className="mx-1.5 h-4.5 w-px shrink-0 bg-border" />;
 }
 
-// ─── Fixed formatting toolbar ─────────────────────────────────────────────────
-
 export function FixedToolbar({ editor }: { editor: Editor }) {
   const [, setTick] = useState(0);
 
@@ -76,12 +80,11 @@ export function FixedToolbar({ editor }: { editor: Editor }) {
     else editor.chain().focus().setLink({ href: url }).run();
   }
 
-  const headingActions = BLOCK_ACTIONS.filter((a) => a.toolbarExec && a.isActive);
+  const headingActions = BLOCK_ACTIONS.filter((action) => action.toolbarExec && action.isActive);
 
   return (
     <div className="sticky top-0 z-10 px-6 pt-4">
       <div className="flex h-11 shrink-0 items-center gap-px rounded-xl border bg-card px-3">
-        {/* History */}
         <ToolbarBtn onClick={() => editor.chain().focus().undo().run()} active={false} title="Undo">
           <Undo className="h-3.5 w-3.5" />
         </ToolbarBtn>
@@ -91,7 +94,6 @@ export function FixedToolbar({ editor }: { editor: Editor }) {
 
         <Sep />
 
-        {/* Block type */}
         <ToolbarBtn
           onClick={() => editor.chain().focus().setParagraph().run()}
           active={editor.isActive("paragraph") && !editor.isActive("heading")}
@@ -99,20 +101,19 @@ export function FixedToolbar({ editor }: { editor: Editor }) {
         >
           <Type className="h-3.5 w-3.5" />
         </ToolbarBtn>
-        {headingActions.map((a) => (
+        {headingActions.map((action) => (
           <ToolbarBtn
-            key={a.title}
-            onClick={() => a.toolbarExec!(editor)}
-            active={a.isActive!(editor)}
-            title={a.title}
+            key={action.title}
+            onClick={() => action.toolbarExec!(editor)}
+            active={action.isActive!(editor)}
+            title={action.title}
           >
-            {a.icon}
+            {action.icon}
           </ToolbarBtn>
         ))}
 
         <Sep />
 
-        {/* Inline formatting */}
         <ToolbarBtn
           onClick={() => editor.chain().focus().toggleBold().run()}
           active={editor.isActive("bold")}
@@ -144,14 +145,12 @@ export function FixedToolbar({ editor }: { editor: Editor }) {
 
         <Sep />
 
-        {/* Link */}
         <ToolbarBtn onClick={setLink} active={editor.isActive("link")} title="Link">
           <LinkIcon className="h-3.5 w-3.5" />
         </ToolbarBtn>
 
         <Sep />
 
-        {/* Media */}
         <ToolbarBtn
           onClick={() => {
             useMediaStore.getState().openPicker("any", (url, name, mimeType) => {
@@ -166,14 +165,11 @@ export function FixedToolbar({ editor }: { editor: Editor }) {
 
         <div className="flex-1" />
 
-        {/* Export */}
         <ExportMenu editor={editor} />
       </div>
     </div>
   );
 }
-
-// ─── Export dropdown ───────────────────────────────────────────────────────────
 
 function ExportMenu({ editor }: { editor: Editor }) {
   const [open, setOpen] = useState(false);
@@ -238,8 +234,6 @@ function ExportMenu({ editor }: { editor: Editor }) {
   );
 }
 
-// ─── Bubble toolbar (appears on text selection) ────────────────────────────────
-
 export function BubbleToolbar({ editor }: { editor: Editor }) {
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
 
@@ -266,7 +260,7 @@ export function BubbleToolbar({ editor }: { editor: Editor }) {
     };
   }, [editor]);
 
-  const headingActions = BLOCK_ACTIONS.filter((a) => a.toolbarExec && a.isActive);
+  const headingActions = BLOCK_ACTIONS.filter((action) => action.toolbarExec && action.isActive);
 
   if (!coords) return null;
 
@@ -291,14 +285,14 @@ export function BubbleToolbar({ editor }: { editor: Editor }) {
 
       <div className="mx-1 h-4 w-px bg-border" />
 
-      {headingActions.map((a) => (
+      {headingActions.map((action) => (
         <ToolbarBtn
-          key={a.title}
-          onClick={() => a.toolbarExec!(editor)}
-          active={a.isActive!(editor)}
-          title={a.title}
+          key={action.title}
+          onClick={() => action.toolbarExec!(editor)}
+          active={action.isActive!(editor)}
+          title={action.title}
         >
-          {a.icon}
+          {action.icon}
         </ToolbarBtn>
       ))}
 
@@ -322,8 +316,6 @@ export function BubbleToolbar({ editor }: { editor: Editor }) {
   );
 }
 
-// ─── Utilities ─────────────────────────────────────────────────────────────────
-
 export function insertAssetInEditor(editor: Editor, url: string, name: string, mimeType: string) {
   const isMedia =
     mimeType.startsWith("image/") ||
@@ -340,9 +332,9 @@ export function insertAssetInEditor(editor: Editor, url: string, name: string, m
 function download(content: string, filename: string, mime: string) {
   const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
   URL.revokeObjectURL(url);
 }

@@ -1,38 +1,18 @@
+/**
+ * @context  API route for a collection's media directory (cli/ui/app/api/media/[collection]).
+ * @does     GET lists all media assets; POST accepts a file upload and writes it to the collection's _media folder.
+ * @depends  @cli/adapters/fs-adapter for file I/O, lib/env for contents dir, @shared/constants for media paths.
+ * @do       Add DELETE support or metadata endpoints for media assets here.
+ * @dont     Never serve or mutate files outside the collection's _media directory.
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import path from "node:path";
 import { FsAdapter } from "@cli/adapters/fs-adapter";
 import { getContentsDir } from "@/lib/env";
-import { MEDIA_DIR, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, AUDIO_EXTENSIONS } from "@shared/constants";
+import { MEDIA_DIR } from "@shared/constants";
 import type { MediaAsset } from "@shared/types";
-
-function mimeFromExt(ext: string): string {
-  const map: Record<string, string> = {
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".gif": "image/gif",
-    ".webp": "image/webp",
-    ".svg": "image/svg+xml",
-    ".avif": "image/avif",
-    ".mp4": "video/mp4",
-    ".webm": "video/webm",
-    ".ogv": "video/ogg",
-    ".mp3": "audio/mpeg",
-    ".ogg": "audio/ogg",
-    ".wav": "audio/wav",
-    ".m4a": "audio/aac",
-    ".aac": "audio/aac",
-    ".flac": "audio/flac",
-  };
-  return map[ext.toLowerCase()] ?? "application/octet-stream";
-}
-
-function kindFromExt(ext: string): "image" | "video" | "audio" | "file" {
-  if ((IMAGE_EXTENSIONS as readonly string[]).includes(ext.toLowerCase())) return "image";
-  if ((VIDEO_EXTENSIONS as readonly string[]).includes(ext.toLowerCase())) return "video";
-  if ((AUDIO_EXTENSIONS as readonly string[]).includes(ext.toLowerCase())) return "audio";
-  return "file";
-}
+import { mimeFromExtension, kindFromExtension } from "@/lib/media-types";
 
 export async function GET(
   _req: NextRequest,
@@ -45,16 +25,16 @@ export async function GET(
 
   const files = await fs.listAllFiles(mediaDir);
 
-  const assets: MediaAsset[] = files.map((f) => {
-    const ext = path.extname(f.name);
+  const assets: MediaAsset[] = files.map((file) => {
+    const ext = path.extname(file.name);
     return {
-      name: f.name,
-      path: f.relativePath,
-      url: `/api/media/${collection}/${encodeURIComponent(f.name)}`,
-      size: f.size,
-      mimeType: mimeFromExt(ext),
-      kind: kindFromExt(ext),
-      modifiedAt: f.modifiedAt.toISOString(),
+      name: file.name,
+      path: file.relativePath,
+      url: `/api/media/${collection}/${encodeURIComponent(file.name)}`,
+      size: file.size,
+      mimeType: mimeFromExtension(ext),
+      kind: kindFromExtension(ext),
+      modifiedAt: file.modifiedAt.toISOString(),
     };
   });
 
@@ -93,8 +73,8 @@ export async function POST(
     path: destPath,
     url: `/api/media/${collection}/${encodeURIComponent(safeName)}`,
     size: buffer.length,
-    mimeType: mimeFromExt(ext),
-    kind: kindFromExt(ext),
+    mimeType: mimeFromExtension(ext),
+    kind: kindFromExtension(ext),
     modifiedAt: new Date().toISOString(),
   };
 

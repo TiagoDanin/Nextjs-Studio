@@ -81,7 +81,6 @@
     @apply bg-background text-foreground;
   }
 
-  /* Subtle custom scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -99,22 +98,18 @@
 }
 
 @layer components {
-  /* Full-height flex column for each page's main content area */
   .studio-main {
     @apply relative flex flex-1 flex-col overflow-hidden bg-background;
   }
 
-  /* Fixed-height top bar aligned with the sidebar header (58px) */
   .studio-topbar {
     @apply flex h-[58px] shrink-0 items-center justify-between border-b bg-background px-6;
   }
 
-  /* Scrollable content area below the topbar */
   .studio-canvas {
     @apply flex-1 overflow-auto;
   }
 
-  /* Card surface for content containers */
   .studio-surface {
     @apply rounded-xl border bg-card;
   }
@@ -231,7 +226,6 @@
 .dark .tiptap pre { background-color: #161b22; color: #e6edf3; }
 .dark .tiptap code { background-color: var(--color-muted); }
 
-/* Rich text field inside JSON form — override MDX-specific constraints */
 .rich-text-field .tiptap {
   max-width: none;
   min-height: 200px;

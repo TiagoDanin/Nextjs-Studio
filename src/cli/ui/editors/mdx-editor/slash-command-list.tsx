@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  UI editor — slash command dropdown at src/cli/ui/editors/mdx-editor/slash-command-list.tsx
+ * @does     Renders the filterable popup list of available editor actions triggered by "/"
+ * @depends  ./editor-actions for EditorAction type
+ * @do       Improve keyboard navigation or add action categories here
+ * @dont     Define actions here — action definitions belong in editor-actions.tsx
+ */
+
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { EditorAction } from "./editor-actions";

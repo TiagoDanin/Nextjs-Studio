@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  UI editor — form field renderer at src/cli/ui/editors/json-form/form-field.tsx
+ * @does     Renders the appropriate input control for each field type in the JSON form editor
+ * @depends  @/stores/editor-store, @/components/ui/*, @shared/fields, @shared/field-utils
+ * @do       Add new field type renderers (e.g. color picker, relation) here
+ * @dont     Put form-level layout or section logic here — that belongs in form-section.tsx
+ */
+
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useEditorStore } from "@/stores/editor-store";
@@ -13,6 +21,7 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NativeSelect } from "@/components/ui/native-select";
 import { keyLabel } from "@shared/field-utils";
 import type {
   FieldDefinition,
@@ -33,7 +42,6 @@ interface Props {
   isRichText?: boolean;
 }
 
-// Shared label + wrapper layout
 function FieldRow({
   label,
   children,
@@ -51,36 +59,6 @@ function FieldRow({
   );
 }
 
-// Native <select> styled to match shadcn Input
-function NativeSelect({
-  value,
-  onChange,
-  options,
-  className,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: { label: string; value: string }[];
-  className?: string;
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={cn(
-        "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-        className,
-      )}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
-  );
-}
-
 export function FormField({ fieldKey, path, value, isRichText }: Props) {
   const updateField = useEditorStore((s) => s.updateField);
   const fieldDefs = useEditorStore((s) => s.fieldDefs);
@@ -92,7 +70,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
   const label = fieldDef?.label ?? keyLabel(fieldKey);
   const type = fieldDef?.type;
 
-  // --- rich text (primary long-text field with TipTap) ---
   if (isRichText && typeof value === "string") {
     return (
       <div className="flex flex-col gap-2">
@@ -106,7 +83,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     );
   }
 
-  // --- boolean ---
   if (type === "boolean" || (!type && typeof value === "boolean")) {
     return (
       <div className="flex items-center gap-4">
@@ -121,7 +97,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     );
   }
 
-  // --- number ---
   if (type === "number" || (!type && typeof value === "number")) {
     return (
       <FieldRow label={label}>
@@ -137,7 +112,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     );
   }
 
-  // --- date / datetime ---
   if (type === "date") {
     const includeTime = (fieldDef as { includeTime?: boolean }).includeTime;
     return (
@@ -151,7 +125,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     );
   }
 
-  // --- created-time / updated-time (read-only display) ---
   if (type === "created-time" || type === "updated-time") {
     return (
       <FieldRow label={label}>
@@ -165,7 +138,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     );
   }
 
-  // --- email ---
   if (type === "email") {
     return (
       <FieldRow label={label}>
@@ -179,7 +151,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     );
   }
 
-  // --- url ---
   if (type === "url") {
     return (
       <FieldRow label={label}>
@@ -193,7 +164,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     );
   }
 
-  // --- select ---
   if (type === "select") {
     const opts = (fieldDef as SelectField).options ?? [];
     return (
@@ -207,7 +177,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     );
   }
 
-  // --- multi-select (comma-separated for now) ---
   if (type === "multi-select") {
     const opts = (fieldDef as MultiSelectField).options ?? [];
     const selected = Array.isArray(value) ? (value as string[]) : [];
@@ -254,7 +223,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     );
   }
 
-  // --- status ---
   if (type === "status") {
     const opts = (fieldDef as StatusField).options ?? [];
     return (
@@ -268,7 +236,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     );
   }
 
-  // --- long-text ---
   if (type === "long-text") {
     const rows = (fieldDef as { rows?: number }).rows ?? 3;
     return (
@@ -284,7 +251,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     );
   }
 
-  // --- media ---
   if (type === "media") {
     return (
       <FieldRow label={label}>
@@ -298,7 +264,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     );
   }
 
-  // --- id / slug (editable text) ---
   if (type === "id" || type === "slug") {
     return (
       <FieldRow label={label}>
@@ -311,7 +276,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     );
   }
 
-  // --- nested object ---
   if (
     typeof value === "object" &&
     value !== null &&
@@ -327,7 +291,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     );
   }
 
-  // --- array fallback (comma-separated) ---
   if (type === "array" || Array.isArray(value)) {
     return (
       <FieldRow label={label}>
@@ -344,7 +307,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     );
   }
 
-  // --- default: text ---
   return (
     <FieldRow label={label}>
       <Input
@@ -356,8 +318,6 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     </FieldRow>
   );
 }
-
-// ─── Nested object (collapsible, recursive) ──────────────────────────────────
 
 function NestedObjectField({
   label,

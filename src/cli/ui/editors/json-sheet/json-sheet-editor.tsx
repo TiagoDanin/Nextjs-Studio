@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  UI editor — JSON sheet view at src/cli/ui/editors/json-sheet/json-sheet-editor.tsx
+ * @does     Initializes the editor store and composes the sheet toolbar with the data table
+ * @depends  @/stores/editor-store, ./sheet-toolbar, ./sheet-table
+ * @do       Add sheet-level features (column visibility, filters) here
+ * @dont     Put table rendering logic here — that belongs in sheet-table.tsx
+ */
+
 import { useEffect } from "react";
 import { useEditorStore } from "@/stores/editor-store";
 import { SheetToolbar } from "./sheet-toolbar";

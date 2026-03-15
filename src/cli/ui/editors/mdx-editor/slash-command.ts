@@ -1,3 +1,11 @@
+/**
+ * @context  UI editor — TipTap extension at src/cli/ui/editors/mdx-editor/slash-command.ts
+ * @does     Registers the "/" trigger as a TipTap Suggestion plugin that opens the command list
+ * @depends  @tiptap/core, @tiptap/suggestion, ./slash-command-list, ./editor-actions
+ * @do       Customize trigger character or suggestion behavior here
+ * @dont     Define actions here — action definitions belong in editor-actions.tsx
+ */
+
 import { Extension } from "@tiptap/core";
 import { ReactRenderer } from "@tiptap/react";
 import Suggestion from "@tiptap/suggestion";
@@ -7,7 +15,7 @@ import { BLOCK_ACTIONS, type EditorAction } from "./editor-actions";
 
 function filterCommands(query: string): EditorAction[] {
   const q = query.toLowerCase();
-  return BLOCK_ACTIONS.filter((a) => a.title.toLowerCase().includes(q));
+  return BLOCK_ACTIONS.filter((action) => action.title.toLowerCase().includes(q));
 }
 
 export const SlashCommand = Extension.create({

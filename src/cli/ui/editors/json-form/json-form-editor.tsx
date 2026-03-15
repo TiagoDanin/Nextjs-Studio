@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  UI editor — JSON form view at src/cli/ui/editors/json-form/json-form-editor.tsx
+ * @does     Renders a JSON object as a sectioned form with collapsible groups and rich text support
+ * @depends  @/stores/editor-store, ./form-toolbar, ./form-section, ./form-field, ./form-add-*
+ * @do       Add form-level features (validation summary, keyboard shortcuts) here
+ * @dont     Put individual field rendering here — that belongs in form-field.tsx
+ */
+
 import { useEffect } from "react";
 import { useEditorStore } from "@/stores/editor-store";
 import { FormToolbar } from "./form-toolbar";
@@ -30,7 +38,7 @@ function getPrimaryRichTextField(
   fieldDefs: Record<string, { type?: string }>,
 ): string | null {
   const flatKeys = Object.entries(data)
-    .filter(([, v]) => typeof v === "string")
+    .filter(([, value]) => typeof value === "string")
     .map(([k]) => k);
 
   // Check priority names first

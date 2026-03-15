@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  Dark/light mode toggle button (cli/ui/components).
+ * @does     Reads the current theme from next-themes and toggles between dark and light on click.
+ * @depends  next-themes for useTheme hook, components/ui/button for the base button.
+ * @do       Add system-preference detection or animated transitions here.
+ * @dont     Never manage theme state outside next-themes — it handles persistence and SSR.
+ */
+
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";

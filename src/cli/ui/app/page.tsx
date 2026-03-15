@@ -1,3 +1,11 @@
+/**
+ * @context  Home page of the studio UI (cli/ui/app), the default route at "/".
+ * @does     Fetches all collections and renders an overview grid with cards linking to each collection.
+ * @depends  actions/collections for getCollections, components/app-sidebar for navigation.
+ * @do       Add workspace-level features (search, recent entries) to this page.
+ * @dont     Never render editor components here — each editor lives on its own collection route.
+ */
+
 import Link from "next/link";
 import {
   FileText,
@@ -25,7 +33,7 @@ const typeLabels = {
 
 export default async function HomePage() {
   const collections = await getCollections();
-  const totalEntries = collections.reduce((sum, c) => sum + c.count, 0);
+  const totalEntries = collections.reduce((sum, collection) => sum + collection.count, 0);
 
   return (
     <>

@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  UI editor — table cell at src/cli/ui/editors/json-sheet/sheet-cell.tsx
+ * @does     Formats and displays a cell value with type-aware previews for arrays, objects, and primitives
+ * @depends  none
+ * @do       Add new value type formatters (e.g. date, color swatch) here
+ * @dont     Put editable inputs here — editing happens in sheet-row-inspector.tsx
+ */
+
 interface Props {
   value: unknown;
 }

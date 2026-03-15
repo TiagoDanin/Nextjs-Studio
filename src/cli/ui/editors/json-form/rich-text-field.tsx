@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @context  UI editor — rich text field at src/cli/ui/editors/json-form/rich-text-field.tsx
+ * @does     Provides a TipTap-based rich text editor for long-text fields in the JSON form
+ * @depends  @tiptap/react, ../mdx-editor/editor-actions for BLOCK_ACTIONS
+ * @do       Add field-specific toolbar buttons or extensions here
+ * @dont     Put form layout logic here — this is a standalone field component
+ */
+
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -30,8 +38,6 @@ interface Props {
   onChange: (markdown: string) => void;
   placeholder?: string;
 }
-
-// ─── Toolbar button ──────────────────────────────────────────────────────────
 
 function Btn({
   onClick,
@@ -64,8 +70,6 @@ function Sep() {
   return <div className="mx-1.5 h-4.5 w-px shrink-0 bg-border" />;
 }
 
-// ─── Inline toolbar ──────────────────────────────────────────────────────────
-
 function RichTextToolbar({ editor }: { editor: Editor }) {
   const [, setTick] = useState(0);
 
@@ -87,7 +91,7 @@ function RichTextToolbar({ editor }: { editor: Editor }) {
     else editor.chain().focus().setLink({ href: url }).run();
   }
 
-  const headingActions = BLOCK_ACTIONS.filter((a) => a.toolbarExec && a.isActive);
+  const headingActions = BLOCK_ACTIONS.filter((action) => action.toolbarExec && action.isActive);
 
   return (
     <div className="flex items-center gap-px rounded-t-md border border-b-0 bg-card px-2 py-1">
@@ -107,14 +111,14 @@ function RichTextToolbar({ editor }: { editor: Editor }) {
       >
         <Type className="h-3.5 w-3.5" />
       </Btn>
-      {headingActions.map((a) => (
+      {headingActions.map((action) => (
         <Btn
-          key={a.title}
-          onClick={() => a.toolbarExec!(editor)}
-          active={a.isActive!(editor)}
-          title={a.title}
+          key={action.title}
+          onClick={() => action.toolbarExec!(editor)}
+          active={action.isActive!(editor)}
+          title={action.title}
         >
-          {a.icon}
+          {action.icon}
         </Btn>
       ))}
 
@@ -157,8 +161,6 @@ function RichTextToolbar({ editor }: { editor: Editor }) {
     </div>
   );
 }
-
-// ─── Main component ──────────────────────────────────────────────────────────
 
 export function RichTextField({ value, onChange, placeholder }: Props) {
   const isInternalUpdate = useRef(false);

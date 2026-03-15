@@ -1,11 +1,19 @@
 "use client";
 
+/**
+ * @context  UI editor — MDX editor wrapper at src/cli/ui/editors/mdx-editor/mdx-editor.tsx
+ * @does     Composes the MDX toolbar, frontmatter editor, TipTap editor, and media picker
+ * @depends  @/stores/mdx-editor-store, ./mdx-toolbar, ./mdx-frontmatter, ./mdx-tiptap, @/editors/media-picker
+ * @do       Add new editor panels (e.g. outline sidebar) as children here
+ * @dont     Put editor logic or state management here — delegate to stores and sub-components
+ */
+
 import { useEffect } from "react";
 import { useMdxEditorStore } from "@/stores/mdx-editor-store";
 import { MdxToolbar } from "./mdx-toolbar";
 import { MdxFrontmatter } from "./mdx-frontmatter";
 import { MdxTiptap } from "./mdx-tiptap";
-import { MediaPicker } from "@/components/media-picker/media-picker";
+import { MediaPicker } from "@/editors/media-picker/media-picker";
 
 interface Props {
   collectionName: string;

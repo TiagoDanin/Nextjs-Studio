@@ -1,7 +1,15 @@
+/**
+ * @context  Collection detail page in the studio UI (cli/ui/app/collection/[name]).
+ * @does     Fetches a collection's entries and renders the appropriate editor (sheet for arrays/mdx, form for objects).
+ * @depends  actions/collections for data loading, editors/json-sheet and editors/json-form editors.
+ * @do       Add new editor types (e.g. YAML) by branching on collection.type here.
+ * @dont     Never embed editor logic directly — delegate to the dedicated editor components.
+ */
+
 import { AppSidebar } from "@/components/app-sidebar";
 import { getCollections, getCollectionEntries } from "@/actions/collections";
-import { JsonSheetEditor } from "@/components/json-sheet/json-sheet-editor";
-import { JsonFormEditor } from "@/components/json-form/json-form-editor";
+import { JsonSheetEditor } from "@/editors/json-sheet/json-sheet-editor";
+import { JsonFormEditor } from "@/editors/json-form/json-form-editor";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -21,16 +29,16 @@ export default async function CollectionPage({
 
   const { collection, entries, filePath } = result;
 
-  const collectionsWithEntries = collections.map((c) =>
-    c.name === name && c.type === "mdx"
+  const collectionsWithEntries = collections.map((collection) =>
+    collection.name === name && collection.type === "mdx"
       ? {
-          ...c,
-          entries: entries.map((e) => ({
-            slug: e.slug,
-            title: String(e.data.title ?? e.slug),
+          ...collection,
+          entries: entries.map((entry) => ({
+            slug: entry.slug,
+            title: String(entry.data.title ?? entry.slug),
           })),
         }
-      : c,
+      : collection,
   );
 
   return (

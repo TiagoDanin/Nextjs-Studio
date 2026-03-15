@@ -1,3 +1,11 @@
+/**
+ * @context  Main sidebar navigation component for the studio UI (cli/ui/components).
+ * @does     Renders the collection list with icons, counts, and expandable MDX entry sub-items.
+ * @depends  lib/sidebar-cache for persisting collection names, components/theme-toggle, components/ui/scroll-area.
+ * @do       Add sidebar features like search filtering or drag-to-reorder collections.
+ * @dont     Never fetch data here — receive collections as props from the page server component.
+ */
+
 import Link from "next/link";
 import { FileText, Table, FileJson, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
