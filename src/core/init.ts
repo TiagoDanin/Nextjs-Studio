@@ -45,3 +45,31 @@ export function isStudioInitialized(): boolean {
     return false;
   }
 }
+
+/**
+ * Ensures the content store is initialized. Safe to call multiple times — only
+ * initializes once. Ideal for use at the top of Next.js server components and
+ * `generateStaticParams` / `generateMetadata` functions.
+ *
+ * @param contentsDir - Path to the contents directory. Defaults to `./contents` relative to cwd.
+ * @param config - Optional studio config for schemas and scripts.
+ *
+ * @example
+ * ```ts
+ * import { ensureContentLoaded, queryCollection } from "nextjs-studio";
+ *
+ * export default async function Page() {
+ *   await ensureContentLoaded();
+ *   const posts = queryCollection("posts");
+ *   // ...
+ * }
+ * ```
+ */
+export async function ensureContentLoaded(
+  contentsDir?: string,
+  config?: StudioConfig,
+): Promise<void> {
+  if (!isStudioInitialized()) {
+    await initStudio(contentsDir, config);
+  }
+}

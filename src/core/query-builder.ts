@@ -7,26 +7,24 @@
  */
 
 import { filter, orderBy, get, slice } from "lodash-es";
-import type { ContentEntry, QueryOptions } from "../shared/types.js";
+import type { QueryOptions } from "../shared/types.js";
+import type { CollectionTypeMap } from "../shared/types.js";
 import { getStore } from "./content-store.js";
 
 /**
  * Fluent query builder for content collections.
+ * Returned by `queryCollection()` — supports both chaining and direct array usage.
  *
  * ```ts
- * const posts = queryCollection("blog")
- *   .where({ published: true })
- *   .sort("date", "desc")
- *   .limit(10)
- *   .all();
- * ```
+ * Fluent chaining
+ * queryCollection("blog").where({ published: true }).sort("date", "desc").limit(10).all()
  *
- * Supports dot notation for nested properties:
- * ```ts
- * queryCollection("pages").where({ "hero.title": "Welcome" }).all();
+ * Direct array usage — all native JS array methods work
+ * queryCollection("blog").slice(0, 5)
+ * queryCollection("blog").map(post => post.title)
  * ```
  */
-export class QueryBuilder {
+export class QueryBuilder<T = Record<string, unknown>> {
   private readonly collectionName: string;
   private options: QueryOptions = {};
 
@@ -54,7 +52,7 @@ export class QueryBuilder {
     return this;
   }
 
-  all(): ContentEntry[] {
+  all(): T[] {
     let entries = [...getStore().getCollection(this.collectionName)];
 
     if (this.options.where) {
@@ -71,10 +69,10 @@ export class QueryBuilder {
 
     const start = this.options.offset ?? 0;
     const end = this.options.limit ? start + this.options.limit : undefined;
-    return slice(entries, start, end);
+    return slice(entries, start, end).map((e) => e.data as unknown as T);
   }
 
-  first(): ContentEntry | undefined {
+  first(): T | undefined {
     return this.limit(1).all()[0];
   }
 
@@ -83,9 +81,52 @@ export class QueryBuilder {
   }
 }
 
+/** Intersection type: fluent builder + full native Array<T> interface. */
+export type QueryResult<T> = QueryBuilder<T> & T[];
+
+/**
+ * Wraps a QueryBuilder in a Proxy that delegates any unknown property access
+ * to the resolved array. The array result is cached and invalidated whenever
+ * a fluent method (where/sort/limit/offset) is called.
+ */
+const FLUENT_METHODS = new Set(["where", "sort", "limit", "offset"]);
+
+function wrapWithArrayProxy<T>(builder: QueryBuilder<T>): QueryResult<T> {
+  let cache: T[] | null = null;
+
+  return new Proxy(builder, {
+    get(target, prop, receiver) {
+      // Fluent methods: apply on target, invalidate cache, return proxy for chaining
+      if (FLUENT_METHODS.has(String(prop))) {
+        const method = Reflect.get(target, prop) as (...args: unknown[]) => unknown;
+        return (...args: unknown[]) => {
+          cache = null;
+          method.apply(target, args);
+          return receiver;
+        };
+      }
+
+      // Own QueryBuilder methods (all, first, count, etc.)
+      if (prop in target) {
+        const value = Reflect.get(target, prop, receiver);
+        return typeof value === "function" ? value.bind(target) : value;
+      }
+
+      // Delegate everything else (slice, map, filter, length, etc.) to the resolved array
+      if (!cache) cache = target.all();
+      const value = Reflect.get(cache, prop);
+      return typeof value === "function" ? value.bind(cache) : value;
+    },
+  }) as unknown as QueryResult<T>;
+}
+
 /**
  * Entry point for querying a content collection.
  */
-export function queryCollection(collection: string): QueryBuilder {
-  return new QueryBuilder(collection);
+export function queryCollection<K extends keyof CollectionTypeMap>(
+  name: K,
+): QueryResult<CollectionTypeMap[K]>;
+export function queryCollection(name: string): QueryResult<Record<string, unknown>>;
+export function queryCollection(name: string): QueryResult<Record<string, unknown>> {
+  return wrapWithArrayProxy(new QueryBuilder(name));
 }

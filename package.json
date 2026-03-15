@@ -1,6 +1,6 @@
 {
     "name": "nextjs-studio",
-    "version": "0.2.0",
+    "version": "0.5.0",
     "description": "A Git-based, local-first CMS for Next.js projects",
     "keywords": [
         "nextjs",
@@ -14,7 +14,7 @@
     "homepage": "https://github.com/TiagoDanin/Nextjs-Studio",
     "repository": {
         "type": "git",
-        "url": "https://github.com/TiagoDanin/Nextjs-Studio.git"
+        "url": "git+https://github.com/TiagoDanin/Nextjs-Studio.git"
     },
     "license": "MIT",
     "author": "Tiago Danin",
@@ -27,7 +27,7 @@
     },
     "main": "./dist/core/index.js",
     "types": "./dist/core/index.d.ts",
-    "bin": "./dist/bin/nextjs-studio.js",
+    "bin": "dist/bin/nextjs-studio.js",
     "files": [
         "dist",
         "README.md",
@@ -36,7 +36,7 @@
     "scripts": {
         "dev": "tsx src/bin/nextjs-studio.ts --dir example/contents",
         "studio:dev": "cross-env STUDIO_CONTENTS_DIR=example/contents next dev --port 3030 --webpack src/cli/ui",
-        "studio:build": "next build --webpack src/cli/ui",
+        "studio:build": "next build --webpack src/cli/ui && mkdir -p dist/cli/ui/.next/standalone/dist/cli/ui/.next && cp -r dist/cli/ui/.next/static dist/cli/ui/.next/standalone/dist/cli/ui/.next/static",
         "build": "tsup && yarn studio:build",
         "lint": "eslint src/",
         "type-check": "tsc --noEmit",

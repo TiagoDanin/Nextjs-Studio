@@ -5,11 +5,14 @@ const projectRoot = path.resolve(import.meta.dirname, "../../..");
 
 const config: NextConfig = {
   output: "standalone",
+  distDir: "../../../dist/cli/ui/.next",
   reactStrictMode: true,
   outputFileTracingRoot: projectRoot,
-  transpilePackages: [],
   allowedDevOrigins: ["*"],
+  // ESM-only packages used server-side must be loaded natively — not bundled by webpack
+  serverExternalPackages: ["@sindresorhus/slugify", "@sindresorhus/transliterate"],
   webpack: (config) => {
+    config.resolve ??= {};
     config.resolve.alias = {
       ...config.resolve.alias,
       "@core": path.resolve(import.meta.dirname, "../../core"),

@@ -62,6 +62,20 @@ export interface CollectionConfig {
 }
 
 /**
+ * Augmentable map of collection names to their typed entry shapes.
+ * Extend this via generated types or manual declaration:
+ *
+ * @example
+ * // .studio/studio.d.ts (auto-generated)
+ * declare module 'nextjs-studio' {
+ *   interface CollectionTypeMap {
+ *     posts: { title: string; date: string; slug: string };
+ *   }
+ * }
+ */
+export interface CollectionTypeMap {}
+
+/**
  * Query options for the content query builder.
  */
 export interface QueryOptions {
