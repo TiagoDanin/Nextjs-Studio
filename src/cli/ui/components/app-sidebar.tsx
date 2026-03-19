@@ -18,7 +18,7 @@ interface CollectionItem {
   type: "mdx" | "json-array" | "json-object";
   count: number;
   sectionCount?: number;
-  entries?: { slug: string; title: string }[];
+  entries?: { slug: string; title: string; draft?: boolean }[];
 }
 
 const typeIcons = {
@@ -113,9 +113,13 @@ export function AppSidebar({
                             "text-sidebar-foreground/50 hover:text-sidebar-foreground",
                             activeSlug === entry.slug &&
                               "text-sidebar-foreground font-medium",
+                            entry.draft && "opacity-50",
                           )}
                         >
                           {entry.title}
+                          {entry.draft && (
+                            <span className="ml-1.5 text-[10px] text-sidebar-foreground/30">draft</span>
+                          )}
                         </Link>
                       ))}
                     </div>

@@ -9,13 +9,21 @@
  */
 
 import { loadContent } from "@core/content-store";
+import { loadConfigFromPath } from "@core/config-loader";
+import { loadComponentRegistry } from "@core/component-registry";
 import { writeJsonFile, writeMdxEntries } from "@core/content-writer.js";
 import { inferSchema } from "@core/schema-inferrer.js";
 import { fieldLabel } from "@shared/field-utils.js";
 import { FsAdapter } from "@cli/adapters/fs-adapter";
-import { getContentsDir } from "../lib/env";
-import type { ContentEntry } from "@shared/types";
+import { getContentsDir, getConfigPath } from "../lib/env";
+import type { ContentEntry, StudioConfig } from "@shared/types";
 import type { FieldDefinition } from "@shared/fields";
+
+async function loadConfigForUI(): Promise<StudioConfig> {
+  const configPath = getConfigPath();
+  if (!configPath) return {};
+  return loadConfigFromPath(configPath);
+}
 
 export interface CollectionSummary {
   name: string;
@@ -60,7 +68,8 @@ export interface SerializableEntry {
 export async function getCollections(): Promise<CollectionSummary[]> {
   try {
     const contentsDir = getContentsDir();
-    const store = await loadContent(new FsAdapter(contentsDir));
+    const config = await loadConfigForUI();
+    const store = await loadContent(new FsAdapter(contentsDir), config);
 
     return store.getCollections().map((collection) => {
       const base = { name: collection.name, type: collection.type, count: collection.count, basePath: collection.basePath };
@@ -80,7 +89,8 @@ export async function getCollectionEntries(
 ): Promise<CollectionEntriesResult | null> {
   try {
     const contentsDir = getContentsDir();
-    const store = await loadContent(new FsAdapter(contentsDir));
+    const config = await loadConfigForUI();
+    const store = await loadContent(new FsAdapter(contentsDir), config);
     const collections = store.getCollections();
     const col = collections.find((collection) => collection.name === name);
 
@@ -137,7 +147,8 @@ export async function getMdxEntry(
 ): Promise<{ filePath: string; frontmatter: Record<string, unknown>; body: string } | null> {
   try {
     const contentsDir = getContentsDir();
-    const store = await loadContent(new FsAdapter(contentsDir));
+    const config = await loadConfigForUI();
+    const store = await loadContent(new FsAdapter(contentsDir), config);
     const entries: ContentEntry[] = store.getCollection(collectionName);
     const entry = entries.find((entry) => entry.slug === slug);
     if (!entry) return null;
@@ -186,4 +197,9 @@ export async function saveMdxFrontmatter(
   } catch (error) {
     return { success: false, error: String(error) };
   }
+}
+
+export async function getComponentRegistry() {
+  const config = await loadConfigForUI();
+  return loadComponentRegistry(config);
 }
