@@ -14,6 +14,7 @@ import { COLLECTION_ORDER_FILE } from "../shared/constants.js";
 import { parseMdx } from "./parsers/parser-mdx.js";
 import { parseJson } from "./parsers/parser-json.js";
 import { inferSchema } from "./schema-inferrer.js";
+import { parseLocaleFromFilename, stripLocaleFromSlug } from "./locale-parser.js";
 
 export class ContentIndex {
   private readonly entries = new Map<string, ContentEntry[]>();
@@ -47,6 +48,38 @@ export class ContentIndex {
   clear(): void {
     this.entries.clear();
     this.collections.clear();
+  }
+
+  updateEntry(collectionName: string, entry: ContentEntry): void {
+    const entries = this.entries.get(collectionName) ?? [];
+    const idx = entries.findIndex((e) => e.slug === entry.slug);
+    if (idx >= 0) {
+      entries[idx] = entry;
+    } else {
+      entries.push(entry);
+    }
+    this.entries.set(collectionName, entries);
+    this.updateCollectionMeta(collectionName);
+  }
+
+  removeEntry(collectionName: string, slug: string): void {
+    const entries = this.entries.get(collectionName);
+    if (!entries) return;
+    const filtered = entries.filter((e) => e.slug !== slug);
+    this.entries.set(collectionName, filtered);
+    this.updateCollectionMeta(collectionName);
+  }
+
+  private updateCollectionMeta(collectionName: string): void {
+    const col = this.collections.get(collectionName);
+    const entries = this.entries.get(collectionName) ?? [];
+    if (col) {
+      this.collections.set(collectionName, {
+        ...col,
+        count: entries.length,
+        type: this.detectCollectionType(entries),
+      });
+    }
   }
 
   private async indexCollection(
@@ -101,21 +134,24 @@ export class ContentIndex {
         .join("/");
 
       if (ext === ".mdx") {
-        entries.push(this.buildMdxEntry(collectionName, slug, content));
+        entries.push(this.buildMdxEntry(collectionName, slug, fileName, content));
       } else if (ext === ".json") {
         entries.push(...this.buildJsonEntries(collectionName, slug, content));
       }
     }
   }
 
-  private buildMdxEntry(collectionName: string, slug: string, content: string): ContentEntry {
+  private buildMdxEntry(collectionName: string, slug: string, fileName: string, content: string): ContentEntry {
     const parsed = parseMdx(content);
+    const locale = parseLocaleFromFilename(fileName);
+    const normalizedSlug = stripLocaleFromSlug(slug, locale);
     return {
       collection: collectionName,
-      slug,
-      path: `/${collectionName}/${slug}`,
+      slug: normalizedSlug,
+      path: `/${collectionName}/${normalizedSlug}`,
       body: parsed.body,
       data: parsed.data,
+      ...(locale ? { locale } : {}),
     };
   }
 

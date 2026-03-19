@@ -7,15 +7,25 @@
  */
 
 import matter from "gray-matter";
+import { bindFrontmatter } from "../frontmatter-binder.js";
 
 export interface ParsedMdx {
   data: Record<string, unknown>;
   body: string;
 }
 
-export function parseMdx(content: string): ParsedMdx {
+export interface ParseMdxOptions {
+  /** When true, replaces {frontmatter.X} tokens in the body with actual values. */
+  bindTokens?: boolean;
+}
+
+export function parseMdx(content: string, options?: ParseMdxOptions): ParsedMdx {
   const { data, content: body } = matter(content);
-  return { data, body: body.trim() };
+  const trimmed = body.trim();
+  return {
+    data,
+    body: options?.bindTokens ? bindFrontmatter(trimmed, data) : trimmed,
+  };
 }
 
 export function serializeMdx(data: Record<string, unknown>, body: string): string {

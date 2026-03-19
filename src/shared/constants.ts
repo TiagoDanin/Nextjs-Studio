@@ -9,6 +9,7 @@
 export const CONTENTS_DIR = "contents";
 export const CLI_PORT = 3030;
 export const CONFIG_FILE = "studio.config.ts";
+export const CONFIG_FILENAMES = ["studio.config.ts", "studio.config.js", "studio.config.mjs"] as const;
 export const SUPPORTED_EXTENSIONS = [".mdx", ".json"] as const;
 export const COLLECTION_ORDER_FILE = "collection.json";
 export const WATCHER_DEBOUNCE_MS = 5_000;

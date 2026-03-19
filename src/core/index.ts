@@ -10,6 +10,10 @@ export { queryCollection } from "./query-builder.js";
 export { initStudio, isStudioInitialized, ensureContentLoaded } from "./init.js";
 export { loadContent } from "./content-store.js";
 export { ContentIndex } from "./indexer.js";
+export { loadStudioConfig, resolveConfigPath, loadConfigFromPath } from "./config-loader.js";
+export { isDraft, filterDrafts } from "./draft-filter.js";
+export { bindFrontmatter, extractFrontmatterTokens } from "./frontmatter-binder.js";
+export { parseLocaleFromFilename, stripLocaleFromSlug } from "./locale-parser.js";
 
 export type {
   ContentEntry,

@@ -10,6 +10,7 @@ import { filter, orderBy, get, slice } from "lodash-es";
 import type { QueryOptions } from "../shared/types.js";
 import type { CollectionTypeMap } from "../shared/types.js";
 import { getStore } from "./content-store.js";
+import { isDraft } from "./draft-filter.js";
 
 /**
  * Fluent query builder for content collections.
@@ -27,6 +28,8 @@ import { getStore } from "./content-store.js";
 export class QueryBuilder<T = Record<string, unknown>> {
   private readonly collectionName: string;
   private options: QueryOptions = {};
+  private _excludeDrafts = false;
+  private _locale: string | undefined;
 
   constructor(collection: string) {
     this.collectionName = collection;
@@ -52,8 +55,27 @@ export class QueryBuilder<T = Record<string, unknown>> {
     return this;
   }
 
+  excludeDrafts(): this {
+    this._excludeDrafts = true;
+    return this;
+  }
+
+  locale(code: string): this {
+    this._locale = code;
+    return this;
+  }
+
   all(): T[] {
     let entries = [...getStore().getCollection(this.collectionName)];
+
+    if (this._excludeDrafts) {
+      entries = entries.filter((entry) => !isDraft(entry));
+    }
+
+    if (this._locale) {
+      const loc = this._locale;
+      entries = entries.filter((entry) => entry.locale === loc);
+    }
 
     if (this.options.where) {
       const conditions = this.options.where;
@@ -89,7 +111,7 @@ export type QueryResult<T> = QueryBuilder<T> & T[];
  * to the resolved array. The array result is cached and invalidated whenever
  * a fluent method (where/sort/limit/offset) is called.
  */
-const FLUENT_METHODS = new Set(["where", "sort", "limit", "offset"]);
+const FLUENT_METHODS = new Set(["where", "sort", "limit", "offset", "excludeDrafts", "locale"]);
 
 function wrapWithArrayProxy<T>(builder: QueryBuilder<T>): QueryResult<T> {
   let cache: T[] | null = null;

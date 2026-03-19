@@ -22,6 +22,8 @@ export interface ContentEntry {
   body?: string;
   /** Parsed frontmatter or JSON data */
   data: Record<string, unknown>;
+  /** Locale code parsed from filename (e.g. "pt" from "post.pt.mdx") */
+  locale?: string;
 }
 
 /**

@@ -79,6 +79,10 @@ export class ContentWatcher extends EventEmitter<ContentWatcherEvents> {
     this.debounceTimers.set(key, timer);
   }
 
+  isRunning(): boolean {
+    return this.watcher !== null;
+  }
+
   private parseFilePath(type: WatchEventType, filePath: string): WatchEvent | null {
     const relative = path.relative(this.contentsDir, filePath);
     const parts = relative.split(path.sep);
@@ -97,4 +101,13 @@ export class ContentWatcher extends EventEmitter<ContentWatcherEvents> {
       filePath: relative,
     };
   }
+}
+
+let singletonWatcher: ContentWatcher | null = null;
+
+export function getWatcher(contentsDir: string): ContentWatcher {
+  if (!singletonWatcher) {
+    singletonWatcher = new ContentWatcher(contentsDir);
+  }
+  return singletonWatcher;
 }
