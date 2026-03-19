@@ -66,6 +66,10 @@ interface EditorState {
   toggleSection: (section: string) => void;
   reorderSection: (key: string, direction: "up" | "down") => void;
 
+  // Tree actions
+  deleteField: (path: string) => void;
+  reorderField: (path: string, direction: "up" | "down") => void;
+
   // Shared actions
   markClean: () => void;
   getSerializedJson: () => string;
@@ -264,6 +268,51 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         formData: Object.fromEntries(next.flat().map((entryIndex) => entries[entryIndex]!)),
         isDirty: true,
       };
+    }),
+
+  deleteField: (fieldPath) =>
+    set((state) => {
+      const data = structuredClone(state.formData);
+      const keys = fieldPath.split(".");
+      const lastKey = keys.pop()!;
+      let obj: Record<string, unknown> = data;
+      for (const segment of keys) {
+        if (typeof obj[segment] !== "object" || obj[segment] === null) return {};
+        obj = obj[segment] as Record<string, unknown>;
+      }
+      delete obj[lastKey];
+      return { formData: data, isDirty: true };
+    }),
+
+  reorderField: (fieldPath, direction) =>
+    set((state) => {
+      const data = structuredClone(state.formData);
+      const keys = fieldPath.split(".");
+      const lastKey = keys.pop()!;
+      let parent: Record<string, unknown> = data;
+      for (const segment of keys) {
+        if (typeof parent[segment] !== "object" || parent[segment] === null) return {};
+        parent = parent[segment] as Record<string, unknown>;
+      }
+      const entries = Object.entries(parent);
+      const idx = entries.findIndex(([k]) => k === lastKey);
+      if (idx === -1) return {};
+      const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= entries.length) return {};
+      [entries[idx], entries[swapIdx]] = [entries[swapIdx]!, entries[idx]!];
+
+      // Rebuild parent object in the new order
+      const reordered = Object.fromEntries(entries);
+      if (keys.length === 0) {
+        return { formData: reordered, isDirty: true };
+      }
+      // Reassign to the nested parent
+      let root: Record<string, unknown> = data;
+      for (let i = 0; i < keys.length - 1; i++) {
+        root = root[keys[i]!] as Record<string, unknown>;
+      }
+      root[keys[keys.length - 1]!] = reordered;
+      return { formData: data, isDirty: true };
     }),
 
   markClean: () => set({ isDirty: false, isSaving: false }),

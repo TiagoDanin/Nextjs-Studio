@@ -12,9 +12,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMdxEditorStore } from "@/stores/mdx-editor-store";
 import { useMediaStore } from "@/stores/media-store";
-import { Upload, X, FileVideo, FileAudio, File } from "lucide-react";
+import { Upload, X, FileVideo, FileAudio, File, Crop } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchMediaAssets, uploadMediaFile } from "@/services/media-api";
+import { CropDialog } from "./crop-dialog";
 import type { MediaAsset } from "@shared/types";
 
 export function MediaPicker() {
@@ -28,6 +29,7 @@ export function MediaPicker() {
   const [selected, setSelected] = useState<MediaAsset | null>(null);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [cropAsset, setCropAsset] = useState<MediaAsset | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchAssets = useCallback(async () => {
@@ -86,9 +88,20 @@ export function MediaPicker() {
     closePicker();
   }
 
+  async function handleCropDone(blob: Blob, filename: string) {
+    if (!collection) return;
+    const file = new File([blob], filename, { type: blob.type });
+    const asset = await uploadMediaFile(file, collection);
+    if (asset) {
+      setAssets((prev) => [asset, ...prev.filter((a) => a.name !== asset.name)]);
+      setSelected(asset);
+    }
+    setCropAsset(null);
+  }
+
   if (!open) return null;
 
-  return createPortal(
+  return <>{createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={closePicker}
@@ -189,6 +202,16 @@ export function MediaPicker() {
             >
               Cancel
             </button>
+            {selected?.kind === "image" && (
+              <button
+                type="button"
+                onClick={() => setCropAsset(selected)}
+                className="flex h-7 items-center gap-1.5 rounded border px-3 text-xs hover:bg-accent"
+              >
+                <Crop className="h-3 w-3" />
+                Crop
+              </button>
+            )}
             <button
               type="button"
               disabled={!selected}
@@ -205,7 +228,17 @@ export function MediaPicker() {
       </div>
     </div>,
     document.body,
-  );
+  )}
+  {cropAsset && (
+    <CropDialog
+      key={cropAsset.path}
+      imageUrl={cropAsset.url}
+      imageName={cropAsset.name}
+      onCrop={handleCropDone}
+      onClose={() => setCropAsset(null)}
+    />
+  )}
+  </>;
 }
 
 function AssetThumb({
