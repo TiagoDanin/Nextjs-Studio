@@ -8,6 +8,7 @@
  * @dont     Put table structure or column definitions here — that belongs in sheet-table.tsx
  */
 
+import dynamic from "next/dynamic";
 import { useEditorStore } from "@/stores/editor-store";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,11 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { NativeSelect } from "@/components/ui/native-select";
 import { keyLabel } from "@shared/field-utils";
+
+const RichTextField = dynamic(
+  () => import("../json-form/rich-text-field").then((m) => m.RichTextField),
+  { ssr: false, loading: () => <div className="h-[120px] animate-pulse rounded-md border bg-muted/30" /> },
+);
 import type {
   FieldDefinition,
   SelectField,
@@ -320,6 +326,21 @@ export function SheetRowInspector({ rowIndex }: Props) {
               );
             })}
           </div>
+        </div>
+      );
+    }
+
+    if (typeof value === "string" && (value.length > 200 || value.includes("\n"))) {
+      return (
+        <div key={key} className="flex flex-col gap-1.5">
+          <Label className="text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <RichTextField
+            value={value}
+            onChange={(md) => updateCell(rowIndex, key, md)}
+            placeholder="Start writing..."
+          />
         </div>
       );
     }

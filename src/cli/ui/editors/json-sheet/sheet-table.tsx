@@ -178,7 +178,7 @@ export function SheetTable() {
               ) : (
                 <TableRow
                   data-state={undefined}
-                  className="cursor-pointer"
+                  className={cn("cursor-pointer", row.original.draft === true && "opacity-50")}
                   onClick={() => selectRow(row.index)}
                 >
                   {row.getVisibleCells().map((cell) => (

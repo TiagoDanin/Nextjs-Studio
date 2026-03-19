@@ -22,6 +22,7 @@ import {
   Image,
   FileVideo,
   FileAudio,
+  Box,
 } from "lucide-react";
 import { useMediaStore } from "@/stores/media-store";
 
@@ -132,6 +133,19 @@ export const BLOCK_ACTIONS: EditorAction[] = [
       useMediaStore.getState().openPicker("audio", (url, name) => {
         editor.chain().focus().setImage({ src: url, alt: name }).run();
       });
+    },
+  },
+  {
+    title: "Component",
+    description: "Insert a custom component block",
+    icon: <Box className={ICON_SIZE} />,
+    slashExec: (editor, range) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent({ type: "componentBlock", attrs: { tagName: "Component", props: {} } })
+        .run();
     },
   },
 ];

@@ -28,6 +28,12 @@ function formatObjectPreview(obj: object): string {
   return `{ ${keys.slice(0, 2).join(", ")}, +${keys.length - 2} }`;
 }
 
+function truncateText(value: unknown): string {
+  const str = String(value);
+  if (str.length <= 100) return str;
+  return `${str.slice(0, 97)}…`;
+}
+
 export function SheetCell({ value }: Props) {
   return (
     <span className="block truncate px-1 py-0.5">
@@ -40,7 +46,7 @@ export function SheetCell({ value }: Props) {
       ) : typeof value === "object" ? (
         <span className="text-muted-foreground">{formatObjectPreview(value)}</span>
       ) : (
-        String(value)
+        truncateText(value)
       )}
     </span>
   );

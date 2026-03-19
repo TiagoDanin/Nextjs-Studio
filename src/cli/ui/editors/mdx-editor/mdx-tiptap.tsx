@@ -10,6 +10,9 @@
 
 import { useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
+import { Extension } from "@tiptap/core";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -25,9 +28,42 @@ import { useMdxEditorStore } from "@/stores/mdx-editor-store";
 import { uploadMediaFile } from "@/services/media-api";
 import { SlashCommand } from "./slash-command";
 import { MermaidBlock } from "./mermaid-block";
+import { ComponentBlock } from "./component-block";
 import { FixedToolbar, BubbleToolbar, insertAssetInEditor } from "./toolbar";
 
 const lowlight = createLowlight(common);
+
+const frontmatterHighlightKey = new PluginKey("frontmatterHighlight");
+const FRONTMATTER_TOKEN = /\{frontmatter\.[a-zA-Z0-9_.]+\}/g;
+
+const FrontmatterHighlight = Extension.create({
+  name: "frontmatterHighlight",
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: frontmatterHighlightKey,
+        props: {
+          decorations(state) {
+            const decorations: Decoration[] = [];
+            state.doc.descendants((node, pos) => {
+              if (!node.isText || !node.text) return;
+              let match: RegExpExecArray | null;
+              const regex = new RegExp(FRONTMATTER_TOKEN.source, "g");
+              while ((match = regex.exec(node.text)) !== null) {
+                decorations.push(
+                  Decoration.inline(pos + match.index, pos + match.index + match[0].length, {
+                    class: "frontmatter-token",
+                  }),
+                );
+              }
+            });
+            return DecorationSet.create(state.doc, decorations);
+          },
+        },
+      }),
+    ];
+  },
+});
 
 const IMAGE_MIME_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml", "image/avif"];
 const VIDEO_MIME_TYPES = ["video/mp4", "video/webm", "video/ogg"];
@@ -93,7 +129,9 @@ export function MdxTiptap() {
       Markdown.configure({ transformPastedText: true }),
       GlobalDragHandle,
       MermaidBlock,
+      ComponentBlock,
       SlashCommand,
+      FrontmatterHighlight,
     ],
     content: useMdxEditorStore.getState().body,
     onCreate({ editor }) {

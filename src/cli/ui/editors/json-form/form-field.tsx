@@ -8,21 +8,15 @@
  * @dont     Put form-level layout or section logic here — that belongs in form-section.tsx
  */
 
-import { useState } from "react";
+import { memo } from "react";
 import dynamic from "next/dynamic";
 import { useEditorStore } from "@/stores/editor-store";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { NativeSelect } from "@/components/ui/native-select";
 import { keyLabel } from "@shared/field-utils";
+import { TreeNode } from "./tree-node";
 import type {
   FieldDefinition,
   SelectField,
@@ -59,7 +53,7 @@ function FieldRow({
   );
 }
 
-export function FormField({ fieldKey, path, value, isRichText }: Props) {
+export const FormField = memo(function FormField({ fieldKey, path, value, isRichText }: Props) {
   const updateField = useEditorStore((s) => s.updateField);
   const fieldDefs = useEditorStore((s) => s.fieldDefs);
 
@@ -283,10 +277,10 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
     type !== "array"
   ) {
     return (
-      <NestedObjectField
+      <TreeNode
         label={label}
         path={path}
-        entries={Object.entries(value as Record<string, unknown>)}
+        data={value as Record<string, unknown>}
       />
     );
   }
@@ -317,47 +311,5 @@ export function FormField({ fieldKey, path, value, isRichText }: Props) {
       />
     </FieldRow>
   );
-}
+});
 
-function NestedObjectField({
-  label,
-  path,
-  entries,
-}: {
-  label: string;
-  path: string;
-  entries: [string, unknown][];
-}) {
-  const [isOpen, setIsOpen] = useState(true);
-
-  return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger className="flex items-center gap-2 py-1">
-        <ChevronRight
-          className={cn(
-            "h-3.5 w-3.5 text-muted-foreground transition-transform",
-            isOpen && "rotate-90",
-          )}
-        />
-        <Label className="cursor-pointer text-sm text-muted-foreground">
-          {label}
-        </Label>
-        <span className="text-xs text-muted-foreground">
-          ({entries.length} field{entries.length !== 1 ? "s" : ""})
-        </span>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div className="ml-6 flex flex-col gap-3 border-l pl-4 pt-2">
-          {entries.map(([key, val]) => (
-            <FormField
-              key={key}
-              fieldKey={key}
-              path={`${path}.${key}`}
-              value={val}
-            />
-          ))}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}

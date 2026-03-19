@@ -8,10 +8,12 @@
  * @dont     Put editor state logic here — that belongs in the store
  */
 
-import { useTransition } from "react";
+import { useTransition, useCallback } from "react";
 import { useEditorStore } from "@/stores/editor-store";
 import { saveCollectionJson } from "@/actions/collections";
 import { Button } from "@/components/ui/button";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { toast } from "@/components/ui/toast";
 
 interface Props {
   collectionName: string;
@@ -24,15 +26,21 @@ export function FormToolbar({ collectionName }: Props) {
   const markClean = useEditorStore((s) => s.markClean);
   const [isPending, startTransition] = useTransition();
 
-  function handleSave() {
+  const handleSave = useCallback(() => {
+    if (!isDirty || isPending) return;
     startTransition(async () => {
       const json = getSerializedJson();
       const result = await saveCollectionJson(filePath, json);
       if (result.success) {
         markClean();
+        toast("Saved successfully", "success");
+      } else {
+        toast(result.error ?? "Save failed", "error");
       }
     });
-  }
+  }, [isDirty, isPending, filePath, getSerializedJson, markClean, startTransition]);
+
+  useKeyboardShortcuts({ onSave: handleSave });
 
   return (
     <div className="studio-topbar">

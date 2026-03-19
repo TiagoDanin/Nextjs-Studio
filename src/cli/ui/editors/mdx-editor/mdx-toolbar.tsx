@@ -8,12 +8,14 @@
  * @dont     Put formatting toolbar buttons here — those belong in toolbar.tsx
  */
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useCallback } from "react";
 import { useMdxEditorStore } from "@/stores/mdx-editor-store";
 import { saveMdxFrontmatter } from "@/actions/collections";
 import { Button } from "@/components/ui/button";
 import { PreviewDialog } from "./preview-dialog";
 import { Eye, ChevronRight } from "lucide-react";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { toast } from "@/components/ui/toast";
 
 export function MdxToolbar() {
   const isDirty = useMdxEditorStore((s) => s.isDirty);
@@ -26,12 +28,20 @@ export function MdxToolbar() {
   const [isPending, startTransition] = useTransition();
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  function handleSave() {
+  const handleSave = useCallback(() => {
+    if (!isDirty || isPending) return;
     startTransition(async () => {
       const result = await saveMdxFrontmatter([{ filePath, frontmatter, body }]);
-      if (result.success) markClean();
+      if (result.success) {
+        markClean();
+        toast("Saved successfully", "success");
+      } else {
+        toast(result.error ?? "Save failed", "error");
+      }
     });
-  }
+  }, [isDirty, isPending, filePath, frontmatter, body, markClean, startTransition]);
+
+  useKeyboardShortcuts({ onSave: handleSave });
 
   return (
     <>

@@ -8,11 +8,13 @@
  * @dont     Put editor state logic here — that belongs in the store
  */
 
-import { useTransition } from "react";
+import { useTransition, useCallback } from "react";
 import { useEditorStore } from "@/stores/editor-store";
 import { saveCollectionJson, saveMdxFrontmatter } from "@/actions/collections";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { toast } from "@/components/ui/toast";
 
 interface Props {
   collectionName: string;
@@ -28,16 +30,22 @@ export function SheetToolbar({ collectionName }: Props) {
   const markClean = useEditorStore((s) => s.markClean);
   const [isPending, startTransition] = useTransition();
 
-  function handleSave() {
+  const handleSave = useCallback(() => {
+    if (!isDirty || isPending) return;
     startTransition(async () => {
       const result = isMdx
         ? await saveMdxFrontmatter(getMdxSources())
         : await saveCollectionJson(filePath, getSerializedJson());
       if (result.success) {
         markClean();
+        toast("Saved successfully", "success");
+      } else {
+        toast(result.error ?? "Save failed", "error");
       }
     });
-  }
+  }, [isDirty, isPending, isMdx, filePath, getMdxSources, getSerializedJson, markClean, startTransition]);
+
+  useKeyboardShortcuts({ onSave: handleSave });
 
   return (
     <div className="studio-topbar">
