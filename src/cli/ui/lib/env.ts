@@ -12,3 +12,7 @@ import { CONTENTS_DIR } from "@shared/constants";
 export function getContentsDir(): string {
   return process.env.STUDIO_CONTENTS_DIR ?? path.resolve(process.cwd(), CONTENTS_DIR);
 }
+
+export function getConfigPath(): string | undefined {
+  return process.env.STUDIO_CONFIG_PATH || undefined;
+}

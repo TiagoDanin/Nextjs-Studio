@@ -10,6 +10,11 @@
 
 import { create } from "zustand";
 
+interface SelectedComponent {
+  tagName: string;
+  attrs: Record<string, unknown>;
+}
+
 interface MdxEditorState {
   isDirty: boolean;
   collectionName: string;
@@ -18,6 +23,7 @@ interface MdxEditorState {
   frontmatter: Record<string, unknown>;
   body: string;
   renderedHtml: string;
+  selectedComponent: SelectedComponent | null;
 
   init: (
     collectionName: string,
@@ -29,6 +35,7 @@ interface MdxEditorState {
   updateFrontmatter: (key: string, value: unknown) => void;
   updateBody: (body: string) => void;
   updateRenderedHtml: (html: string) => void;
+  setSelectedComponent: (component: SelectedComponent | null) => void;
   markClean: () => void;
 }
 
@@ -40,9 +47,10 @@ export const useMdxEditorStore = create<MdxEditorState>((set) => ({
   frontmatter: {},
   body: "",
   renderedHtml: "",
+  selectedComponent: null,
 
   init: (collectionName, slug, filePath, frontmatter, body) =>
-    set({ collectionName, slug, filePath, frontmatter, body, isDirty: false }),
+    set({ collectionName, slug, filePath, frontmatter, body, isDirty: false, selectedComponent: null }),
 
   updateFrontmatter: (key, value) =>
     set((state) => ({
@@ -53,6 +61,8 @@ export const useMdxEditorStore = create<MdxEditorState>((set) => ({
   updateBody: (body) => set({ body, isDirty: true }),
 
   updateRenderedHtml: (html) => set({ renderedHtml: html }),
+
+  setSelectedComponent: (component) => set({ selectedComponent: component }),
 
   markClean: () => set({ isDirty: false }),
 }));
