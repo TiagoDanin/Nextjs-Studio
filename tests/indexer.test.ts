@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { ContentIndex } from "../src/core/indexer.js";
+import { FsAdapter } from "../src/cli/adapters/fs-adapter.js";
 
 describe("ContentIndex", () => {
   let tmpDir: string;
@@ -10,7 +11,7 @@ describe("ContentIndex", () => {
 
   beforeEach(async () => {
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "nextjs-studio-idx-"));
-    index = new ContentIndex();
+    index = new ContentIndex(new FsAdapter(tmpDir));
   });
 
   afterEach(async () => {
@@ -44,7 +45,7 @@ published: false
 # World`,
       );
 
-      await index.build(tmpDir);
+      await index.build();
 
       const entries = index.getCollection("blog");
       expect(entries).toHaveLength(2);
@@ -61,7 +62,7 @@ published: false
     it("should detect collection type as mdx", async () => {
       await writeContent("blog/post.mdx", "---\ntitle: Post\n---\nBody");
 
-      await index.build(tmpDir);
+      await index.build();
 
       const collections = index.getCollections();
       const blog = collections.find((c) => c.name === "blog");
@@ -81,7 +82,7 @@ published: false
         ]),
       );
 
-      await index.build(tmpDir);
+      await index.build();
 
       const entries = index.getCollection("products");
       expect(entries).toHaveLength(2);
@@ -98,7 +99,7 @@ published: false
         JSON.stringify([{ name: "A" }, { name: "B" }]),
       );
 
-      await index.build(tmpDir);
+      await index.build();
 
       const entries = index.getCollection("items");
       expect(entries[0].slug).toBe("index/0");
@@ -111,7 +112,7 @@ published: false
         JSON.stringify([{ name: "A" }, { name: "B" }]),
       );
 
-      await index.build(tmpDir);
+      await index.build();
 
       const collections = index.getCollections();
       const products = collections.find((c) => c.name === "products");
@@ -126,7 +127,7 @@ published: false
         JSON.stringify({ title: "My Site", theme: "dark" }),
       );
 
-      await index.build(tmpDir);
+      await index.build();
 
       const entries = index.getCollection("settings");
       expect(entries).toHaveLength(1);
@@ -140,7 +141,7 @@ published: false
         JSON.stringify({ title: "Site" }),
       );
 
-      await index.build(tmpDir);
+      await index.build();
 
       const collections = index.getCollections();
       const settings = collections.find((c) => c.name === "settings");
@@ -158,7 +159,7 @@ published: false
         JSON.stringify(["ccc", "aaa", "bbb"]),
       );
 
-      await index.build(tmpDir);
+      await index.build();
 
       const entries = index.getCollection("blog");
       expect(entries.map((e) => e.slug)).toEqual(["ccc", "aaa", "bbb"]);
@@ -176,7 +177,7 @@ published: false
         "---\ntitle: API Ref\n---\nAPI reference",
       );
 
-      await index.build(tmpDir);
+      await index.build();
 
       const entries = index.getCollection("docs");
       const slugs = entries.map((e) => e.slug).sort();
@@ -199,11 +200,141 @@ published: false
         JSON.stringify({ title: "Site" }),
       );
 
-      await index.build(tmpDir);
+      await index.build();
 
       const collections = index.getCollections();
       const names = collections.map((c) => c.name).sort();
       expect(names).toEqual(["blog", "products", "settings"]);
+    });
+  });
+
+  describe("updateEntry", () => {
+    it("should add a new entry to an existing collection", async () => {
+      await writeContent("blog/post.mdx", "---\ntitle: Post\n---\nBody");
+      await index.build();
+
+      expect(index.getCollection("blog")).toHaveLength(1);
+
+      index.updateEntry("blog", {
+        collection: "blog",
+        slug: "new-post",
+        path: "/blog/new-post",
+        body: "New body",
+        data: { title: "New Post" },
+      });
+
+      expect(index.getCollection("blog")).toHaveLength(2);
+      const newEntry = index.getCollection("blog").find(
+        (e) => e.slug === "new-post",
+      );
+      expect(newEntry).toBeDefined();
+      expect(newEntry!.data.title).toBe("New Post");
+    });
+
+    it("should replace an existing entry by slug", async () => {
+      await writeContent("blog/post.mdx", "---\ntitle: Original\n---\nBody");
+      await index.build();
+
+      index.updateEntry("blog", {
+        collection: "blog",
+        slug: "post",
+        path: "/blog/post",
+        body: "Updated body",
+        data: { title: "Updated" },
+      });
+
+      const entries = index.getCollection("blog");
+      expect(entries).toHaveLength(1);
+      expect(entries[0].data.title).toBe("Updated");
+      expect(entries[0].body).toBe("Updated body");
+    });
+
+    it("should update collection metadata count", async () => {
+      await writeContent("blog/post.mdx", "---\ntitle: Post\n---\nBody");
+      await index.build();
+
+      index.updateEntry("blog", {
+        collection: "blog",
+        slug: "another",
+        path: "/blog/another",
+        body: "Another body",
+        data: { title: "Another" },
+      });
+
+      const collections = index.getCollections();
+      const blog = collections.find((c) => c.name === "blog");
+      expect(blog!.count).toBe(2);
+    });
+
+    it("should create entries array for a collection that has metadata", async () => {
+      await writeContent("blog/post.mdx", "---\ntitle: Post\n---\nBody");
+      await index.build();
+
+      // updateEntry on a known collection but with no prior entries in the
+      // internal map should still work because the collection was already
+      // built via build().
+      index.updateEntry("blog", {
+        collection: "blog",
+        slug: "post",
+        path: "/blog/post",
+        body: "Replaced",
+        data: { title: "Replaced" },
+      });
+
+      expect(index.getCollection("blog")).toHaveLength(1);
+    });
+  });
+
+  describe("removeEntry", () => {
+    it("should remove an entry by slug", async () => {
+      await writeContent("blog/aaa.mdx", "---\ntitle: AAA\n---\nA");
+      await writeContent("blog/bbb.mdx", "---\ntitle: BBB\n---\nB");
+      await index.build();
+
+      expect(index.getCollection("blog")).toHaveLength(2);
+
+      index.removeEntry("blog", "aaa");
+
+      const entries = index.getCollection("blog");
+      expect(entries).toHaveLength(1);
+      expect(entries[0].slug).toBe("bbb");
+    });
+
+    it("should update collection metadata count after removal", async () => {
+      await writeContent("blog/aaa.mdx", "---\ntitle: AAA\n---\nA");
+      await writeContent("blog/bbb.mdx", "---\ntitle: BBB\n---\nB");
+      await index.build();
+
+      index.removeEntry("blog", "aaa");
+
+      const collections = index.getCollections();
+      const blog = collections.find((c) => c.name === "blog");
+      expect(blog!.count).toBe(1);
+    });
+
+    it("should do nothing when removing from a non-existing collection", () => {
+      index.removeEntry("nonexistent", "slug");
+      expect(index.getCollection("nonexistent")).toEqual([]);
+    });
+
+    it("should do nothing when slug does not exist", async () => {
+      await writeContent("blog/post.mdx", "---\ntitle: Post\n---\nBody");
+      await index.build();
+
+      index.removeEntry("blog", "nonexistent-slug");
+
+      expect(index.getCollection("blog")).toHaveLength(1);
+    });
+
+    it("should handle removing the last entry in a collection", async () => {
+      await writeContent("blog/post.mdx", "---\ntitle: Post\n---\nBody");
+      await index.build();
+
+      index.removeEntry("blog", "post");
+
+      expect(index.getCollection("blog")).toHaveLength(0);
+      const blog = index.getCollections().find((c) => c.name === "blog");
+      expect(blog!.count).toBe(0);
     });
   });
 
@@ -213,18 +344,18 @@ published: false
     });
 
     it("should handle empty contents directory", async () => {
-      await index.build(tmpDir);
+      await index.build();
 
       expect(index.getCollections()).toEqual([]);
     });
 
     it("should clear previous data on rebuild", async () => {
       await writeContent("blog/post.mdx", "---\ntitle: Post\n---\nBody");
-      await index.build(tmpDir);
+      await index.build();
       expect(index.getCollection("blog")).toHaveLength(1);
 
       await fs.rm(path.join(tmpDir, "blog"), { recursive: true });
-      await index.build(tmpDir);
+      await index.build();
       expect(index.getCollections()).toEqual([]);
     });
   });

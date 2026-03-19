@@ -4,6 +4,7 @@ import path from "node:path";
 import os from "node:os";
 import { loadContent } from "../src/core/content-store.js";
 import { queryCollection } from "../src/core/query-builder.js";
+import { FsAdapter } from "../src/cli/adapters/fs-adapter.js";
 
 describe("queryCollection", () => {
   let tmpDir: string;
@@ -48,6 +49,19 @@ meta:
 Content C`,
     );
     await writeContent(
+      "blog/post-d.mdx",
+      `---
+title: Post D (Draft)
+date: 2026-03-01
+published: true
+draft: true
+meta:
+  priority: 4
+---
+
+Draft content D`,
+    );
+    await writeContent(
       "products/index.json",
       JSON.stringify([
         { slug: "x", name: "X", price: 30 },
@@ -63,7 +77,7 @@ Content C`,
       }),
     );
 
-    await loadContent(tmpDir);
+    await loadContent(new FsAdapter(tmpDir));
   });
 
   async function writeContent(filePath: string, content: string) {
@@ -78,8 +92,8 @@ Content C`,
         .where({ published: true })
         .all();
 
-      expect(results).toHaveLength(2);
-      expect(results.every((e) => e.data.published === true)).toBe(true);
+      expect(results).toHaveLength(3);
+      expect(results.every((e) => e.published === true)).toBe(true);
     });
 
     it("should filter by multiple conditions", () => {
@@ -89,7 +103,7 @@ Content C`,
         .all();
 
       expect(results).toHaveLength(1);
-      expect(results[0].data.title).toBe("Post A");
+      expect(results[0].title).toBe("Post A");
     });
 
     it("should support dot notation for nested fields", () => {
@@ -98,7 +112,7 @@ Content C`,
         .all();
 
       expect(results).toHaveLength(1);
-      expect(results[0].data.title).toBe("Home");
+      expect(results[0].title).toBe("Home");
     });
 
     it("should return empty for no matches", () => {
@@ -114,17 +128,19 @@ Content C`,
     it("should sort by string field ascending", () => {
       const results = queryCollection("blog").sort("title", "asc").all();
 
-      expect(results.map((e) => e.data.title)).toEqual([
+      expect(results.map((e) => e.title)).toEqual([
         "Post A",
         "Post B",
         "Post C",
+        "Post D (Draft)",
       ]);
     });
 
     it("should sort by string field descending", () => {
       const results = queryCollection("blog").sort("title", "desc").all();
 
-      expect(results.map((e) => e.data.title)).toEqual([
+      expect(results.map((e) => e.title)).toEqual([
+        "Post D (Draft)",
         "Post C",
         "Post B",
         "Post A",
@@ -134,16 +150,17 @@ Content C`,
     it("should sort by number field", () => {
       const results = queryCollection("products").sort("price", "asc").all();
 
-      expect(results.map((e) => e.data.price)).toEqual([10, 20, 30]);
+      expect(results.map((e) => e.price)).toEqual([10, 20, 30]);
     });
 
     it("should sort by date field", () => {
       const results = queryCollection("blog").sort("date", "desc").all();
 
-      const titles = results.map((e) => e.data.title);
-      expect(titles[0]).toBe("Post B"); // Feb 15
-      expect(titles[1]).toBe("Post C"); // Jan 20
-      expect(titles[2]).toBe("Post A"); // Jan 10
+      const titles = results.map((e) => e.title);
+      expect(titles[0]).toBe("Post D (Draft)"); // Mar 01
+      expect(titles[1]).toBe("Post B"); // Feb 15
+      expect(titles[2]).toBe("Post C"); // Jan 20
+      expect(titles[3]).toBe("Post A"); // Jan 10
     });
 
     it("should sort by nested field with dot notation", () => {
@@ -151,7 +168,8 @@ Content C`,
         .sort("meta.priority", "desc")
         .all();
 
-      expect(results.map((e) => e.data.title)).toEqual([
+      expect(results.map((e) => e.title)).toEqual([
+        "Post D (Draft)",
         "Post C",
         "Post A",
         "Post B",
@@ -167,7 +185,7 @@ Content C`,
         .all();
 
       expect(results).toHaveLength(2);
-      expect(results.map((e) => e.data.title)).toEqual(["Post A", "Post B"]);
+      expect(results.map((e) => e.title)).toEqual(["Post A", "Post B"]);
     });
 
     it("should offset results", () => {
@@ -176,8 +194,12 @@ Content C`,
         .offset(1)
         .all();
 
-      expect(results).toHaveLength(2);
-      expect(results.map((e) => e.data.title)).toEqual(["Post B", "Post C"]);
+      expect(results).toHaveLength(3);
+      expect(results.map((e) => e.title)).toEqual([
+        "Post B",
+        "Post C",
+        "Post D (Draft)",
+      ]);
     });
 
     it("should combine offset and limit", () => {
@@ -188,7 +210,7 @@ Content C`,
         .all();
 
       expect(results).toHaveLength(1);
-      expect(results[0].data.title).toBe("Post B");
+      expect(results[0].title).toBe("Post B");
     });
   });
 
@@ -200,7 +222,7 @@ Content C`,
         .first();
 
       expect(result).toBeDefined();
-      expect(result!.data.title).toBe("Post B");
+      expect(result!.title).toBe("Post D (Draft)");
     });
 
     it("should return undefined for no matches", () => {
@@ -214,12 +236,12 @@ Content C`,
 
   describe("count", () => {
     it("should count all entries in collection", () => {
-      expect(queryCollection("blog").count()).toBe(3);
+      expect(queryCollection("blog").count()).toBe(4);
     });
 
     it("should count filtered entries", () => {
       expect(queryCollection("blog").where({ published: true }).count()).toBe(
-        2,
+        3,
       );
     });
   });
@@ -234,7 +256,70 @@ Content C`,
         .all();
 
       expect(results).toHaveLength(1);
-      expect(results[0].data.title).toBe("Post A");
+      expect(results[0].title).toBe("Post A");
+    });
+  });
+
+  describe("excludeDrafts", () => {
+    it("should exclude entries with draft: true", () => {
+      const results = queryCollection("blog").excludeDrafts().all();
+
+      expect(results).toHaveLength(3);
+      expect(results.every((e) => e.draft !== true)).toBe(true);
+    });
+
+    it("should combine with where filter", () => {
+      const results = queryCollection("blog")
+        .excludeDrafts()
+        .where({ published: true })
+        .all();
+
+      expect(results).toHaveLength(2);
+      expect(results.every((e) => e.published === true)).toBe(true);
+      expect(results.every((e) => e.draft !== true)).toBe(true);
+    });
+
+    it("should combine with sort", () => {
+      const results = queryCollection("blog")
+        .excludeDrafts()
+        .sort("title", "asc")
+        .all();
+
+      expect(results.map((e) => e.title)).toEqual([
+        "Post A",
+        "Post B",
+        "Post C",
+      ]);
+    });
+
+    it("should combine with limit", () => {
+      const results = queryCollection("blog")
+        .excludeDrafts()
+        .sort("title", "asc")
+        .limit(2)
+        .all();
+
+      expect(results).toHaveLength(2);
+      expect(results.map((e) => e.title)).toEqual(["Post A", "Post B"]);
+    });
+
+    it("should return correct count when excluding drafts", () => {
+      expect(queryCollection("blog").excludeDrafts().count()).toBe(3);
+    });
+
+    it("should return correct first when excluding drafts", () => {
+      const result = queryCollection("blog")
+        .excludeDrafts()
+        .sort("date", "desc")
+        .first();
+
+      expect(result).toBeDefined();
+      expect(result!.title).toBe("Post B");
+    });
+
+    it("should not affect collections without drafts", () => {
+      const results = queryCollection("products").excludeDrafts().all();
+      expect(results).toHaveLength(3);
     });
   });
 
