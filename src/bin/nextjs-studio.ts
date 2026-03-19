@@ -17,6 +17,7 @@ import { CLI_PORT, CONTENTS_DIR } from "../shared/constants.js";
 import { FsAdapter } from "../cli/adapters/fs-adapter.js";
 import { loadContent } from "../core/content-store.js";
 import { generateCollectionTypes } from "../core/type-generator.js";
+import { loadStudioConfig, resolveConfigPath } from "../core/config-loader.js";
 import pkg from "../../package.json" with { type: "json" };
 
 const { version } = pkg;
@@ -40,8 +41,9 @@ async function runGenerateTypes(sourceDir: string): Promise<void> {
 
   console.log(`Generating types from ${sourceDir}...`);
 
+  const config = await loadStudioConfig(process.cwd());
   const fsAdapter = new FsAdapter(sourceDir);
-  const index = await loadContent(fsAdapter);
+  const index = await loadContent(fsAdapter, config);
   const schemas = index.getCollections().flatMap((c) => (c.schema ? [c.schema] : []));
   const code = generateCollectionTypes(schemas);
 
@@ -88,7 +90,14 @@ if (opts.generateTypes) {
 }
 
 const uiDir = path.resolve(import.meta.dirname, "../cli/ui");
-const serverEnv = { ...process.env, STUDIO_CONTENTS_DIR: contentsDir, PORT: String(port), HOSTNAME: "0.0.0.0" };
+const configPath = resolveConfigPath(process.cwd());
+const serverEnv: NodeJS.ProcessEnv = {
+  ...process.env,
+  STUDIO_CONTENTS_DIR: contentsDir,
+  PORT: String(port),
+  HOSTNAME: "0.0.0.0",
+  ...(configPath ? { STUDIO_CONFIG_PATH: configPath } : {}),
+};
 const serverProcess = resolveServerProcess(uiDir, port, serverEnv);
 
 if (!serverProcess) {
