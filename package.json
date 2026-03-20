@@ -36,7 +36,7 @@
     "scripts": {
         "dev": "tsx src/bin/nextjs-studio.ts --dir example/contents",
         "studio:dev": "cross-env STUDIO_CONTENTS_DIR=example/contents next dev --port 3030 --webpack src/cli/ui",
-        "studio:build": "next build --webpack src/cli/ui && mkdir -p dist/cli/ui/.next/standalone/dist/cli/ui/.next && cp -r dist/cli/ui/.next/static dist/cli/ui/.next/standalone/dist/cli/ui/.next/static",
+        "studio:build": "next build --webpack src/cli/ui && node -e \"const fs=require('fs');const p='dist/cli/ui/.next/standalone/dist/cli/ui/.next';fs.mkdirSync(p,{recursive:true});fs.cpSync('dist/cli/ui/.next/static',p+'/static',{recursive:true})\"",
         "build": "tsup && yarn studio:build",
         "lint": "eslint src/",
         "type-check": "tsc --noEmit",

@@ -16,6 +16,7 @@ const RE_ISO_DATETIME =
 const RE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RE_URL = /^https?:\/\/.+/;
 const LONG_TEXT_THRESHOLD = 200;
+const RICH_TEXT_FIELD_NAMES = ["description", "descriptions", "text", "content"];
 
 function isISODate(value: string): boolean {
   return RE_ISO_DATE.test(value);
@@ -38,6 +39,9 @@ function inferStringField(name: string, strings: string[]): FieldDefinition {
   if (strings.every(isUrl)) return { name, type: "url" };
   if (strings.every(isISODateTime)) return { name, type: "date", includeTime: true };
   if (strings.every(isISODate)) return { name, type: "date" };
+
+  // Fields with well-known names are always treated as long/rich text
+  if (RICH_TEXT_FIELD_NAMES.includes(name.toLowerCase())) return { name, type: "long-text" };
 
   const isLong = strings.some((s) => s.length > LONG_TEXT_THRESHOLD || s.includes("\n"));
   return { name, type: isLong ? "long-text" : "text" };

@@ -12,7 +12,7 @@ Content lives in your repository as plain files. No database, no backend, no syn
 - **JSON Form Editor** — auto-generated forms for JSON objects with nested field support
 - **Schema Validation** — Zod-based validation with field-level type definitions
 - **Media Library** — per-collection media folders, upload via drag & drop, paste, toolbar, or slash commands
-- **Import Scripts** — run data import and sync scripts directly from the CMS UI
+- **Sync Scripts** — run data import and sync scripts directly from the CMS UI
 - **File Watching** — live updates via chokidar and WebSocket
 
 ## Quick start

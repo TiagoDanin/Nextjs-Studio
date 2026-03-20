@@ -7,7 +7,7 @@
  */
 
 import { AppSidebar } from "@/components/app-sidebar";
-import { getCollections, getCollectionEntries } from "@/actions/collections";
+import { getCollections, getCollectionEntries, getCollectionScripts } from "@/actions/collections";
 import { JsonSheetEditor } from "@/editors/json-sheet/json-sheet-editor";
 import { JsonFormEditor } from "@/editors/json-form/json-form-editor";
 import { notFound } from "next/navigation";
@@ -20,9 +20,10 @@ export default async function CollectionPage({
   params: Promise<{ name: string }>;
 }) {
   const { name } = await params;
-  const [collections, result] = await Promise.all([
+  const [collections, result, scripts] = await Promise.all([
     getCollections(),
     getCollectionEntries(name),
+    getCollectionScripts(name),
   ]);
 
   if (!result) notFound();
@@ -50,6 +51,7 @@ export default async function CollectionPage({
             collection={collection}
             entries={entries}
             filePath={filePath}
+            hasSync={!!scripts.sync}
           />
         )}
         {collection.type === "json-object" && (
@@ -57,6 +59,7 @@ export default async function CollectionPage({
             collection={collection}
             data={entries[0]?.data ?? {}}
             filePath={filePath}
+            hasSync={!!scripts.sync}
           />
         )}
       </main>

@@ -2,7 +2,7 @@
 
 Collections are auto-detected from `/contents`. No config file needed for basic usage.
 
-Create `studio.config.ts` at your project root to add schemas, import scripts, or sync scripts.
+Create `studio.config.ts` at your project root to add schemas or sync scripts.
 
 ## studio.config.ts
 
@@ -23,8 +23,7 @@ const config: StudioConfig = {
         ],
       },
       scripts: {
-        import: "node scripts/import-posts.js",
-        sync:   "node scripts/sync-posts.js",
+        sync: "node scripts/sync-posts.js",
       },
     },
   },
@@ -38,8 +37,7 @@ export default config;
 | Property | Type | Description |
 |----------|------|-------------|
 | `schema` | `CollectionSchema` | Field definitions. Used for validation, typed output, and editor inputs |
-| `scripts.import` | `string` | Shell command to import external data. Triggered from the CMS UI |
-| `scripts.sync` | `string` | Shell command to sync with an external source |
+| `scripts.sync` | `string` | Shell command to sync with an external source. Triggered from the CMS UI |
 
 ## Schemas in separate files
 
@@ -111,4 +109,4 @@ Without `studio.config.ts`, the CMS:
 
 - [Field Types](../reference/fields.md) — every available field type and its options
 - [Collections](../collections/overview.md) — MDX, JSON, ordering, nested structure
-- [Import Scripts](../collections/import-scripts.md) — automate data imports from external sources
+- [Sync Scripts](../collections/import-scripts.md) — automate data sync from external sources

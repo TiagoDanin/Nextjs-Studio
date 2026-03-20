@@ -199,6 +199,17 @@ export async function saveMdxFrontmatter(
   }
 }
 
+export async function getCollectionScripts(
+  name: string,
+): Promise<{ sync?: string }> {
+  try {
+    const config = await loadConfigForUI();
+    return config.collections?.[name]?.scripts ?? {};
+  } catch {
+    return {};
+  }
+}
+
 export async function getComponentRegistry() {
   const config = await loadConfigForUI();
   return loadComponentRegistry(config);

@@ -18,9 +18,10 @@ interface Props {
   collection: CollectionSummary;
   entries: SerializableEntry[];
   filePath: string;
+  hasSync?: boolean;
 }
 
-export function JsonSheetEditor({ collection, entries, filePath }: Props) {
+export function JsonSheetEditor({ collection, entries, filePath, hasSync }: Props) {
   const initSheet = useEditorStore((s) => s.initSheet);
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export function JsonSheetEditor({ collection, entries, filePath }: Props) {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      <SheetToolbar collectionName={collection.name} />
+      <SheetToolbar collectionName={collection.name} hasSync={hasSync} />
       <div className="studio-canvas px-4 py-4 md:px-6">
         <div className="h-full overflow-hidden rounded-xl border bg-card">
           <SheetTable />

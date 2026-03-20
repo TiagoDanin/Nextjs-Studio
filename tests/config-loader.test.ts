@@ -80,18 +80,6 @@ describe("config-loader", () => {
       expect(config).toEqual({});
     });
 
-    it("should load a .mjs config with default export", async () => {
-      await fs.writeFile(
-        path.join(tmpDir, "studio.config.mjs"),
-        `export default { collections: { blog: { scripts: { import: "fetch-blog.sh" } } } };`,
-      );
-
-      const config = await loadStudioConfig(tmpDir);
-      expect(config.collections).toBeDefined();
-      expect(config.collections!.blog).toBeDefined();
-      expect(config.collections!.blog.scripts?.import).toBe("fetch-blog.sh");
-    });
-
     it("should return empty config for invalid module", async () => {
       await fs.writeFile(
         path.join(tmpDir, "studio.config.mjs"),

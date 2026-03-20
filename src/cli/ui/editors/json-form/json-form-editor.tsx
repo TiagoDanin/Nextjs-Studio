@@ -23,6 +23,7 @@ interface Props {
   collection: CollectionSummary;
   data: Record<string, unknown>;
   filePath: string;
+  hasSync?: boolean;
 }
 
 type DisplaySection =
@@ -82,7 +83,7 @@ function buildSections(data: Record<string, unknown>): DisplaySection[] {
   return sections;
 }
 
-export function JsonFormEditor({ collection, data, filePath }: Props) {
+export function JsonFormEditor({ collection, data, filePath, hasSync }: Props) {
   const initForm = useEditorStore((s) => s.initForm);
   const formData = useEditorStore((s) => s.formData);
   const fieldDefs = useEditorStore((s) => s.fieldDefs);
@@ -97,7 +98,7 @@ export function JsonFormEditor({ collection, data, filePath }: Props) {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      <FormToolbar collectionName={collection.name} />
+      <FormToolbar collectionName={collection.name} hasSync={hasSync} />
       <ScrollArea className="studio-canvas">
         <div className="h-full w-full px-4 py-4 md:px-6">
           <div className="studio-surface flex min-h-full flex-col gap-6 p-6">

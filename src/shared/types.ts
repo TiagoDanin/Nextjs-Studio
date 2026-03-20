@@ -56,9 +56,8 @@ export interface StudioConfig {
 export interface CollectionConfig {
   /** Field schema that describes the shape of each entry. */
   schema?: CollectionSchema;
-  /** Import/sync scripts for the collection */
+  /** Sync scripts for the collection */
   scripts?: {
-    import?: string;
     sync?: string;
   };
 }

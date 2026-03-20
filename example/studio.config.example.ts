@@ -14,7 +14,6 @@ const config: StudioConfig = {
     blog: {
       schema: blogSchema,
       scripts: {
-        import: "node scripts/import-posts.js",
         sync: "node scripts/sync-posts.js",
       },
     },
