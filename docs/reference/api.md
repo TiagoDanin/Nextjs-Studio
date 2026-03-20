@@ -1,33 +1,35 @@
 # API Reference
 
-Complete reference for the public API exported from `nextjs-studio`.
+Complete reference for the public API exported from `nextjs-studio` and `nextjs-studio/server`.
+
+The package exposes two entry points:
+
+| Entry point | Use in | Auto-inits store |
+|-------------|--------|-----------------|
+| `nextjs-studio` | Client-safe types and pure utilities | No |
+| `nextjs-studio/server` | Server components and build-time scripts | Yes |
 
 ## Content Querying
 
 ### `queryCollection(name)`
 
-Returns a fluent query builder for the named collection. See [Query API](./query-api.md) for full documentation.
+Returns a fluent query builder for the named collection. Call is synchronous — no `await` required. See [Query API](./query-api.md) for full documentation.
+
+Import from `nextjs-studio/server` in server components and page files:
 
 ```ts
-import { queryCollection } from "nextjs-studio";
+import { queryCollection } from "nextjs-studio/server";
 
 const posts = queryCollection("blog").where({ published: true }).all();
 ```
 
 ### `loadContent(fsAdapter, config?)`
 
-Indexes the contents directory and returns a `ContentIndex`. Used internally by the CLI and type generator.
+Indexes the contents directory and populates the content store. Import from `nextjs-studio/server`.
 
 ```ts
-import { loadContent } from "nextjs-studio";
-import { FsAdapter } from "nextjs-studio/cli";
-
-const index = await loadContent(new FsAdapter("./contents"), config);
+import { loadContent } from "nextjs-studio/server";
 ```
-
-### `getStore()`
-
-Returns the current `ContentIndex` singleton. Only available after `loadContent()` has been called.
 
 ## Configuration
 

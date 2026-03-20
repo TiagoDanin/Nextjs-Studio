@@ -41,10 +41,10 @@ contents/
 
 ## Query API
 
-Fetch content from your Next.js pages at build time:
+Fetch content from your Next.js pages at build time. Import from `nextjs-studio/server` in server components — it auto-initializes the content store and the call is synchronous (no `async`/`await` needed):
 
 ```ts
-import { queryCollection } from "nextjs-studio";
+import { queryCollection } from "nextjs-studio/server";
 
 const posts = queryCollection("blog")
   .where({ published: true })
@@ -52,6 +52,13 @@ const posts = queryCollection("blog")
   .limit(10)
   .all();
 ```
+
+The package exposes two entry points:
+
+| Entry point | Use in |
+|-------------|--------|
+| `nextjs-studio` | Client-safe types and pure utilities |
+| `nextjs-studio/server` | Server components — auto-inits content store on import |
 
 ## Next steps
 

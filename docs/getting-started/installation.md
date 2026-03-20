@@ -41,7 +41,7 @@ Your first post.
 
 ```tsx
 // app/blog/page.tsx
-import { queryCollection } from "nextjs-studio";
+import { queryCollection } from "nextjs-studio/server";
 
 export default function BlogPage() {
   const posts = queryCollection("blog")
@@ -52,12 +52,14 @@ export default function BlogPage() {
   return (
     <ul>
       {posts.map((post) => (
-        <li key={post.slug}>{post.data.title as string}</li>
+        <li key={post.slug}>{post.title as string}</li>
       ))}
     </ul>
   );
 }
 ```
+
+Note: no `async`, no `await` — `queryCollection` is synchronous. Import from `nextjs-studio/server` in server components; it auto-initializes the content store on import.
 
 ### 4. Start the CMS
 

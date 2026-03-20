@@ -29,7 +29,7 @@ export interface BlogEntry {
   cover: MediaPath;
 }
 
-declare module 'nextjs-studio' {
+declare module 'nextjs-studio/server' {
   interface CollectionTypeMap {
     "blog": BlogEntry;
   }
