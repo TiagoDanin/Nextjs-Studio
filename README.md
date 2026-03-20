@@ -4,6 +4,8 @@ A Git-based, local-first CMS for Next.js projects.
 
 Content lives in your repository as plain files. No database, no backend, no sync service. Editing happens through a standalone local server. Everything resolves at build time.
 
+![image](screenshot.png)
+
 ## Features
 
 - **Content Collections** — folders inside `/contents` become collections automatically
