@@ -23,6 +23,10 @@
         ".": {
             "types": "./dist/core/index.d.ts",
             "import": "./dist/core/index.js"
+        },
+        "./server": {
+            "types": "./dist/core/server.d.ts",
+            "import": "./dist/core/server.js"
         }
     },
     "main": "./dist/core/index.js",

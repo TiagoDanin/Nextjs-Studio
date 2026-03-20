@@ -98,6 +98,14 @@ export class QueryBuilder<T = Record<string, unknown>> {
     return this.limit(1).all()[0];
   }
 
+  one(): T {
+    const result = this.limit(1).all()[0];
+    if (result === undefined) {
+      throw new Error(`Collection "${this.collectionName}" is empty — expected exactly one entry.`);
+    }
+    return result;
+  }
+
   count(): number {
     return this.all().length;
   }

@@ -1,33 +1,34 @@
 /**
  * @context  Core layer — content store at src/core/content-store.ts
  * @does     Manages a singleton ContentIndex; exposes loadContent() and getStore() for consumers
- * @depends  src/core/indexer.ts, src/core/fs-adapter.ts, src/shared/types.ts
+ * @depends  src/core/indexer.ts, src/shared/types.ts
  * @do       Use this as the single access point for in-memory indexed content
- * @dont     Import from CLI or UI; contain parsing or I/O logic
+ * @dont     Import from CLI or UI; contain parsing or I/O logic; import fs-adapter at top level
  */
 
-import path from "node:path";
 import type { IFsAdapter } from "../shared/fs-adapter.interface.js";
 import type { StudioConfig } from "../shared/types.js";
-import { CONTENTS_DIR } from "../shared/constants.js";
-import { FsAdapter } from "./fs-adapter.js";
 import { ContentIndex } from "./indexer.js";
 
 let store: ContentIndex | null = null;
 
-/**
- * Returns the singleton content store.
- * Auto-initializes synchronously on first access using the default contents
- * directory (`./contents` relative to cwd).
- */
 export function getStore(): ContentIndex {
   if (!store) {
-    const dir = path.join(process.cwd(), CONTENTS_DIR);
-    const index = new ContentIndex(new FsAdapter(dir));
-    index.buildSync();
-    store = index;
+    throw new Error(
+      "Content not loaded. Auto-init requires 'nextjs-studio/server' — " +
+      "use loadContentSync() in a server context, or queryCollection() " +
+      "will auto-init when imported from 'nextjs-studio/server'.",
+    );
   }
   return store;
+}
+
+export function setStore(index: ContentIndex): void {
+  store = index;
+}
+
+export function hasStore(): boolean {
+  return store !== null;
 }
 
 export async function loadContent(

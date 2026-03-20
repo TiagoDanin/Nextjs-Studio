@@ -2,8 +2,18 @@
 
 `queryCollection()` returns a fluent builder for fetching content from any collection. All queries run at build time — there is no runtime database.
 
+## Entry Points
+
+The package exposes two entry points:
+
+| Entry point | Usage | Includes `fs` |
+|-------------|-------|---------------|
+| `nextjs-studio` | Client components, types, pure utilities | No |
+| `nextjs-studio/server` | Server components — auto-inits content store on import | Yes |
+
 ```ts
-import { queryCollection } from "nextjs-studio";
+// Server components — auto-initializes the content store
+import { queryCollection } from "nextjs-studio/server";
 
 const posts = queryCollection("blog")
   .where({ published: true })
@@ -11,6 +21,12 @@ const posts = queryCollection("blog")
   .limit(10)
   .all();
 ```
+
+::callout{type="warning"}
+Use `nextjs-studio/server` in server components. The base `nextjs-studio` import does not auto-initialize the content store and will throw if called without prior setup.
+::
+
+---
 
 ## Methods
 
@@ -75,9 +91,33 @@ queryCollection("blog")
 
 ---
 
+### `.excludeDrafts()`
+
+Exclude entries that have `draft: true` in their data.
+
+```ts
+queryCollection("blog").excludeDrafts().all();
+```
+
+---
+
+### `.locale(code)`
+
+Filter entries by locale code (parsed from filename, e.g. `post.pt.mdx` → `"pt"`).
+
+```ts
+queryCollection("blog").locale("pt").all();
+```
+
+---
+
 ### `.all()`
 
-Execute the query. Returns `ContentEntry[]`.
+Execute the query. Returns `T[]`.
+
+```ts
+const posts = queryCollection("blog").all();
+```
 
 ---
 
@@ -89,6 +129,17 @@ Return the first match, or `undefined` if none.
 const post = queryCollection("blog")
   .where({ slug: "hello-world" })
   .first();
+```
+
+---
+
+### `.one()`
+
+Return the single entry from the collection. Throws if the collection is empty. Use for singleton collections (JSON objects like `about`, `settings`).
+
+```ts
+// No need for ! or undefined checks
+const about = queryCollection("about").one();
 ```
 
 ---
@@ -115,15 +166,35 @@ interface ContentEntry {
 }
 ```
 
+## Direct Array Usage
+
+`queryCollection()` returns a `QueryResult<T>` — a Proxy that behaves as both a fluent builder and a native array. You can use `.map()`, `.filter()`, `.length`, spread, and all other array methods directly.
+
+```ts
+// No need to call .all() — array methods work directly
+const titles = queryCollection("blog").map(post => post.title);
+const count = queryCollection("blog").length;
+const [first, ...rest] = queryCollection("blog");
+```
+
 ## Examples
 
 ### All published posts, newest first
 
 ```ts
+import { queryCollection } from "nextjs-studio/server";
+
 const posts = queryCollection("blog")
   .where({ published: true })
   .sort("date", "desc")
   .all();
+```
+
+### Singleton collection (JSON object)
+
+```ts
+const about = queryCollection("about").one();
+// about.name, about.bio, etc. — fully typed
 ```
 
 ### Single post by slug
