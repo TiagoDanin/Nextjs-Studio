@@ -52,10 +52,41 @@ interface ComponentDefinition {
 ## Editor Integration
 
 1. Type `/` in the MDX editor and select "Component"
-2. Choose from the registered components
-3. The component is inserted as a placeholder block
-4. Click the block to open the props panel on the right
-5. Edit props using the field-based form
+2. A component block is inserted as a dashed placeholder showing `<Component />`
+3. Click the block to open the props panel on the right side
+4. Edit props using the field-based form (text, boolean, select, url, etc.)
+5. When saved, the component is serialized as standard JSX in the MDX file
+
+## Example
+
+Given this config:
+
+```ts
+components: [
+  {
+    name: "Call to Action",
+    tagName: "CTA",
+    description: "A call-to-action button with title and link",
+    category: "Marketing",
+    props: [
+      { name: "title", type: "text", required: true },
+      { name: "href", type: "url", required: true },
+      { name: "variant", type: "select", options: [
+        { label: "Primary", value: "primary" },
+        { label: "Secondary", value: "secondary" },
+      ]},
+    ],
+  },
+],
+```
+
+After editing the props in the panel, the MDX output will be:
+
+```mdx
+<CTA title="Start Building" href="/docs" variant="primary" />
+```
+
+See `example/studio.config.example.ts` and `example/contents/blog/getting-started.mdx` for a working example.
 
 ## MDX Output
 
@@ -64,6 +95,11 @@ Components are serialized as standard JSX in the MDX file:
 ```mdx
 <Hero title="Welcome" subtitle="Get started" image="/media/hero.jpg" centered />
 ```
+
+Props are serialized as:
+- Strings: `key="value"`
+- Booleans: `key` (true) or omitted (false)
+- Numbers/Objects: `key={value}`
 
 ## API
 

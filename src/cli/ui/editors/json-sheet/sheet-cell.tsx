@@ -41,6 +41,8 @@ export function SheetCell({ value }: Props) {
         <span className="text-muted-foreground">—</span>
       ) : typeof value === "boolean" ? (
         value ? "true" : "false"
+      ) : value instanceof Date ? (
+        truncateText(value.toISOString().split("T")[0])
       ) : Array.isArray(value) ? (
         <span className="text-muted-foreground">{formatArrayPreview(value)}</span>
       ) : typeof value === "object" ? (

@@ -9,7 +9,7 @@
 import { notFound } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { MdxEditor } from "@/editors/mdx-editor/mdx-editor";
-import { getCollections, getMdxEntry, getCollectionEntries } from "@/actions/collections";
+import { getCollections, getMdxEntry, getCollectionEntries, getComponentRegistry } from "@/actions/collections";
 
 export const dynamic = "force-dynamic";
 
@@ -20,10 +20,11 @@ export default async function MdxEntryPage({
 }) {
   const { name, slug } = await params;
 
-  const [collections, entry, collectionResult] = await Promise.all([
+  const [collections, entry, collectionResult, registry] = await Promise.all([
     getCollections(),
     getMdxEntry(name, slug),
     getCollectionEntries(name),
+    getComponentRegistry(),
   ]);
 
   if (!entry) notFound();
@@ -54,6 +55,7 @@ export default async function MdxEntryPage({
           filePath={entry.filePath}
           frontmatter={entry.frontmatter}
           body={entry.body}
+          registry={registry}
         />
       </main>
     </>

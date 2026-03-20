@@ -19,8 +19,24 @@ export interface ParseMdxOptions {
   bindTokens?: boolean;
 }
 
+/** Convert Date objects produced by gray-matter back to ISO strings. */
+function normalizeDates(data: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value instanceof Date) {
+      result[key] = value.toISOString().split("T")[0];
+    } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      result[key] = normalizeDates(value as Record<string, unknown>);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 export function parseMdx(content: string, options?: ParseMdxOptions): ParsedMdx {
-  const { data, content: body } = matter(content);
+  const { data: rawData, content: body } = matter(content);
+  const data = normalizeDates(rawData);
   const trimmed = body.trim();
   return {
     data,

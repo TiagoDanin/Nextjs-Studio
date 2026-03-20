@@ -219,7 +219,7 @@ export function RichTextField({ value, onChange, placeholder }: Props) {
       {editor && <RichTextToolbar editor={editor} />}
       <EditorContent
         editor={editor}
-        className="px-4 py-3 [&_.tiptap]:min-h-[200px] [&_.tiptap]:outline-none"
+        className="px-4 py-3 [&_.tiptap]:min-h-50 [&_.tiptap]:outline-none"
       />
     </div>
   );

@@ -14,6 +14,8 @@ import { MdxToolbar } from "./mdx-toolbar";
 import { MdxFrontmatter } from "./mdx-frontmatter";
 import { MdxTiptap } from "./mdx-tiptap";
 import { MediaPicker } from "@/editors/media-picker/media-picker";
+import { ComponentPropsPanel } from "./component-props-panel";
+import type { ComponentDefinition } from "@shared/component-types";
 
 interface Props {
   collectionName: string;
@@ -21,6 +23,7 @@ interface Props {
   filePath: string;
   frontmatter: Record<string, unknown>;
   body: string;
+  registry?: ComponentDefinition[];
 }
 
 export function MdxEditor({
@@ -29,6 +32,7 @@ export function MdxEditor({
   filePath,
   frontmatter,
   body,
+  registry = [],
 }: Props) {
   const init = useMdxEditorStore((s) => s.init);
 
@@ -37,17 +41,20 @@ export function MdxEditor({
   }, [collectionName, slug, filePath, frontmatter, body, init]);
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
-      <MdxToolbar />
-      <div className="studio-canvas overflow-y-auto">
-        <div className="min-h-full px-4 py-4">
-          <div className="studio-surface flex min-h-full flex-col">
-            <MdxFrontmatter />
-            <MdxTiptap />
+    <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <MdxToolbar />
+        <div className="studio-canvas overflow-y-auto">
+          <div className="min-h-full px-4 py-4">
+            <div className="studio-surface flex min-h-full flex-col">
+              <MdxFrontmatter />
+              <MdxTiptap />
+            </div>
           </div>
         </div>
+        <MediaPicker />
       </div>
-      <MediaPicker />
+      <ComponentPropsPanel registry={registry} />
     </div>
   );
 }

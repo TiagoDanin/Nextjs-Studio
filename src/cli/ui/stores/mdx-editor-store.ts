@@ -12,7 +12,9 @@ import { create } from "zustand";
 
 interface SelectedComponent {
   tagName: string;
-  attrs: Record<string, unknown>;
+  props: Record<string, unknown>;
+  /** Callback to update TipTap node attributes when props change */
+  updateAttributes?: (attrs: Record<string, unknown>) => void;
 }
 
 interface MdxEditorState {
@@ -36,6 +38,7 @@ interface MdxEditorState {
   updateBody: (body: string) => void;
   updateRenderedHtml: (html: string) => void;
   setSelectedComponent: (component: SelectedComponent | null) => void;
+  updateComponentProp: (key: string, value: unknown) => void;
   markClean: () => void;
 }
 
@@ -63,6 +66,18 @@ export const useMdxEditorStore = create<MdxEditorState>((set) => ({
   updateRenderedHtml: (html) => set({ renderedHtml: html }),
 
   setSelectedComponent: (component) => set({ selectedComponent: component }),
+
+  updateComponentProp: (key, value) =>
+    set((state) => {
+      if (!state.selectedComponent) return state;
+      const newProps = { ...state.selectedComponent.props, [key]: value };
+      // Sync back to TipTap node
+      state.selectedComponent.updateAttributes?.({ props: newProps });
+      return {
+        selectedComponent: { ...state.selectedComponent, props: newProps },
+        isDirty: true,
+      };
+    }),
 
   markClean: () => set({ isDirty: false }),
 }));

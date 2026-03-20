@@ -9,7 +9,7 @@
  */
 
 import { useEffect } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, ReactNodeViewRenderer } from "@tiptap/react";
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
@@ -17,6 +17,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import { CodeBlockView } from "./code-block-view";
 import Image from "@tiptap/extension-image";
 import FileHandler from "@tiptap/extension-file-handler";
 import { createLowlight, common } from "lowlight";
@@ -103,7 +104,11 @@ export function MdxTiptap() {
       StarterKit.configure({ codeBlock: false }),
       Link.configure({ openOnClick: false }),
       Placeholder.configure({ placeholder: 'Start writing, or type "/" for commands…' }),
-      CodeBlockLowlight.configure({ lowlight }),
+      CodeBlockLowlight.extend({
+        addNodeView() {
+          return ReactNodeViewRenderer(CodeBlockView);
+        },
+      }).configure({ lowlight }),
       Image.configure({ inline: false }),
       FileHandler.configure({
         allowedMimeTypes: ALL_MEDIA_TYPES,
