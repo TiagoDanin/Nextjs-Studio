@@ -63,6 +63,7 @@ export interface SerializableEntry {
   filePath: string;
   body?: string;
   data: Record<string, unknown>;
+  locale?: string;
 }
 
 export async function getCollections(): Promise<CollectionSummary[]> {
@@ -132,6 +133,7 @@ export async function getCollectionEntries(
           col.type === "mdx" ? fs.join(col.basePath, entry.slug + ".mdx") : "",
         body: entry.body,
         data: entry.data,
+        locale: entry.locale,
       })),
       rawJson,
       filePath,

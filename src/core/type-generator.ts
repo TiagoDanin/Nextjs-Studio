@@ -135,8 +135,13 @@ export function generateCollectionTypes(schemas: CollectionSchema[]): string {
   const interfaces = schemas.map(generateInterfaceForSchema).join("\n\n");
 
   const collectionRegistry = [
-    "// Augment the nextjs-studio module so queryCollection() is fully typed.",
+    "// Augment both entry points so queryCollection() is fully typed regardless of import path.",
     "declare module 'nextjs-studio' {",
+    "  interface CollectionTypeMap {",
+    schemas.map((schema) => `    ${JSON.stringify(schema.collection)}: ${toPascalCase(schema.collection)}Entry;`).join("\n"),
+    "  }",
+    "}",
+    "declare module 'nextjs-studio/server' {",
     "  interface CollectionTypeMap {",
     schemas.map((schema) => `    ${JSON.stringify(schema.collection)}: ${toPascalCase(schema.collection)}Entry;`).join("\n"),
     "  }",

@@ -2,7 +2,7 @@
 
 /**
  * @context  UI editor — sheet toolbar at src/cli/ui/editors/json-sheet/sheet-toolbar.tsx
- * @does     Renders the top bar with collection name, add row button, and save button
+ * @does     Renders the top bar with collection name, locale filter, add row button, and save button
  * @depends  @/stores/editor-store, @/actions/collections
  * @do       Add sheet-level actions (import CSV, export) to this toolbar
  * @dont     Put editor state logic here — that belongs in the store
@@ -19,9 +19,12 @@ import { toast } from "@/components/ui/toast";
 interface Props {
   collectionName: string;
   hasSync?: boolean;
+  locales?: Array<string | undefined>;
+  selectedLocale?: string | undefined;
+  onLocaleChange?: (locale: string | undefined) => void;
 }
 
-export function SheetToolbar({ collectionName, hasSync }: Props) {
+export function SheetToolbar({ collectionName, hasSync, locales, selectedLocale, onLocaleChange }: Props) {
   const isDirty = useEditorStore((s) => s.isDirty);
   const filePath = useEditorStore((s) => s.filePath);
   const isMdx = useEditorStore((s) => s.isMdx);
@@ -78,6 +81,27 @@ export function SheetToolbar({ collectionName, hasSync }: Props) {
         )}
       </div>
       <div className="flex items-center gap-1.5">
+        {locales && locales.length > 1 && (
+          <div className="flex items-center rounded-md border overflow-hidden">
+            {locales.map((locale) => {
+              const label = locale ?? "default";
+              const isActive = locale === selectedLocale;
+              return (
+                <button
+                  key={label}
+                  onClick={() => onLocaleChange?.(locale)}
+                  className={`h-7 px-2.5 text-xs font-medium transition-colors ${
+                    isActive
+                      ? "bg-foreground text-background"
+                      : "bg-transparent text-foreground/60 hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        )}
         {hasSync && (
           <Button
             variant="outline"
