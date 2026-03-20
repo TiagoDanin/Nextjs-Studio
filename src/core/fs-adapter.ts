@@ -1,5 +1,5 @@
 /**
- * @context  CLI layer — filesystem adapter at src/cli/adapters/fs-adapter.ts
+ * @context  Core layer — filesystem adapter at src/core/fs-adapter.ts
  * @does     Implements IFsAdapter; abstracts all file read/write/list operations behind a single interface
  * @depends  src/shared/types.ts, src/shared/constants.ts, src/shared/fs-adapter.interface.ts
  * @do       Add new I/O operations here; all file access must go through this adapter
@@ -10,9 +10,9 @@ import fs from "node:fs/promises";
 import fsSync from "node:fs";
 import path from "node:path";
 import type { Dirent } from "node:fs";
-import type { FileInfo, DirectoryFileEntry } from "../../shared/types.js";
-import type { IFsAdapter } from "../../shared/fs-adapter.interface.js";
-import { SUPPORTED_EXTENSIONS } from "../../shared/constants.js";
+import type { FileInfo, DirectoryFileEntry } from "../shared/types.js";
+import type { IFsAdapter } from "../shared/fs-adapter.interface.js";
+import { SUPPORTED_EXTENSIONS } from "../shared/constants.js";
 
 export class FsAdapter implements IFsAdapter {
   private readonly basePath: string;

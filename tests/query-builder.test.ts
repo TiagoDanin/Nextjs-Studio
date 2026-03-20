@@ -4,7 +4,7 @@ import path from "node:path";
 import os from "node:os";
 import { loadContent } from "../src/core/content-store.js";
 import { queryCollection } from "../src/core/query-builder.js";
-import { FsAdapter } from "../src/cli/adapters/fs-adapter.js";
+import { FsAdapter } from "../src/core/fs-adapter.js";
 
 describe("queryCollection", () => {
   let tmpDir: string;

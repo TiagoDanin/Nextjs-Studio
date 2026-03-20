@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-import { FsAdapter } from "../src/cli/adapters/fs-adapter.js";
+import { FsAdapter } from "../src/core/fs-adapter.js";
 
 describe("FsAdapter", () => {
   let tmpDir: string;

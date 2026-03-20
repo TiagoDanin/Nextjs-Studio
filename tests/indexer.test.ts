@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { ContentIndex } from "../src/core/indexer.js";
-import { FsAdapter } from "../src/cli/adapters/fs-adapter.js";
+import { FsAdapter } from "../src/core/fs-adapter.js";
 
 describe("ContentIndex", () => {
   let tmpDir: string;

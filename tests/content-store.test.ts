@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { loadContent, getStore } from "../src/core/content-store.js";
-import { FsAdapter } from "../src/cli/adapters/fs-adapter.js";
+import { FsAdapter } from "../src/core/fs-adapter.js";
 import type { ContentIndex } from "../src/core/indexer.js";
 
 describe("content-store", () => {

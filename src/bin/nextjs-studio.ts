@@ -14,7 +14,7 @@ import path from "node:path";
 import { spawn, type ChildProcess } from "node:child_process";
 import { Command } from "commander";
 import { CLI_PORT, CONTENTS_DIR } from "../shared/constants.js";
-import { FsAdapter } from "../cli/adapters/fs-adapter.js";
+import { FsAdapter } from "../core/fs-adapter.js";
 import { loadContent } from "../core/content-store.js";
 import { generateCollectionTypes } from "../core/type-generator.js";
 import { loadStudioConfig, resolveConfigPath } from "../core/config-loader.js";

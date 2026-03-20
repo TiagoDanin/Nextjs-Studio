@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import path from "node:path";
-import { FsAdapter } from "@cli/adapters/fs-adapter";
+import { FsAdapter } from "@core/fs-adapter";
 import { getContentsDir } from "@/lib/env";
 import { MEDIA_DIR } from "@shared/constants";
 import type { MediaAsset } from "@shared/types";

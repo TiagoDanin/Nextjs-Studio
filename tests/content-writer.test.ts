@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { writeJsonFile, writeMdxEntries } from "../src/core/content-writer.js";
-import { FsAdapter } from "../src/cli/adapters/fs-adapter.js";
+import { FsAdapter } from "../src/core/fs-adapter.js";
 
 describe("content-writer", () => {
   let tmpDir: string;

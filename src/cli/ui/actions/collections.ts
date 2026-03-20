@@ -14,7 +14,7 @@ import { loadComponentRegistry } from "@core/component-registry";
 import { writeJsonFile, writeMdxEntries } from "@core/content-writer.js";
 import { inferSchema } from "@core/schema-inferrer.js";
 import { fieldLabel } from "@shared/field-utils.js";
-import { FsAdapter } from "@cli/adapters/fs-adapter";
+import { FsAdapter } from "@core/fs-adapter";
 import { getContentsDir, getConfigPath } from "../lib/env";
 import type { ContentEntry, StudioConfig } from "@shared/types";
 import type { FieldDefinition } from "@shared/fields";
