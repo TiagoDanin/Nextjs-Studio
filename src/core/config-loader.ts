@@ -42,7 +42,7 @@ export async function loadStudioConfig(projectRoot: string): Promise<StudioConfi
 export async function loadConfigFromPath(configPath: string): Promise<StudioConfig> {
   try {
     const fileUrl = pathToFileURL(configPath).href;
-    const mod = await import(fileUrl);
+    const mod = await import(/* webpackIgnore: true */ fileUrl);
     const config = mod.default ?? mod.config ?? mod;
 
     if (typeof config !== "object" || config === null || Array.isArray(config)) {

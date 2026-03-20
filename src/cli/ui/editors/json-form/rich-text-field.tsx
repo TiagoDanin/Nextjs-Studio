@@ -164,7 +164,7 @@ function RichTextToolbar({ editor }: { editor: Editor }) {
 
 export function RichTextField({ value, onChange, placeholder }: Props) {
   const isInternalUpdate = useRef(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleUpdate = useCallback(
     (md: string) => {

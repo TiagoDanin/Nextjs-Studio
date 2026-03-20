@@ -12,7 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMdxEditorStore } from "@/stores/mdx-editor-store";
 import { useMediaStore } from "@/stores/media-store";
-import { Upload, X, FileVideo, FileAudio, File, Crop } from "lucide-react";
+import { Upload, X, FileVideo, FileAudio, File as FileIcon, Crop } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchMediaAssets, uploadMediaFile } from "@/services/media-api";
 import { CropDialog } from "./crop-dialog";
@@ -277,7 +277,7 @@ function AssetThumb({
         ) : asset.kind === "audio" ? (
           <FileAudio className="h-6 w-6 text-muted-foreground" />
         ) : (
-          <File className="h-6 w-6 text-muted-foreground" />
+          <FileIcon className="h-6 w-6 text-muted-foreground" />
         )}
       </div>
       <span className="w-full truncate text-center text-[10px] text-muted-foreground">
