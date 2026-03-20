@@ -7,6 +7,7 @@
  */
 
 import fs from "node:fs/promises";
+import fsSync from "node:fs";
 import path from "node:path";
 import type { Dirent } from "node:fs";
 import type { FileInfo, DirectoryFileEntry } from "../../shared/types.js";
@@ -132,5 +133,44 @@ export class FsAdapter implements IFsAdapter {
 
   normalizeSlug(relativePath: string, ext: string): string {
     return relativePath.replace(ext, "").split(path.sep).join("/");
+  }
+
+  readFileSync(filePath: string): string {
+    return fsSync.readFileSync(this.resolve(filePath), "utf-8");
+  }
+
+  existsSync(filePath: string): boolean {
+    return fsSync.existsSync(this.resolve(filePath));
+  }
+
+  listFilesSync(dirPath: string, extensions?: readonly string[]): string[] {
+    const fullPath = this.resolve(dirPath);
+    const filterExts = extensions ?? SUPPORTED_EXTENSIONS;
+
+    let entries: Dirent[];
+    try {
+      entries = fsSync.readdirSync(fullPath, { withFileTypes: true });
+    } catch {
+      return [];
+    }
+
+    return entries
+      .filter((entry) => entry.isFile() && filterExts.some((ext) => entry.name.endsWith(ext)))
+      .map((entry) => this.join(dirPath, entry.name));
+  }
+
+  listDirectoriesSync(dirPath: string): string[] {
+    const fullPath = this.resolve(dirPath);
+
+    let entries: Dirent[];
+    try {
+      entries = fsSync.readdirSync(fullPath, { withFileTypes: true });
+    } catch {
+      return [];
+    }
+
+    return entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => this.join(dirPath, entry.name));
   }
 }

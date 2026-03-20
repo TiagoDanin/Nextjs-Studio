@@ -64,7 +64,9 @@ export function CodeBlockView({ node, updateAttributes, extension }: NodeViewPro
         </select>
       </div>
       <pre>
-        <NodeViewContent as="code" />
+        <code>
+          <NodeViewContent />
+        </code>
       </pre>
     </NodeViewWrapper>
   );

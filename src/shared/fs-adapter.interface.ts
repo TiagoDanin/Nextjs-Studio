@@ -24,4 +24,10 @@ export interface IFsAdapter {
   extname(filePath: string): string;
   relative(from: string, to: string): string;
   normalizeSlug(relativePath: string, ext: string): string;
+
+  // Sync variants used by the build-time indexer for auto-initialization
+  readFileSync(filePath: string): string;
+  existsSync(filePath: string): boolean;
+  listFilesSync(dirPath: string, extensions?: readonly string[]): string[];
+  listDirectoriesSync(dirPath: string): string[];
 }

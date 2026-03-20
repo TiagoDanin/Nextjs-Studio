@@ -37,6 +37,18 @@ export class ContentIndex {
     }
   }
 
+  buildSync(config?: StudioConfig): void {
+    this.clear();
+    const dirs = this.fs.listDirectoriesSync(".");
+
+    for (const dir of dirs) {
+      const dirName = this.fs.basename(dir);
+      const collectionName = slugify(dirName);
+      const collectionConfig = config?.collections?.[collectionName];
+      this.indexCollectionSync(dirName, collectionName, collectionConfig?.schema);
+    }
+  }
+
   getCollection(name: string): ContentEntry[] {
     return this.entries.get(name) ?? [];
   }
@@ -108,6 +120,32 @@ export class ContentIndex {
     });
   }
 
+  private indexCollectionSync(
+    dirName: string,
+    collectionName: string,
+    manualSchema?: CollectionSchema,
+  ): void {
+    const entries: ContentEntry[] = [];
+    this.scanDirSync(dirName, collectionName, dirName, entries);
+
+    const orderPath = this.fs.join(dirName, COLLECTION_ORDER_FILE);
+    const ordering = this.readOrderingSync(orderPath);
+    if (ordering) {
+      this.applyOrdering(entries, ordering);
+    }
+
+    const schema = manualSchema ?? inferSchema(entries, collectionName);
+
+    this.entries.set(collectionName, entries);
+    this.collections.set(collectionName, {
+      name: collectionName,
+      type: this.detectCollectionType(entries),
+      count: entries.length,
+      basePath: dirName,
+      schema,
+    });
+  }
+
   private async scanDir(
     dirName: string,
     collectionName: string,
@@ -126,6 +164,39 @@ export class ContentIndex {
 
       const ext = this.fs.extname(fileName);
       const content = await this.fs.readFile(filePath);
+      const relativePath = this.fs.relative(dirName, filePath);
+      const slug = this.fs
+        .normalizeSlug(relativePath, ext)
+        .split("/")
+        .map((segment) => slugify(segment))
+        .join("/");
+
+      if (ext === ".mdx") {
+        entries.push(this.buildMdxEntry(collectionName, slug, fileName, content));
+      } else if (ext === ".json") {
+        entries.push(...this.buildJsonEntries(collectionName, slug, content));
+      }
+    }
+  }
+
+  private scanDirSync(
+    dirName: string,
+    collectionName: string,
+    dirPath: string,
+    entries: ContentEntry[],
+  ): void {
+    const subDirs = this.fs.listDirectoriesSync(dirPath);
+    for (const subDir of subDirs) {
+      this.scanDirSync(dirName, collectionName, subDir, entries);
+    }
+
+    const files = this.fs.listFilesSync(dirPath);
+    for (const filePath of files) {
+      const fileName = this.fs.basename(filePath);
+      if (fileName === COLLECTION_ORDER_FILE) continue;
+
+      const ext = this.fs.extname(fileName);
+      const content = this.fs.readFileSync(filePath);
       const relativePath = this.fs.relative(dirName, filePath);
       const slug = this.fs
         .normalizeSlug(relativePath, ext)
@@ -179,6 +250,19 @@ export class ContentIndex {
 
     try {
       const content = await this.fs.readFile(orderPath);
+      const parsed: unknown = JSON.parse(content);
+      if (Array.isArray(parsed)) return parsed as string[];
+    } catch (error) {
+      console.warn(`[Nextjs Studio] Failed to parse ordering file: ${orderPath}`, error);
+    }
+    return null;
+  }
+
+  private readOrderingSync(orderPath: string): string[] | null {
+    if (!this.fs.existsSync(orderPath)) return null;
+
+    try {
+      const content = this.fs.readFileSync(orderPath);
       const parsed: unknown = JSON.parse(content);
       if (Array.isArray(parsed)) return parsed as string[];
     } catch (error) {

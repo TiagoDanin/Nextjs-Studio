@@ -2,13 +2,9 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-import {
-  initStudio,
-  isStudioInitialized,
-  ensureContentLoaded,
-} from "../src/core/init.js";
-import { getStore } from "../src/core/content-store.js";
+import { loadContent, loadContentSync, getStore } from "../src/core/content-store.js";
 import { queryCollection } from "../src/core/query-builder.js";
+import { FsAdapter } from "../src/cli/adapters/fs-adapter.js";
 
 describe("init", () => {
   let tmpDir: string;
@@ -27,11 +23,11 @@ describe("init", () => {
     await fs.writeFile(full, content, "utf-8");
   }
 
-  describe("initStudio", () => {
+  describe("loadContent (async)", () => {
     it("should initialize the content store from a given directory", async () => {
       await writeContent("blog/post.mdx", "---\ntitle: Test\n---\nBody");
 
-      await initStudio(tmpDir);
+      await loadContent(new FsAdapter(tmpDir));
 
       const store = getStore();
       expect(store).toBeDefined();
@@ -49,7 +45,7 @@ published: true
 Hello content`,
       );
 
-      await initStudio(tmpDir);
+      await loadContent(new FsAdapter(tmpDir));
 
       const results = queryCollection("blog").all();
       expect(results).toHaveLength(1);
@@ -59,7 +55,7 @@ Hello content`,
     it("should accept optional config", async () => {
       await writeContent("blog/post.mdx", "---\ntitle: Post\n---\nBody");
 
-      await initStudio(tmpDir, {
+      await loadContent(new FsAdapter(tmpDir), {
         collections: {
           blog: {
             schema: {
@@ -76,60 +72,62 @@ Hello content`,
     });
 
     it("should handle empty directory", async () => {
-      await initStudio(tmpDir);
+      await loadContent(new FsAdapter(tmpDir));
       expect(getStore().getCollections()).toEqual([]);
     });
   });
 
-  describe("isStudioInitialized", () => {
-    it("should return true after initStudio has been called", async () => {
-      await writeContent("blog/post.mdx", "---\ntitle: Test\n---\nBody");
-      await initStudio(tmpDir);
-
-      expect(isStudioInitialized()).toBe(true);
-    });
-
-    it("should return true even if store is empty", async () => {
-      await initStudio(tmpDir);
-      expect(isStudioInitialized()).toBe(true);
-    });
-  });
-
-  describe("ensureContentLoaded", () => {
-    it("should initialize if not already initialized", async () => {
-      // First, load content to clear any previous state by reinitializing
-      await writeContent("blog/post.mdx", "---\ntitle: First\n---\nBody");
-      await initStudio(tmpDir);
-
-      // Now call ensureContentLoaded - since store is already set, it should not re-init
-      await ensureContentLoaded(tmpDir);
-
-      expect(isStudioInitialized()).toBe(true);
-    });
-
-    it("should be safe to call multiple times", async () => {
+  describe("loadContentSync", () => {
+    it("should initialize the content store synchronously", async () => {
       await writeContent("blog/post.mdx", "---\ntitle: Test\n---\nBody");
 
-      await ensureContentLoaded(tmpDir);
-      await ensureContentLoaded(tmpDir);
-      await ensureContentLoaded(tmpDir);
+      loadContentSync(new FsAdapter(tmpDir));
 
-      expect(isStudioInitialized()).toBe(true);
-      expect(getStore().getCollection("blog")).toHaveLength(1);
+      const store = getStore();
+      expect(store).toBeDefined();
+      expect(store.getCollection("blog")).toHaveLength(1);
     });
 
-    it("should not reload content if already initialized", async () => {
-      await writeContent("blog/post.mdx", "---\ntitle: Original\n---\nBody");
-      await initStudio(tmpDir);
+    it("should allow querying after sync initialization", async () => {
+      await writeContent(
+        "blog/hello.mdx",
+        `---
+title: Hello
+published: true
+---
 
-      // Add another file
-      await writeContent("blog/new.mdx", "---\ntitle: New\n---\nBody");
+Hello content`,
+      );
 
-      // ensureContentLoaded should NOT re-scan since already initialized
-      await ensureContentLoaded(tmpDir);
+      loadContentSync(new FsAdapter(tmpDir));
 
-      // Should still have original count (1) because it did not re-initialize
-      expect(getStore().getCollection("blog")).toHaveLength(1);
+      const results = queryCollection("blog").all();
+      expect(results).toHaveLength(1);
+      expect(results[0].title).toBe("Hello");
+    });
+
+    it("should accept optional config", async () => {
+      await writeContent("blog/post.mdx", "---\ntitle: Post\n---\nBody");
+
+      loadContentSync(new FsAdapter(tmpDir), {
+        collections: {
+          blog: {
+            schema: {
+              collection: "blog",
+              fields: [{ name: "title", type: "text" }],
+            },
+          },
+        },
+      });
+
+      const collections = getStore().getCollections();
+      const blog = collections.find((c) => c.name === "blog");
+      expect(blog!.schema).toBeDefined();
+    });
+
+    it("should handle empty directory", async () => {
+      loadContentSync(new FsAdapter(tmpDir));
+      expect(getStore().getCollections()).toEqual([]);
     });
   });
 });
