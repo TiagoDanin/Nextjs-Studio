@@ -78,7 +78,11 @@ export const ComponentBlock = Node.create({
 
   addAttributes() {
     return {
-      tagName: { default: "Component" },
+      tagName: {
+        default: "Component",
+        parseHTML: (element) => element.getAttribute("tagname") ?? "Component",
+        renderHTML: (attributes) => ({ tagname: attributes.tagName as string }),
+      },
       props: {
         default: {},
         parseHTML: (element) => {

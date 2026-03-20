@@ -212,6 +212,7 @@ export async function getCollectionScripts(
   }
 }
 
+
 export async function getComponentRegistry() {
   const config = await loadConfigForUI();
   return loadComponentRegistry(config);

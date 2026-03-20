@@ -1,8 +1,8 @@
 # Media
 
-Each collection has its own `media/` subfolder for images, videos, audio, and other files. Assets live alongside your content and are committed to your repository.
+Each collection stores its media files in a configurable location. By default, assets live alongside your content inside `contents/`. You can redirect uploads to the project's `public/` directory so Next.js serves them as static files.
 
-## File location
+## Default file location
 
 ```
 contents/
@@ -15,6 +15,36 @@ contents/
 ```
 
 There is no global media folder. Each collection manages its own assets independently.
+
+## Saving media to `public/` (recommended for Next.js)
+
+When your site exports as a static site, images must live under `public/` to be served correctly. Configure `mediaDir` per collection in `studio.config.ts`:
+
+```ts
+// studio.config.ts
+const config: StudioConfig = {
+  collections: {
+    posts: {
+      mediaDir: "public/images/posts",
+    },
+  },
+};
+```
+
+With this setting:
+
+- Uploads are saved to `<projectRoot>/public/images/posts/filename.jpg`
+- The URL embedded in MDX is `/images/posts/filename.jpg` — works on both the consumer Next.js site and in the studio editor
+- The studio serves these files internally via the fallback rewrite so the editor preview renders them correctly
+
+### URL derivation
+
+The public URL is derived by stripping the leading `public/` segment from `mediaDir`:
+
+| `mediaDir` | URL in MDX |
+|------------|------------|
+| `public/images/posts` | `/images/posts/filename.jpg` |
+| `public/assets/blog` | `/assets/blog/filename.jpg` |
 
 ## Adding files
 

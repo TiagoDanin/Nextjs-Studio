@@ -57,6 +57,10 @@ interface ComponentDefinition {
 4. Edit props using the field-based form (text, boolean, select, url, etc.)
 5. When saved, the component is serialized as standard JSX in the MDX file
 
+### Existing components in MDX files
+
+When you open an MDX file that already contains JSX components (e.g. `<YouTubeEmbed videoId="abc" title="..." />`), the editor automatically parses them into component blocks. Click any block to edit its props in the side panel — no registry entry is required. If the component **is** in the registry, the panel shows typed fields; otherwise it shows the existing props as free-form inputs.
+
 ## Example
 
 Given this config:

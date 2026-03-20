@@ -34,6 +34,68 @@ import { FixedToolbar, BubbleToolbar, insertAssetInEditor } from "./toolbar";
 
 const lowlight = createLowlight(common);
 
+/**
+ * Converts self-closing JSX components in MDX content to `<component-block>` HTML that TipTap can parse.
+ * Example: `<YouTubeEmbed videoId="abc" />` → `<component-block tagname="YouTubeEmbed" data-props='{"videoId":"abc"}'></component-block>`
+ */
+function preprocessMdxComponents(markdown: string): string {
+  // Match self-closing JSX components that start with an uppercase letter
+  const COMPONENT_RE = /<([A-Z][a-zA-Z0-9.]*)([^>]*?)\s*\/>/g;
+  return markdown.replace(COMPONENT_RE, (_match, tagName: string, propsRaw: string) => {
+    const props = parseJsxProps(propsRaw ?? "");
+    const dataProps = JSON.stringify(props).replace(/'/g, "&#39;");
+    return `<component-block tagname="${tagName}" data-props='${dataProps}'></component-block>`;
+  });
+}
+
+function parseJsxProps(raw: string): Record<string, unknown> {
+  const props: Record<string, unknown> = {};
+  const s = raw.trim();
+  let i = 0;
+
+  while (i < s.length) {
+    while (i < s.length && /\s/.test(s[i]!)) i++;
+    if (i >= s.length) break;
+
+    if (!/[a-zA-Z_$]/.test(s[i]!)) { i++; continue; }
+    const nameStart = i;
+    while (i < s.length && /[a-zA-Z0-9_$]/.test(s[i]!)) i++;
+    const key = s.slice(nameStart, i);
+
+    while (i < s.length && /\s/.test(s[i]!)) i++;
+
+    if (i >= s.length || s[i] !== "=") {
+      props[key] = true;
+      continue;
+    }
+    i++; // skip '='
+    while (i < s.length && /\s/.test(s[i]!)) i++;
+    if (i >= s.length) break;
+
+    const ch = s[i]!;
+    if (ch === '"' || ch === "'") {
+      i++;
+      const start = i;
+      while (i < s.length && s[i] !== ch) i++;
+      props[key] = s.slice(start, i);
+      i++;
+    } else if (ch === "{") {
+      i++;
+      let depth = 1;
+      const start = i;
+      while (i < s.length && depth > 0) {
+        if (s[i] === "{") depth++;
+        else if (s[i] === "}") depth--;
+        i++;
+      }
+      const expr = s.slice(start, i - 1);
+      try { props[key] = JSON.parse(expr); } catch { props[key] = expr; }
+    }
+  }
+
+  return props;
+}
+
 const frontmatterHighlightKey = new PluginKey("frontmatterHighlight");
 const FRONTMATTER_TOKEN = /\{frontmatter\.[a-zA-Z0-9_.]+\}/g;
 
@@ -138,7 +200,7 @@ export function MdxTiptap() {
       SlashCommand,
       FrontmatterHighlight,
     ],
-    content: useMdxEditorStore.getState().body,
+    content: preprocessMdxComponents(useMdxEditorStore.getState().body),
     onCreate({ editor }) {
       convertMermaidCodeBlocks(editor);
     },
@@ -150,7 +212,7 @@ export function MdxTiptap() {
 
   useEffect(() => {
     if (editor && !editor.isDestroyed) {
-      editor.commands.setContent(useMdxEditorStore.getState().body);
+      editor.commands.setContent(preprocessMdxComponents(useMdxEditorStore.getState().body));
       convertMermaidCodeBlocks(editor);
     }
   }, [slug, editor]);

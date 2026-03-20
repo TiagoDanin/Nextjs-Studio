@@ -38,6 +38,7 @@ export default config;
 |----------|------|-------------|
 | `schema` | `CollectionSchema` | Field definitions. Used for validation, typed output, and editor inputs |
 | `scripts.sync` | `string` | Shell command to sync with an external source. Triggered from the CMS UI |
+| `mediaDir` | `string` | Where to save uploaded media, relative to project root (e.g. `"public/images/posts"`). When set, URLs in MDX use the public path (`/images/posts/file.jpg`) instead of the default API path. See [Media](../collections/media.md) |
 
 ## Schemas in separate files
 

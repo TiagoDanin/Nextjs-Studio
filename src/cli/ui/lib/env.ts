@@ -16,3 +16,7 @@ export function getContentsDir(): string {
 export function getConfigPath(): string | undefined {
   return process.env.STUDIO_CONFIG_PATH || undefined;
 }
+
+export function getProjectDir(): string {
+  return process.env.STUDIO_PROJECT_DIR ?? process.cwd();
+}

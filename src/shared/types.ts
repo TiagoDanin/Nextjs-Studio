@@ -60,6 +60,13 @@ export interface CollectionConfig {
   scripts?: {
     sync?: string;
   };
+  /**
+   * Directory where media files for this collection are saved, relative to the project root.
+   * When set, uploads go here instead of the default `_media` subfolder inside contents.
+   * Example: `"public/images/posts"` saves files to `<projectRoot>/public/images/posts/`
+   * and generates URLs like `/images/posts/filename.jpg` (strips the leading `public/` segment).
+   */
+  mediaDir?: string;
 }
 
 /**

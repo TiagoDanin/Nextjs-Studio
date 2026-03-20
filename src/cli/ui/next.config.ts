@@ -9,6 +9,14 @@ const config: NextConfig = {
   reactStrictMode: true,
   outputFileTracingRoot: projectRoot,
   allowedDevOrigins: ["*"],
+  // Fallback rewrite: any path not matched by a studio page/API is forwarded to
+  // /api/public/…, which reads from the consumer project's public directory.
+  // This lets the studio display images stored at e.g. public/images/posts/.
+  async rewrites() {
+    return {
+      fallback: [{ source: "/:path*", destination: "/api/public/:path*" }],
+    };
+  },
   // ESM-only packages used server-side must be loaded natively — not bundled by webpack
   serverExternalPackages: ["@sindresorhus/slugify", "@sindresorhus/transliterate"],
   webpack: (config) => {
