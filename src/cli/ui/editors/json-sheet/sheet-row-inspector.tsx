@@ -600,7 +600,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
       );
     }
 
-    if (typeof value === "string" && (type === "long-text" || value.length > 200 || value.includes("\n"))) {
+    if (typeof value === "string" && (value.length > 200 || value.includes("\n"))) {
       return (
         <div key={key} className="flex flex-col gap-1.5">
           <Label className="text-xs font-semibold text-muted-foreground">
