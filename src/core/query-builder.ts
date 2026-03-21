@@ -7,7 +7,7 @@
  */
 
 import { filter, orderBy, get, slice } from "lodash-es";
-import type { QueryOptions } from "../shared/types.js";
+import type { QueryOptions, EntryResult } from "../shared/types.js";
 import type { CollectionTypeMap } from "../shared/types.js";
 import { getStore } from "./content-store.js";
 import { isDraft } from "./draft-filter.js";
@@ -91,7 +91,14 @@ export class QueryBuilder<T = Record<string, unknown>> {
 
     const start = this.options.offset ?? 0;
     const end = this.options.limit ? start + this.options.limit : undefined;
-    return slice(entries, start, end).map((e) => e.data as unknown as T);
+    return slice(entries, start, end).map((e) => ({
+      collection: e.collection,
+      slug: e.slug,
+      path: e.path,
+      body: e.body,
+      locale: e.locale,
+      ...e.data,
+    }) as unknown as T);
   }
 
   first(): T | undefined {
@@ -155,8 +162,8 @@ function wrapWithArrayProxy<T>(builder: QueryBuilder<T>): QueryResult<T> {
  */
 export function queryCollection<K extends keyof CollectionTypeMap>(
   name: K,
-): QueryResult<CollectionTypeMap[K]>;
-export function queryCollection(name: string): QueryResult<Record<string, unknown>>;
-export function queryCollection(name: string): QueryResult<Record<string, unknown>> {
+): QueryResult<EntryResult<CollectionTypeMap[K]>>;
+export function queryCollection(name: string): QueryResult<EntryResult>;
+export function queryCollection(name: string): QueryResult<EntryResult> {
   return wrapWithArrayProxy(new QueryBuilder(name));
 }

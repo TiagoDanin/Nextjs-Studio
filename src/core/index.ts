@@ -16,6 +16,7 @@ export type {
   ContentEntry,
   Collection,
   CollectionTypeMap,
+  EntryResult,
   StudioConfig,
   CollectionConfig,
   QueryOptions,

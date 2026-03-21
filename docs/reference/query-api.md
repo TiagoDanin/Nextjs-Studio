@@ -113,10 +113,13 @@ queryCollection("blog").locale("pt").all();
 
 ### `.all()`
 
-Execute the query. Returns `T[]`.
+Execute the query. Returns `EntryResult<T>[]` — each entry includes frontmatter data merged with entry metadata (`body`, `locale`, `collection`, `slug`, `path`).
 
 ```ts
 const posts = queryCollection("blog").all();
+// posts[0].title  — from frontmatter
+// posts[0].body   — raw MDX content
+// posts[0].locale — locale from filename
 ```
 
 ---
@@ -152,19 +155,46 @@ Return the total number of matching entries.
 const total = queryCollection("blog").where({ published: true }).count();
 ```
 
-## ContentEntry shape
+## Return Shape (`EntryResult<T>`)
 
-Every method returns or works with `ContentEntry` objects:
+Every query method returns `EntryResult<T>` — a flat object that merges entry metadata with frontmatter/JSON data. No need to use `fs` or `gray-matter` to access the body or metadata.
+
+```ts
+type EntryResult<T> = T & {
+  body?: string;      // raw MDX body (undefined for JSON entries)
+  locale?: string;    // parsed from filename (e.g. "pt" from "post.pt.mdx")
+  collection: string; // collection name, e.g. "blog"
+  slug: string;       // derived from filename
+  path: string;       // e.g. "/blog/hello-world"
+};
+```
+
+Entry-level fields (`collection`, `slug`, `path`) serve as defaults — if frontmatter defines the same key (e.g. `slug`), the frontmatter value wins.
+
+```ts
+const post = queryCollection("posts").where({ slug: "hello" }).first();
+post.title;      // from frontmatter
+post.body;       // raw MDX content — no fs.readFile needed
+post.locale;     // "pt" if filename is "hello.pt.mdx"
+post.collection; // "posts"
+```
+
+### Internal Indexed Format (`ContentEntry`)
+
+Internally, entries are stored with `data` nested separately:
 
 ```ts
 interface ContentEntry {
-  collection: string;            // collection name, e.g. "blog"
-  slug: string;                  // filename without extension, e.g. "hello-world"
-  path: string;                  // full relative path, e.g. "blog/hello-world"
-  body?: string;                 // MDX body (undefined for JSON collections)
-  data: Record<string, unknown>; // frontmatter or JSON data
+  collection: string;
+  slug: string;
+  path: string;
+  body?: string;
+  data: Record<string, unknown>;
+  locale?: string;
 }
 ```
+
+The query builder flattens `data` into the result so consumers get a single flat object.
 
 ## Direct Array Usage
 
@@ -205,6 +235,11 @@ const post = queryCollection("blog")
   .first();
 
 if (!post) notFound();
+
+// Access everything directly — no fs needed
+post.title;  // frontmatter
+post.body;   // MDX content
+post.locale; // locale from filename
 ```
 
 ### Paginated posts

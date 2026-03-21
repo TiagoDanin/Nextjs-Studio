@@ -84,6 +84,26 @@ export interface CollectionConfig {
 export interface CollectionTypeMap {}
 
 /**
+ * Shape returned by queryCollection().all() and array accessors.
+ * Merges frontmatter data (T) with entry metadata (body, locale, etc.).
+ *
+ * Entry-level fields (collection, slug, path) serve as defaults —
+ * if frontmatter defines the same key (e.g. `slug`), frontmatter wins.
+ */
+export type EntryResult<T = Record<string, unknown>> = T & {
+  /** Raw MDX body content (undefined for JSON entries) */
+  body?: string;
+  /** Locale parsed from filename (e.g. "pt" from "post.pt.mdx") */
+  locale?: string;
+  /** Collection name */
+  collection: string;
+  /** Entry slug derived from filename */
+  slug: string;
+  /** Entry path (e.g. "/posts/my-post") */
+  path: string;
+};
+
+/**
  * Query options for the content query builder.
  */
 export interface QueryOptions {
