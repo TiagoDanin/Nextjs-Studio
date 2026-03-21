@@ -8,13 +8,14 @@
  * @dont     Put editor state logic here — that belongs in the store
  */
 
-import { useTransition, useState, useCallback } from "react";
+import { useTransition, useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useEditorStore } from "@/stores/editor-store";
 import { saveCollectionJson, saveMdxFrontmatter } from "@/actions/collections";
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, Columns3 } from "lucide-react";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { toast } from "@/components/ui/toast";
+import { keyLabel } from "@shared/field-utils";
 
 interface Props {
   collectionName: string;
@@ -102,6 +103,7 @@ export function SheetToolbar({ collectionName, hasSync, locales, selectedLocale,
             })}
           </div>
         )}
+        <ColumnVisibilityToggle />
         {hasSync && (
           <Button
             variant="outline"
@@ -134,6 +136,90 @@ export function SheetToolbar({ collectionName, hasSync, locales, selectedLocale,
           {isPending ? "Saving…" : "Save"}
         </Button>
       </div>
+    </div>
+  );
+}
+
+function ColumnVisibilityToggle() {
+  const rows = useEditorStore((s) => s.rows);
+  const fieldDefs = useEditorStore((s) => s.fieldDefs);
+  const visibleColumns = useEditorStore((s) => s.visibleColumns);
+  const hasCustomVisibility = useEditorStore((s) => s.hasCustomVisibility);
+  const toggleColumnVisibility = useEditorStore((s) => s.toggleColumnVisibility);
+  const resetColumnVisibility = useEditorStore((s) => s.resetColumnVisibility);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const allColumns = useMemo(() => {
+    const keys = new Set<string>();
+    for (const row of rows) {
+      for (const key of Object.keys(row)) keys.add(key);
+    }
+    return Array.from(keys);
+  }, [rows]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  if (allColumns.length === 0) return null;
+
+  return (
+    <div className="relative" ref={ref}>
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-7 gap-1.5 px-2.5 text-xs"
+        onClick={() => setOpen(!open)}
+      >
+        <Columns3 className="h-3.5 w-3.5" />
+        Columns
+      </Button>
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-1 w-56 rounded-md border bg-background py-1 shadow-lg">
+          <div className="flex items-center justify-between px-3 py-1.5">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Visible columns
+            </p>
+            {hasCustomVisibility && (
+              <button
+                type="button"
+                onClick={resetColumnVisibility}
+                className="text-[10px] text-muted-foreground hover:text-foreground"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+          <div className="max-h-64 overflow-auto">
+            {allColumns.map((col, idx) => {
+              const visible = hasCustomVisibility
+                ? visibleColumns.has(col)
+                : idx < 5;
+              const label = fieldDefs[col]?.label ?? keyLabel(col);
+              return (
+                <label
+                  key={col}
+                  className="flex cursor-pointer items-center gap-2 px-3 py-1 text-xs hover:bg-accent"
+                >
+                  <input
+                    type="checkbox"
+                    checked={visible}
+                    onChange={() => toggleColumnVisibility(col)}
+                    className="h-3.5 w-3.5 rounded border-input"
+                  />
+                  <span className="truncate">{label}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

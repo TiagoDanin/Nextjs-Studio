@@ -16,6 +16,7 @@ import { MdxTiptap } from "./mdx-tiptap";
 import { MediaPicker } from "@/editors/media-picker/media-picker";
 import { ComponentPropsPanel } from "./component-props-panel";
 import type { ComponentDefinition } from "@shared/component-types";
+import type { FieldDefinition } from "@shared/fields";
 
 interface Props {
   collectionName: string;
@@ -28,6 +29,8 @@ interface Props {
   locales?: { locale: string; slug: string }[];
   /** The currently active locale identifier (e.g. "pt" or "default"). */
   currentLocale?: string;
+  /** Schema field definitions from studio.config.ts — controls input types in frontmatter. */
+  fields?: FieldDefinition[];
 }
 
 export function MdxEditor({
@@ -39,6 +42,7 @@ export function MdxEditor({
   registry = [],
   locales,
   currentLocale,
+  fields,
 }: Props) {
   const init = useMdxEditorStore((s) => s.init);
 
@@ -53,7 +57,7 @@ export function MdxEditor({
         <div className="studio-canvas overflow-y-auto">
           <div className="min-h-full px-4 py-4">
             <div className="studio-surface flex min-h-full flex-col">
-              <MdxFrontmatter />
+              <MdxFrontmatter fields={fields} />
               <MdxTiptap />
             </div>
           </div>

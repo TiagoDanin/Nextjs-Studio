@@ -20,6 +20,8 @@ export async function GET() {
     await watcher.start();
   }
 
+  let cleanupFn: (() => void) | null = null;
+
   const stream = new ReadableStream({
     start(controller) {
       const encoder = new TextEncoder();
@@ -42,7 +44,6 @@ export async function GET() {
       watcher.on("content:change", onChange);
       watcher.on("content:delete", onDelete);
 
-      // Send heartbeat to keep connection alive
       const heartbeat = setInterval(() => {
         try {
           controller.enqueue(encoder.encode(": heartbeat\n\n"));
@@ -58,8 +59,11 @@ export async function GET() {
         watcher.off("content:delete", onDelete);
       }
 
-      // Clean up when the client disconnects
+      cleanupFn = cleanup;
       controller.enqueue(encoder.encode(": connected\n\n"));
+    },
+    cancel() {
+      cleanupFn?.();
     },
   });
 

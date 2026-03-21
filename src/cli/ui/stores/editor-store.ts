@@ -27,6 +27,10 @@ interface EditorState {
   selectedRowIndex: number | null;
   sortColumn: string | null;
   sortDirection: "asc" | "desc";
+  /** Column names explicitly visible (when user has customized visibility). */
+  visibleColumns: Set<string>;
+  /** Whether the user has customized column visibility for this collection. */
+  hasCustomVisibility: boolean;
 
   // MDX per-row sources (parallel to rows[])
   isMdx: boolean;
@@ -70,6 +74,11 @@ interface EditorState {
   deleteField: (path: string) => void;
   reorderField: (path: string, direction: "up" | "down") => void;
 
+  // Column visibility
+  toggleColumnVisibility: (column: string) => void;
+  resetColumnVisibility: () => void;
+  isColumnVisible: (column: string, allColumns: string[]) => boolean;
+
   // Shared actions
   markClean: () => void;
   getSerializedJson: () => string;
@@ -88,6 +97,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   selectedRowIndex: null,
   sortColumn: null,
   sortDirection: "asc",
+  visibleColumns: new Set<string>(),
+  hasCustomVisibility: false,
 
   isMdx: false,
   rowFilePaths: [],
@@ -97,7 +108,18 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   formData: {},
   expandedSections: [],
 
-  initSheet: (collectionName, filePath, rows, mdxSources, fields) =>
+  initSheet: (collectionName, filePath, rows, mdxSources, fields) => {
+    // Restore persisted column visibility from localStorage
+    let visibleColumns = new Set<string>();
+    let hasCustomVisibility = false;
+    try {
+      const stored = localStorage.getItem(`studio:columns:${collectionName}`);
+      if (stored) {
+        visibleColumns = new Set(JSON.parse(stored) as string[]);
+        hasCustomVisibility = true;
+      }
+    } catch { /* ignore */ }
+
     set({
       editorType: "sheet",
       collectionName,
@@ -113,7 +135,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       sortColumn: null,
       sortDirection: "asc",
       fieldDefs: Object.fromEntries((fields ?? []).map((field) => [field.name, field])),
-    }),
+      visibleColumns,
+      hasCustomVisibility,
+    });
+  },
 
   initForm: (collectionName, filePath, data, fields) => {
     const sections = Object.entries(data)
@@ -314,6 +339,57 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       root[keys[keys.length - 1]!] = reordered;
       return { formData: data, isDirty: true };
     }),
+
+  toggleColumnVisibility: (column) =>
+    set((state) => {
+      // On first toggle, seed visibleColumns from the current default (first 5)
+      if (!state.hasCustomVisibility) {
+        const allKeys = new Set<string>();
+        for (const row of state.rows) {
+          for (const key of Object.keys(row)) allKeys.add(key);
+        }
+        const allArr = Array.from(allKeys);
+        const visible = new Set(allArr.slice(0, 5));
+        // Toggle the clicked column
+        if (visible.has(column)) visible.delete(column);
+        else visible.add(column);
+        try {
+          localStorage.setItem(
+            `studio:columns:${state.collectionName}`,
+            JSON.stringify([...visible]),
+          );
+        } catch { /* ignore */ }
+        return { visibleColumns: visible, hasCustomVisibility: true };
+      }
+
+      const next = new Set(state.visibleColumns);
+      if (next.has(column)) next.delete(column);
+      else next.add(column);
+      try {
+        localStorage.setItem(
+          `studio:columns:${state.collectionName}`,
+          JSON.stringify([...next]),
+        );
+      } catch { /* ignore */ }
+      return { visibleColumns: next };
+    }),
+
+  resetColumnVisibility: () =>
+    set((state) => {
+      try {
+        localStorage.removeItem(`studio:columns:${state.collectionName}`);
+      } catch { /* ignore */ }
+      return { visibleColumns: new Set<string>(), hasCustomVisibility: false };
+    }),
+
+  isColumnVisible: (column, allColumns) => {
+    const state = get();
+    if (!state.hasCustomVisibility) {
+      const idx = allColumns.indexOf(column);
+      return idx >= 0 && idx < 5;
+    }
+    return state.visibleColumns.has(column);
+  },
 
   markClean: () => set({ isDirty: false, isSaving: false }),
 

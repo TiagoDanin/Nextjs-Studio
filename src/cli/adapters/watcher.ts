@@ -108,6 +108,9 @@ let singletonWatcher: ContentWatcher | null = null;
 export function getWatcher(contentsDir: string): ContentWatcher {
   if (!singletonWatcher) {
     singletonWatcher = new ContentWatcher(contentsDir);
+    // Allow more listeners — each SSE client adds 3 (add/change/delete).
+    // In dev mode HMR may briefly overlap connections.
+    singletonWatcher.setMaxListeners(10);
   }
   return singletonWatcher;
 }

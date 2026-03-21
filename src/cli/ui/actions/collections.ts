@@ -110,7 +110,8 @@ export async function getCollectionEntries(
       filePath = jsonFile;
     }
 
-    const schema = inferSchema(entries, col.name);
+    // Use the manual schema from studio.config.ts when available, falling back to inference.
+    const schema = col.schema ?? inferSchema(entries, col.name);
     // Ensure every field has a resolved label so consumers never need to compute it.
     const fields: FieldDefinition[] = schema.fields.map((field) => ({
       ...field,

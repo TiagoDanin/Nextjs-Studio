@@ -46,7 +46,10 @@ export function SheetTable() {
   const selectRow = useEditorStore((s) => s.selectRow);
   const deleteRow = useEditorStore((s) => s.deleteRow);
 
-  const columnKeys = useMemo(() => {
+  const visibleColumns = useEditorStore((s) => s.visibleColumns);
+  const hasCustomVisibility = useEditorStore((s) => s.hasCustomVisibility);
+
+  const allColumnKeys = useMemo(() => {
     const keys = new Set<string>();
     for (const row of rows) {
       for (const key of Object.keys(row)) {
@@ -55,6 +58,14 @@ export function SheetTable() {
     }
     return Array.from(keys);
   }, [rows]);
+
+  const columnKeys = useMemo(
+    () => allColumnKeys.filter((key) => {
+      if (!hasCustomVisibility) return allColumnKeys.indexOf(key) < 5;
+      return visibleColumns.has(key);
+    }),
+    [allColumnKeys, visibleColumns, hasCustomVisibility],
+  );
 
   const columns: ColumnDef<Record<string, unknown>>[] = useMemo(
     () => [

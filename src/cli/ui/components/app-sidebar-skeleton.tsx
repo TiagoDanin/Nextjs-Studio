@@ -59,7 +59,7 @@ export function AppSidebarSkeleton() {
       <div className="shrink-0 border-t border-sidebar-border px-4 py-3">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-medium text-sidebar-foreground/30">
-            v0.1.0
+            v1.0
           </span>
           <ThemeToggle />
         </div>

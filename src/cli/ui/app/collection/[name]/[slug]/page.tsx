@@ -79,6 +79,7 @@ export default async function MdxEntryPage({
           registry={registry}
           locales={localeVariants.length > 1 ? localeVariants : undefined}
           currentLocale={locale ?? "default"}
+          fields={collectionResult?.collection.fields}
         />
       </main>
     </>

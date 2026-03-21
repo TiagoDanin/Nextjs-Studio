@@ -9,12 +9,13 @@
  */
 
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { useEditorStore } from "@/stores/editor-store";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, Pencil, Trash2 } from "lucide-react";
 import { NativeSelect } from "@/components/ui/native-select";
 import { keyLabel } from "@shared/field-utils";
 
@@ -34,10 +35,15 @@ interface Props {
 }
 
 export function SheetRowInspector({ rowIndex }: Props) {
+  const router = useRouter();
   const rows = useEditorStore((s) => s.rows);
   const updateCell = useEditorStore((s) => s.updateCell);
   const selectRow = useEditorStore((s) => s.selectRow);
+  const deleteRow = useEditorStore((s) => s.deleteRow);
   const fieldDefs = useEditorStore((s) => s.fieldDefs);
+  const isMdx = useEditorStore((s) => s.isMdx);
+  const collectionName = useEditorStore((s) => s.collectionName);
+  const rowSlugs = useEditorStore((s) => s.rowSlugs);
 
   if (!rows[rowIndex]) return null;
 
@@ -366,14 +372,36 @@ export function SheetRowInspector({ rowIndex }: Props) {
         <h3 className="text-xs font-bold uppercase tracking-wide text-foreground/80">
           Row details - {rowIndex + 1}
         </h3>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          onClick={() => selectRow(null)}
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-0.5">
+          {isMdx && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              title="Edit entry"
+              onClick={() => router.push(`/collection/${collectionName}/${rowSlugs[rowIndex] ?? ""}`)}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+            title="Delete row"
+            onClick={() => { deleteRow(rowIndex); selectRow(null); }}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => selectRow(null)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       <div className="flex max-h-80 flex-col gap-2 overflow-auto px-4 py-3">
         {entries.map(([key, value]) => renderCell(key, value))}

@@ -134,7 +134,7 @@ export function AppSidebar({
       <div className="shrink-0 border-t border-sidebar-border px-4 py-3">
         <div className="flex items-center justify-between">
           <span className="text-[11px] text-sidebar-foreground/30 font-medium">
-            v0.1.0
+            v1.0
           </span>
           <ThemeToggle />
         </div>
