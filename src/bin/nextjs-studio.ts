@@ -62,7 +62,8 @@ function extractStandalone(archivePath: string): string {
   if (!existsSync(serverJs)) {
     console.log("Extracting studio UI (first run)...");
     mkdirSync(cacheDir, { recursive: true });
-    execSync(`tar --force-local -xzf "${archivePath.replaceAll("\\", "/")}" -C "${cacheDir.replaceAll("\\", "/")}"`, { stdio: "inherit" });
+    const forceLocal = process.platform !== "win32" ? "--force-local " : "";
+    execSync(`tar ${forceLocal}-xzf "${archivePath.replaceAll("\\", "/")}" -C "${cacheDir.replaceAll("\\", "/")}"`, { stdio: "inherit" });
   }
 
   return serverJs;
