@@ -1,6 +1,6 @@
 {
     "name": "nextjs-studio",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "description": "A Git-based, local-first CMS for Next.js projects",
     "keywords": [
         "nextjs",

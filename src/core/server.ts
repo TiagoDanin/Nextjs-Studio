@@ -23,7 +23,6 @@ if (!hasStore()) {
 export { FsAdapter } from "./fs-adapter.js";
 export { ContentIndex } from "./indexer.js";
 export { loadContent, loadContentSync } from "./content-store.js";
-export { loadStudioConfig, resolveConfigPath, loadConfigFromPath } from "./config-loader.js";
 export { queryCollection } from "./query-builder.js";
 
 export type {
