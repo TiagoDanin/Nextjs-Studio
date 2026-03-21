@@ -4,6 +4,7 @@ import path from "node:path";
 const projectRoot = path.resolve(import.meta.dirname, "../../..");
 
 const config: NextConfig = {
+  output: "standalone",
   distDir: "../../../dist/cli/ui/.next",
   reactStrictMode: true,
   outputFileTracingRoot: projectRoot,

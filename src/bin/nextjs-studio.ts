@@ -8,11 +8,11 @@
  * @dont     Import UI components or contain parsing/indexing business logic
  */
 
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
-import { createRequire } from "node:module";
-import { spawn, type ChildProcess } from "node:child_process";
+import { execSync, spawn, type ChildProcess } from "node:child_process";
 import { Command } from "commander";
 import { CLI_PORT, CONTENTS_DIR } from "../shared/constants.js";
 import { FsAdapter } from "../core/fs-adapter.js";
@@ -54,21 +54,29 @@ async function runGenerateTypes(sourceDir: string): Promise<void> {
   console.log(`Types written to ${outFile}`);
 }
 
+function extractStandalone(archivePath: string): string {
+  const cacheDir = path.join(os.homedir(), ".cache", "nextjs-studio", `v${version}`);
+  const serverJs = path.join(cacheDir, "standalone", "src", "cli", "ui", "server.js");
+
+  if (!existsSync(serverJs)) {
+    console.log("Extracting studio UI (first run)...");
+    mkdirSync(cacheDir, { recursive: true });
+    execSync(`tar --force-local -xzf "${archivePath.replaceAll("\\", "/")}" -C "${cacheDir.replaceAll("\\", "/")}"`, { stdio: "inherit" });
+  }
+
+  return serverJs;
+}
+
 function resolveServerProcess(
   uiDir: string,
   serverPort: number,
   env: NodeJS.ProcessEnv,
 ): ChildProcess | null {
-  // Production: .next build output present — run via `next start`
-  const buildId = path.resolve(uiDir, ".next/BUILD_ID");
-  if (existsSync(buildId)) {
-    const require = createRequire(import.meta.url);
-    const nextBin = require.resolve("next/dist/bin/next");
-    return spawn("node", [nextBin, "start", "--port", String(serverPort)], {
-      cwd: uiDir,
-      stdio: "inherit",
-      env,
-    });
+  // Production: standalone archive present — extract on first run, then launch
+  const archivePath = path.resolve(import.meta.dirname, "../cli/ui/standalone.tar.gz");
+  if (existsSync(archivePath)) {
+    const serverJs = extractStandalone(archivePath);
+    return spawn("node", [serverJs], { stdio: "inherit", env });
   }
 
   // Dev mode: UI source present (running from repo with `yarn dev`)
