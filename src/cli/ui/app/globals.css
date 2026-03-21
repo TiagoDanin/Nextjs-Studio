@@ -97,6 +97,15 @@
   }
 }
 
+@layer base {
+  /* Validation styles — red border + message for invalid email/url inputs */
+  input:user-invalid,
+  input:not(:placeholder-shown):invalid {
+    border-color: var(--color-destructive) !important;
+    box-shadow: 0 0 0 1px var(--color-destructive) !important;
+  }
+}
+
 @layer components {
   .studio-main {
     @apply relative flex flex-1 flex-col overflow-hidden bg-background;

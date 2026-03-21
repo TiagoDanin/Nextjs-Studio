@@ -30,6 +30,12 @@ export function FormToolbar({ collectionName, hasSync }: Props) {
 
   const handleSave = useCallback(() => {
     if (!isDirty || isPending) return;
+    const invalidInputs = document.querySelectorAll("input:invalid");
+    if (invalidInputs.length > 0) {
+      toast("Fix invalid fields before saving", "error");
+      (invalidInputs[0] as HTMLElement).focus();
+      return;
+    }
     startTransition(async () => {
       const json = getSerializedJson();
       const result = await saveCollectionJson(filePath, json);

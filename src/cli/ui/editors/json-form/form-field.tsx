@@ -352,7 +352,7 @@ export const FormField = memo(function FormField({ fieldKey, path, value, isRich
         {mediaVal && isImagePath(mediaVal) && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={mediaVal.startsWith("http") ? mediaVal : `/api/public/${collectionName}/media/${mediaVal.replace(/^\//, "")}`}
+            src={mediaVal}
             alt=""
             className="mt-1 h-10 w-10 rounded border object-cover"
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}

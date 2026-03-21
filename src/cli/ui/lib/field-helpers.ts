@@ -136,3 +136,35 @@ export function isImagePath(path: string): boolean {
   const ext = path.split(".").pop()?.toLowerCase() ?? "";
   return ["png", "jpg", "jpeg", "gif", "webp", "svg", "avif"].includes(ext);
 }
+
+/**
+ * Validate field values against their schema type.
+ * Returns an array of error messages (empty = valid).
+ */
+export function validateFields(
+  data: Record<string, unknown>,
+  fields: FieldDefinition[],
+): string[] {
+  const errors: string[] = [];
+  for (const field of fields) {
+    const value = data[field.name];
+    if (value === undefined || value === null || value === "") {
+      if (field.required) errors.push(`${field.label ?? field.name} is required`);
+      continue;
+    }
+    const str = String(value);
+    if (field.type === "email" && str) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str)) {
+        errors.push(`${field.label ?? field.name}: invalid email`);
+      }
+    }
+    if (field.type === "url" && str) {
+      try {
+        new URL(str);
+      } catch {
+        errors.push(`${field.label ?? field.name}: invalid URL`);
+      }
+    }
+  }
+  return errors;
+}

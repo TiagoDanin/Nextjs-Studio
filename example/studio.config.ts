@@ -24,6 +24,7 @@ const config: StudioConfig & { components?: ComponentDefinition[] } = {
     },
     tests: {
       schema: testsSchema,
+      mediaDir: "example/contents/tests/media",
     },
   },
   components: [

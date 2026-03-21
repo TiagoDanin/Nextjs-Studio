@@ -274,7 +274,7 @@ function SchemaField({
             </Button>
           </div>
           {mediaVal && isImagePath(mediaVal) && (
-            <MediaPreview src={mediaVal} collection={collectionName} />
+            <MediaPreview src={mediaVal} />
           )}
         </Row>
       );
@@ -559,7 +559,7 @@ function ObjectSubField({
             </Button>
           </div>
           {mediaVal && isImagePath(mediaVal) && (
-            <MediaPreview src={mediaVal} collection={collectionName} />
+            <MediaPreview src={mediaVal} />
           )}
         </Row>
       );
@@ -674,13 +674,12 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-function MediaPreview({ src, collection }: { src: string; collection: string }) {
-  // Use the public API route to serve media files
-  const url = src.startsWith("http") ? src : `/api/public/${collection}/media/${src.replace(/^\//, "")}`;
+function MediaPreview({ src }: { src: string }) {
+  // The value is already a servable URL (e.g. /api/media/tests/app.png or /images/posts/app.png)
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={url}
+      src={src}
       alt=""
       className="mt-1 h-10 w-10 rounded border object-cover"
       onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}

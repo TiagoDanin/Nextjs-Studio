@@ -36,6 +36,13 @@ export function MdxToolbar({ locales, currentLocale }: MdxToolbarProps) {
 
   const handleSave = useCallback(() => {
     if (!isDirty || isPending) return;
+    // Block save if any inputs are invalid (email, url, etc.)
+    const invalidInputs = document.querySelectorAll("input:invalid");
+    if (invalidInputs.length > 0) {
+      toast("Fix invalid fields before saving", "error");
+      (invalidInputs[0] as HTMLElement).focus();
+      return;
+    }
     startTransition(async () => {
       const result = await saveMdxFrontmatter([{ filePath, frontmatter, body }]);
       if (result.success) {

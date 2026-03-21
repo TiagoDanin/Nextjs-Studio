@@ -107,7 +107,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
               max={2100}
               value={String(value ?? "")}
               onChange={(e) => updateCell(rowIndex, key, e.target.value)}
-              className="h-7 w-40 text-sm"
+              className="h-7 flex-1 text-sm"
               placeholder="YYYY"
             />
           </div>
@@ -122,7 +122,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
             type={dateType}
             value={String(value ?? "")}
             onChange={(e) => updateCell(rowIndex, key, e.target.value)}
-            className="h-7 w-40 text-sm"
+            className="h-7 flex-1 text-sm"
           />
         </div>
       );
@@ -138,7 +138,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
             type="text"
             value={value ? formatTimestamp(String(value)) : ""}
             readOnly
-            className="h-7 w-40 cursor-default text-sm opacity-60"
+            className="h-7 flex-1 cursor-default text-sm opacity-60"
             title={String(value ?? "")}
           />
         </div>
@@ -157,7 +157,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
             type="text"
             value={result}
             readOnly
-            className="h-7 w-40 cursor-default text-sm opacity-60"
+            className="h-7 flex-1 cursor-default text-sm opacity-60"
           />
         </div>
       );
@@ -197,7 +197,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
                 updateCell(rowIndex, key, clientSlugify(String(row[fromField])));
               }
             }}
-            className="h-7 w-40 text-sm"
+            className="h-7 flex-1 text-sm"
             placeholder={fromField ? `From "${fromField}"` : "slug"}
           />
         </div>
@@ -214,7 +214,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
             type="email"
             value={String(value ?? "")}
             onChange={(e) => updateCell(rowIndex, key, e.target.value)}
-            className="h-7 w-40 text-sm"
+            className="h-7 flex-1 text-sm"
           />
         </div>
       );
@@ -230,7 +230,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
             type="url"
             value={String(value ?? "")}
             onChange={(e) => updateCell(rowIndex, key, e.target.value)}
-            className="h-7 w-40 text-sm"
+            className="h-7 flex-1 text-sm"
           />
         </div>
       );
@@ -269,7 +269,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
             {mediaVal && isImagePath(mediaVal) && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={mediaVal.startsWith("http") ? mediaVal : `/api/public/${collectionName}/media/${mediaVal.replace(/^\//, "")}`}
+                src={mediaVal}
                 alt=""
                 className="h-8 w-8 rounded border object-cover"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
@@ -291,7 +291,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
             value={String(value ?? "")}
             onChange={(v) => updateCell(rowIndex, key, v)}
             options={[{ label: "—", value: "" }, ...opts]}
-            className="h-7 w-40 px-2"
+            className="h-7 flex-1 px-2"
           />
         </div>
       );
@@ -308,7 +308,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
             value={String(value ?? "")}
             onChange={(v) => updateCell(rowIndex, key, v)}
             options={[{ label: "—", value: "" }, ...opts]}
-            className="h-7 w-40 px-2"
+            className="h-7 flex-1 px-2"
           />
         </div>
       );
@@ -356,7 +356,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
                     e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
                   )
                 }
-                className="h-7 w-40 text-sm"
+                className="h-7 flex-1 text-sm"
               />
             )}
           </div>
@@ -377,7 +377,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
               const num = Number(e.target.value);
               updateCell(rowIndex, key, Number.isNaN(num) ? 0 : num);
             }}
-            className="h-7 w-40 text-sm"
+            className="h-7 flex-1 text-sm"
           />
         </div>
       );
@@ -408,7 +408,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
             type="text"
             value={String(value ?? "")}
             onChange={(e) => updateCell(rowIndex, key, e.target.value)}
-            className="h-7 w-40 text-sm"
+            className="h-7 flex-1 text-sm"
             placeholder={`Slug from "${(fieldDef as { collection: string }).collection}"`}
           />
         </div>
@@ -430,7 +430,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
               type="text"
               value={flat.join(", ")}
               onChange={(e) => updateCell(rowIndex, key, e.target.value.split(",").map((s) => s.trim()).filter(Boolean))}
-              className="h-7 w-40 text-sm"
+              className="h-7 flex-1 text-sm"
               placeholder="comma-separated"
             />
           </div>
@@ -520,7 +520,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
                   e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
                 )
               }
-              className="h-7 w-40 text-sm"
+              className="h-7 flex-1 text-sm"
             />
           </div>
         );
@@ -624,7 +624,7 @@ export function SheetRowInspector({ rowIndex }: Props) {
           type="text"
           value={String(value ?? "")}
           onChange={(e) => updateCell(rowIndex, key, e.target.value)}
-          className="h-7 w-40 text-sm"
+          className="h-7 flex-1 text-sm"
         />
       </div>
     );
@@ -693,6 +693,6 @@ function IdCellInput({
   }, [value, fieldDef.generate, onChange]);
 
   return (
-    <Input type="text" value={String(value ?? "")} readOnly className="h-7 w-40 cursor-default text-sm opacity-60" />
+    <Input type="text" value={String(value ?? "")} readOnly className="h-7 flex-1 cursor-default text-sm opacity-60" />
   );
 }
