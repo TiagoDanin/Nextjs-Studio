@@ -1,0 +1,3 @@
+# Exclude Next.js build cache and dev artifacts from published package
+dist/cli/ui/.next/cache
+dist/cli/ui/.next/dev

@@ -11,6 +11,7 @@
 import { existsSync } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { createRequire } from "node:module";
 import { spawn, type ChildProcess } from "node:child_process";
 import { Command } from "commander";
 import { CLI_PORT, CONTENTS_DIR } from "../shared/constants.js";
@@ -58,9 +59,16 @@ function resolveServerProcess(
   serverPort: number,
   env: NodeJS.ProcessEnv,
 ): ChildProcess | null {
-  const standaloneServer = path.resolve(uiDir, ".next/standalone/src/cli/ui/server.js");
-  if (existsSync(standaloneServer)) {
-    return spawn("node", [standaloneServer], { stdio: "inherit", env });
+  // Production: .next build output present — run via `next start`
+  const buildId = path.resolve(uiDir, ".next/BUILD_ID");
+  if (existsSync(buildId)) {
+    const require = createRequire(import.meta.url);
+    const nextBin = require.resolve("next/dist/bin/next");
+    return spawn("node", [nextBin, "start", "--port", String(serverPort)], {
+      cwd: uiDir,
+      stdio: "inherit",
+      env,
+    });
   }
 
   // Dev mode: UI source present (running from repo with `yarn dev`)
