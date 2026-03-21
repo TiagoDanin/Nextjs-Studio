@@ -8,16 +8,26 @@
  * @dont     Put table structure or column definitions here — that belongs in sheet-table.tsx
  */
 
+import { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEditorStore } from "@/stores/editor-store";
+import { useMediaStore } from "@/stores/media-store";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { X, Pencil, Trash2 } from "lucide-react";
+import { X, Pencil, Trash2, ImageIcon, Plus } from "lucide-react";
 import { NativeSelect } from "@/components/ui/native-select";
 import { keyLabel } from "@shared/field-utils";
+import {
+  clientSlugify,
+  formatTimestamp,
+  evaluateFormula,
+  generateId,
+  isImagePath,
+  getDateInputType,
+} from "@/lib/field-helpers";
 
 const RichTextField = dynamic(
   () => import("../json-form/rich-text-field").then((m) => m.RichTextField),
@@ -28,6 +38,10 @@ import type {
   SelectField,
   MultiSelectField,
   StatusField,
+  SlugField,
+  IdField,
+  FormulaField,
+  ArrayField,
 } from "@shared/fields";
 
 interface Props {
@@ -48,7 +62,17 @@ export function SheetRowInspector({ rowIndex }: Props) {
   if (!rows[rowIndex]) return null;
 
   const row = rows[rowIndex];
-  const entries = Object.entries(row);
+
+  // Render fields in schema order first, then extras
+  const fieldDefEntries = Object.entries(fieldDefs);
+  const schemaKeys = new Set(fieldDefEntries.map(([k]) => k));
+  const extraKeys = Object.keys(row).filter((k) => !schemaKeys.has(k));
+
+  // Build ordered entries: schema fields first, then extras
+  const orderedEntries: [string, unknown][] = [
+    ...fieldDefEntries.map(([k]) => [k, row[k]] as [string, unknown]),
+    ...extraKeys.map((k) => [k, row[k]] as [string, unknown]),
+  ];
 
   function renderCell(key: string, value: unknown) {
     const fieldDef: FieldDefinition | undefined = fieldDefs[key];
@@ -70,14 +94,32 @@ export function SheetRowInspector({ rowIndex }: Props) {
     }
 
     if (type === "date") {
-      const includeTime = (fieldDef as { includeTime?: boolean }).includeTime;
+      const dateType = getDateInputType(fieldDef as import("@shared/fields").DateField);
+      if (dateType === "year") {
+        return (
+          <div key={key} className="flex items-center gap-3">
+            <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+              {label}
+            </Label>
+            <Input
+              type="number"
+              min={1900}
+              max={2100}
+              value={String(value ?? "")}
+              onChange={(e) => updateCell(rowIndex, key, e.target.value)}
+              className="h-7 w-40 text-sm"
+              placeholder="YYYY"
+            />
+          </div>
+        );
+      }
       return (
         <div key={key} className="flex items-center gap-3">
           <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
             {label}
           </Label>
           <Input
-            type={includeTime ? "datetime-local" : "date"}
+            type={dateType}
             value={String(value ?? "")}
             onChange={(e) => updateCell(rowIndex, key, e.target.value)}
             className="h-7 w-40 text-sm"
@@ -94,9 +136,69 @@ export function SheetRowInspector({ rowIndex }: Props) {
           </Label>
           <Input
             type="text"
-            value={String(value ?? "")}
+            value={value ? formatTimestamp(String(value)) : ""}
             readOnly
             className="h-7 w-40 cursor-default text-sm opacity-60"
+            title={String(value ?? "")}
+          />
+        </div>
+      );
+    }
+
+    if (type === "formula") {
+      const expr = (fieldDef as FormulaField).expression;
+      const result = evaluateFormula(expr, row);
+      return (
+        <div key={key} className="flex items-center gap-3">
+          <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <Input
+            type="text"
+            value={result}
+            readOnly
+            className="h-7 w-40 cursor-default text-sm opacity-60"
+          />
+        </div>
+      );
+    }
+
+    if (type === "id") {
+      return (
+        <div key={key} className="flex items-center gap-3">
+          <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <IdCellInput
+            value={value}
+            fieldDef={fieldDef as IdField}
+            onChange={(v) => updateCell(rowIndex, key, v)}
+          />
+        </div>
+      );
+    }
+
+    if (type === "slug") {
+      const fromField = (fieldDef as SlugField).from;
+      return (
+        <div key={key} className="flex items-center gap-3">
+          <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <Input
+            type="text"
+            value={String(value ?? "")}
+            onChange={(e) => updateCell(rowIndex, key, e.target.value)}
+            onBlur={(e) => {
+              const raw = e.target.value;
+              if (raw) {
+                updateCell(rowIndex, key, clientSlugify(raw));
+              } else if (fromField && row[fromField]) {
+                updateCell(rowIndex, key, clientSlugify(String(row[fromField])));
+              }
+            }}
+            className="h-7 w-40 text-sm"
+            placeholder={fromField ? `From "${fromField}"` : "slug"}
           />
         </div>
       );
@@ -130,6 +232,50 @@ export function SheetRowInspector({ rowIndex }: Props) {
             onChange={(e) => updateCell(rowIndex, key, e.target.value)}
             className="h-7 w-40 text-sm"
           />
+        </div>
+      );
+    }
+
+    if (type === "media") {
+      const mediaVal = String(value ?? "");
+      return (
+        <div key={key} className="flex items-start gap-3">
+          <Label className="w-36 shrink-0 truncate pt-1 text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <div className="flex flex-1 flex-col gap-1">
+            <div className="flex items-center gap-1">
+              <Input
+                type="text"
+                value={mediaVal}
+                onChange={(e) => updateCell(rowIndex, key, e.target.value)}
+                className="h-7 flex-1 text-sm"
+                placeholder="Media path or URL"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-7 w-7 shrink-0"
+                onClick={() => {
+                  useMediaStore.getState().openPicker("any", (url) => {
+                    updateCell(rowIndex, key, url);
+                  }, collectionName);
+                }}
+              >
+                <ImageIcon className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            {mediaVal && isImagePath(mediaVal) && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={mediaVal.startsWith("http") ? mediaVal : `/api/public/${collectionName}/media/${mediaVal.replace(/^\//, "")}`}
+                alt=""
+                className="h-8 w-8 rounded border object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
+            )}
+          </div>
         </div>
       );
     }
@@ -233,6 +379,124 @@ export function SheetRowInspector({ rowIndex }: Props) {
             }}
             className="h-7 w-40 text-sm"
           />
+        </div>
+      );
+    }
+
+    if (type === "long-text") {
+      return (
+        <div key={key} className="flex flex-col gap-1.5">
+          <Label className="text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <RichTextField
+            value={String(value ?? "")}
+            onChange={(md) => updateCell(rowIndex, key, md)}
+            placeholder="Start writing..."
+          />
+        </div>
+      );
+    }
+
+    if (type === "relation") {
+      return (
+        <div key={key} className="flex items-center gap-3">
+          <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <Input
+            type="text"
+            value={String(value ?? "")}
+            onChange={(e) => updateCell(rowIndex, key, e.target.value)}
+            className="h-7 w-40 text-sm"
+            placeholder={`Slug from "${(fieldDef as { collection: string }).collection}"`}
+          />
+        </div>
+      );
+    }
+
+    if (type === "array") {
+      const items = Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
+      const itemFields = (fieldDef as ArrayField).itemFields;
+
+      if (itemFields.length === 0 || (itemFields.length === 1 && itemFields[0]?.type === "text")) {
+        const flat = items.map((item) => typeof item === "string" ? item : String(item));
+        return (
+          <div key={key} className="flex items-center gap-3">
+            <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+              {label}
+            </Label>
+            <Input
+              type="text"
+              value={flat.join(", ")}
+              onChange={(e) => updateCell(rowIndex, key, e.target.value.split(",").map((s) => s.trim()).filter(Boolean))}
+              className="h-7 w-40 text-sm"
+              placeholder="comma-separated"
+            />
+          </div>
+        );
+      }
+
+      // Complex arrays
+      return (
+        <div key={key} className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <Label className="text-xs font-semibold text-muted-foreground">{label}</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-5 w-5"
+              onClick={() => {
+                const empty: Record<string, unknown> = {};
+                for (const f of itemFields) empty[f.name] = "";
+                updateCell(rowIndex, key, [...items, empty]);
+              }}
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
+          <div className="flex flex-col gap-2 border-l pl-3">
+            {items.map((item, idx) => (
+              <div key={idx} className="flex flex-col gap-1 rounded border bg-muted/10 p-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-muted-foreground">#{idx + 1}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-4 w-4 text-muted-foreground hover:text-destructive"
+                    onClick={() => {
+                      const next = items.filter((_, i) => i !== idx);
+                      updateCell(rowIndex, key, next);
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+                {itemFields.map((itemField) => {
+                  const ifValue = typeof item === "object" && item !== null ? (item as Record<string, unknown>)[itemField.name] : "";
+                  const ifLabel = ("label" in itemField && itemField.label) ? String(itemField.label) : keyLabel(itemField.name);
+                  return (
+                    <div key={itemField.name} className="flex items-center gap-2">
+                      <Label className="w-20 shrink-0 truncate text-[10px] text-muted-foreground">{ifLabel}</Label>
+                      <Input
+                        type={itemField.type === "url" ? "url" : itemField.type === "email" ? "email" : itemField.type === "number" ? "number" : "text"}
+                        value={String(ifValue ?? "")}
+                        onChange={(e) => {
+                          const newItem = { ...(item as Record<string, unknown>), [itemField.name]: itemField.type === "number" ? Number(e.target.value) || 0 : e.target.value };
+                          const next = [...items];
+                          next[idx] = newItem;
+                          updateCell(rowIndex, key, next);
+                        }}
+                        className="h-6 flex-1 text-xs"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
         </div>
       );
     }
@@ -404,8 +668,31 @@ export function SheetRowInspector({ rowIndex }: Props) {
         </div>
       </div>
       <div className="flex max-h-80 flex-col gap-2 overflow-auto px-4 py-3">
-        {entries.map(([key, value]) => renderCell(key, value))}
+        {orderedEntries.map(([key, value]) => renderCell(key, value))}
       </div>
     </div>
+  );
+}
+
+/** ID cell: read-only, auto-generates if empty */
+function IdCellInput({
+  value,
+  fieldDef,
+  onChange,
+}: {
+  value: unknown;
+  fieldDef: IdField;
+  onChange: (v: unknown) => void;
+}) {
+  const generated = useRef(false);
+  useEffect(() => {
+    if (!value && !generated.current) {
+      generated.current = true;
+      onChange(generateId(fieldDef.generate));
+    }
+  }, [value, fieldDef.generate, onChange]);
+
+  return (
+    <Input type="text" value={String(value ?? "")} readOnly className="h-7 w-40 cursor-default text-sm opacity-60" />
   );
 }

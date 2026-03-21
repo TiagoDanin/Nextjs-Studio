@@ -38,11 +38,22 @@ export async function loadStudioConfig(projectRoot: string): Promise<StudioConfi
 
 /**
  * Loads config from a specific file path.
+ * Uses tsx's tsImport for .ts files so TypeScript configs work at runtime.
  */
 export async function loadConfigFromPath(configPath: string): Promise<StudioConfig> {
   try {
-    const fileUrl = pathToFileURL(configPath).href;
-    const mod = await import(/* webpackIgnore: true */ fileUrl);
+    let mod: Record<string, unknown>;
+
+    if (configPath.endsWith(".ts")) {
+      // Use tsx to transpile TypeScript configs on the fly
+      const { tsImport } = await import(/* webpackIgnore: true */ "tsx/esm/api");
+      const fileUrl = pathToFileURL(configPath).href;
+      mod = await tsImport(fileUrl, import.meta.url) as Record<string, unknown>;
+    } else {
+      const fileUrl = pathToFileURL(configPath).href;
+      mod = await import(/* webpackIgnore: true */ fileUrl);
+    }
+
     const config = mod.default ?? mod.config ?? mod;
 
     if (typeof config !== "object" || config === null || Array.isArray(config)) {

@@ -29,10 +29,11 @@ const program = new Command()
   .version(version)
   .option("-d, --dir <path>", "Path to contents directory", CONTENTS_DIR)
   .option("-p, --port <number>", "Port to run the studio on", String(CLI_PORT))
+  .option("-c, --config <path>", "Path to studio.config.ts (defaults to auto-discovery in project root)")
   .option("--generate-types", "Generate TypeScript types for content collections")
   .parse();
 
-const opts = program.opts<{ dir: string; port: string; generateTypes?: boolean }>();
+const opts = program.opts<{ dir: string; port: string; config?: string; generateTypes?: boolean }>();
 const contentsDir = path.resolve(opts.dir);
 const port = Number(opts.port);
 
@@ -106,7 +107,9 @@ if (opts.generateTypes) {
 }
 
 const uiDir = path.resolve(import.meta.dirname, "../cli/ui");
-const configPath = resolveConfigPath(process.cwd());
+const configPath = opts.config
+  ? path.resolve(opts.config)
+  : resolveConfigPath(process.cwd());
 const serverEnv: NodeJS.ProcessEnv = {
   ...process.env,
   STUDIO_CONTENTS_DIR: contentsDir,

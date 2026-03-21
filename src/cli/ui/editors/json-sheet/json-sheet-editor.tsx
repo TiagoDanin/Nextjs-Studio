@@ -12,6 +12,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useEditorStore } from "@/stores/editor-store";
 import { SheetToolbar } from "./sheet-toolbar";
 import { SheetTable } from "./sheet-table";
+import { MediaPicker } from "@/editors/media-picker/media-picker";
 import type { CollectionSummary, SerializableEntry } from "@/actions/collections";
 
 interface Props {
@@ -71,6 +72,7 @@ export function JsonSheetEditor({ collection, entries, filePath, hasSync }: Prop
           <SheetTable />
         </div>
       </div>
+      <MediaPicker />
     </div>
   );
 }

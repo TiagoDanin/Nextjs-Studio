@@ -83,6 +83,16 @@ export interface DateField extends BaseField {
    * When `false` or omitted it renders a date-only picker.
    */
   includeTime?: boolean;
+  /**
+   * When `false` the editor hides the day picker, rendering a month-year picker (`type="month"`).
+   * When `true` or omitted: default behavior (full date or datetime).
+   */
+  includeDay?: boolean;
+  /**
+   * When `false` (AND `includeDay: false`) the editor renders a year-only picker (number input).
+   * Only effective when `includeDay` is also `false`.
+   */
+  includeMonth?: boolean;
 }
 
 export interface SelectField extends BaseField {

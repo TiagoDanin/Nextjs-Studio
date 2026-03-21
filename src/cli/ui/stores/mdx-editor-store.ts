@@ -9,6 +9,8 @@
  */
 
 import { create } from "zustand";
+import type { FieldDefinition } from "@shared/fields";
+import { resolveDefault } from "@/lib/field-helpers";
 
 interface SelectedComponent {
   tagName: string;
@@ -33,6 +35,7 @@ interface MdxEditorState {
     filePath: string,
     frontmatter: Record<string, unknown>,
     body: string,
+    fields?: FieldDefinition[],
   ) => void;
   updateFrontmatter: (key: string, value: unknown) => void;
   updateBody: (body: string) => void;
@@ -52,8 +55,19 @@ export const useMdxEditorStore = create<MdxEditorState>((set) => ({
   renderedHtml: "",
   selectedComponent: null,
 
-  init: (collectionName, slug, filePath, frontmatter, body) =>
-    set({ collectionName, slug, filePath, frontmatter, body, isDirty: false, selectedComponent: null }),
+  init: (collectionName, slug, filePath, frontmatter, body, fields) => {
+    // Merge schema defaults for fields that don't exist in the frontmatter
+    let merged = frontmatter;
+    if (fields && fields.length > 0) {
+      merged = { ...frontmatter };
+      for (const field of fields) {
+        if (!(field.name in merged) || merged[field.name] === undefined) {
+          merged[field.name] = resolveDefault(field);
+        }
+      }
+    }
+    set({ collectionName, slug, filePath, frontmatter: merged, body, isDirty: false, selectedComponent: null });
+  },
 
   updateFrontmatter: (key, value) =>
     set((state) => ({

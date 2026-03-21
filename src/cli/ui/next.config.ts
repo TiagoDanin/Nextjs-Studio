@@ -18,7 +18,7 @@ const config: NextConfig = {
     };
   },
   // ESM-only packages used server-side must be loaded natively — not bundled by webpack
-  serverExternalPackages: ["@sindresorhus/slugify", "@sindresorhus/transliterate"],
+  serverExternalPackages: ["@sindresorhus/slugify", "@sindresorhus/transliterate", "tsx"],
   webpack: (config) => {
     config.resolve ??= {};
     config.resolve.alias = {

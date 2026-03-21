@@ -23,7 +23,9 @@ export function MediaPicker() {
   const insertType = useMediaStore((s) => s.insertType);
   const onInsert = useMediaStore((s) => s.onInsert);
   const closePicker = useMediaStore((s) => s.closePicker);
-  const collection = useMdxEditorStore((s) => s.collectionName);
+  const mediaStoreCollection = useMediaStore((s) => s.collectionName);
+  const mdxCollection = useMdxEditorStore((s) => s.collectionName);
+  const collection = mediaStoreCollection || mdxCollection;
 
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [selected, setSelected] = useState<MediaAsset | null>(null);

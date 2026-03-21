@@ -11,6 +11,7 @@
 import { create } from "zustand";
 import { orderBy } from "lodash-es";
 import type { FieldDefinition } from "@shared/fields";
+import { resolveDefault } from "@/lib/field-helpers";
 
 interface EditorState {
   // Shared
@@ -120,11 +121,25 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       }
     } catch { /* ignore */ }
 
+    // Merge schema defaults into each row for fields that are missing
+    let mergedRows = rows;
+    if (fields && fields.length > 0) {
+      mergedRows = rows.map((row) => {
+        const merged = { ...row };
+        for (const field of fields) {
+          if (!(field.name in merged) || merged[field.name] === undefined) {
+            merged[field.name] = resolveDefault(field);
+          }
+        }
+        return merged;
+      });
+    }
+
     set({
       editorType: "sheet",
       collectionName,
       filePath,
-      rows,
+      rows: mergedRows,
       isMdx: !!mdxSources,
       rowFilePaths: mdxSources?.map((source) => source.filePath) ?? [],
       rowBodies: mdxSources?.map((source) => source.body) ?? [],
@@ -141,7 +156,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   },
 
   initForm: (collectionName, filePath, data, fields) => {
-    const sections = Object.entries(data)
+    // Merge schema defaults for fields missing from the JSON data (appended at end to preserve JSON order)
+    let mergedData = data;
+    if (fields && fields.length > 0) {
+      mergedData = { ...data };
+      for (const field of fields) {
+        if (!(field.name in mergedData) || mergedData[field.name] === undefined) {
+          mergedData[field.name] = resolveDefault(field);
+        }
+      }
+    }
+    const sections = Object.entries(mergedData)
       .filter(
         ([, value]) => typeof value === "object" && value !== null && !Array.isArray(value),
       )
@@ -150,7 +175,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       editorType: "form",
       collectionName,
       filePath,
-      formData: data,
+      formData: mergedData,
       expandedSections: sections,
       isDirty: false,
       isSaving: false,
@@ -168,7 +193,13 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   addRow: () =>
     set((state) => {
       const template: Record<string, unknown> = {};
-      if (state.rows.length > 0) {
+      // Use schema defaults when available
+      const defs = Object.values(state.fieldDefs);
+      if (defs.length > 0) {
+        for (const field of defs) {
+          template[field.name] = resolveDefault(field);
+        }
+      } else if (state.rows.length > 0) {
         for (const key of Object.keys(state.rows[0])) {
           const sample = state.rows[0][key];
           if (typeof sample === "boolean") template[key] = false;

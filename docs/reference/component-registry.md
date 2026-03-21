@@ -90,7 +90,7 @@ After editing the props in the panel, the MDX output will be:
 <CTA title="Start Building" href="/docs" variant="primary" />
 ```
 
-See `example/studio.config.example.ts` and `example/contents/blog/getting-started.mdx` for a working example.
+See `example/studio.config.ts` and `example/contents/blog/getting-started.mdx` for a working example.
 
 ## MDX Output
 

@@ -14,10 +14,13 @@ interface MediaPickerState {
   open: boolean;
   insertType: "image" | "video" | "audio" | "any";
   onInsert: ((url: string, name: string, mimeType: string) => void) | null;
+  /** Collection name for the media picker — used to fetch/upload assets. */
+  collectionName: string;
 
   openPicker: (
     insertType: "image" | "video" | "audio" | "any",
     onInsert: (url: string, name: string, mimeType: string) => void,
+    collectionName?: string,
   ) => void;
   closePicker: () => void;
 }
@@ -26,7 +29,14 @@ export const useMediaStore = create<MediaPickerState>((set) => ({
   open: false,
   insertType: "any",
   onInsert: null,
+  collectionName: "",
 
-  openPicker: (insertType, onInsert) => set({ open: true, insertType, onInsert }),
+  openPicker: (insertType, onInsert, collectionName) =>
+    set({
+      open: true,
+      insertType,
+      onInsert,
+      ...(collectionName !== undefined ? { collectionName } : {}),
+    }),
   closePicker: () => set({ open: false, onInsert: null }),
 }));

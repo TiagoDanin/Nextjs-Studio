@@ -1,0 +1,160 @@
+---
+title: All Fields & Features Test
+date: '2024-01-20'
+number: 42
+decimal: 3.14
+boolean: true
+email: test@example.com
+url: https://example.com
+select: tech
+multiSelect:
+  - react
+  - typescript
+status: published
+coverImage: /screenshot.png
+slug: all-fields-features-test
+id: abc123nanoid
+author: author-1
+formula: computed-value
+createdAt: '2024-01-20T10:00:00.000Z'
+updatedAt: '2024-01-20T12:00:00.000Z'
+seo:
+  metaTitle: All Fields Test Page
+  metaDescription: This page tests every field type available in the studio.
+  ogImage: /screenshot.png
+links:
+  - label: GitHub
+    url: https://github.com
+  - label: Docs
+    url: https://example.com/docs
+---
+
+# H1 — All Fields & Features Test
+
+## H2 — Text Formatting
+
+### H3 — Inline Styles
+
+This is **bold text**, this is *italic text*, this is ~~strikethrough~~ text, and this is `inline code`.
+
+Here is a [link to example.com](https://example.com) and another [internal link](/blog/getting-started).
+
+---
+
+## H2 — Media
+
+![Screenshot do Studio](/screenshot.png)
+
+---
+
+## H2 — Components
+
+<CTA
+  title="Get Started Now"
+  href="https://example.com/get-started"
+  variant="primary"
+/>
+
+<Hero
+  title="Welcome to the Studio"
+  subtitle="A local-first CMS for Next.js"
+  image="/screenshot.png"
+  centered={true}
+/>
+
+---
+
+## H2 — Mermaid Diagrams
+
+### H3 — Flowchart (LR)
+
+```mermaid
+flowchart LR
+  A[Start] --> B{Is published?}
+  B -- Yes --> C[Show Post]
+  B -- No --> D[Show Draft]
+  C --> E[End]
+  D --> E
+```
+
+### H3 — Flowchart (TD)
+
+```mermaid
+flowchart TD
+  Config[studio.config.ts] --> Indexer
+  Indexer --> Parser
+  Parser --> Store[(Content Store)]
+  Store --> Query[queryCollection API]
+  Query --> UI[Next.js Page]
+```
+
+### H3 — Sequence Diagram
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant CLI
+  participant Core
+  participant FS
+
+  User->>CLI: npx nextjs-studio
+  CLI->>Core: loadContent()
+  Core->>FS: readdir /contents
+  FS-->>Core: entries[]
+  Core-->>CLI: ContentStore ready
+  CLI-->>User: Studio running on :3030
+```
+
+### H3 — Entity Relationship
+
+```mermaid
+erDiagram
+  BLOG_POST {
+    string id PK
+    string title
+    string slug
+    string status
+    date publishedAt
+  }
+  AUTHOR {
+    string id PK
+    string name
+    string email
+  }
+  TAG {
+    string value PK
+    string label
+  }
+  BLOG_POST }o--|| AUTHOR : "written by"
+  BLOG_POST }o--o{ TAG : "tagged with"
+```
+
+### H3 — State Diagram
+
+```mermaid
+stateDiagram-v2
+  [*] --> Draft
+  Draft --> Review : submit for review
+  Review --> Published : approve
+  Review --> Draft : request changes
+  Published --> Draft : unpublish
+  Published --> [*]
+```
+
+---
+
+## H2 — Code Block
+
+```typescript
+import { queryCollection } from 'nextjs-studio/server'
+
+const posts = await queryCollection('blog')
+  .where({ published: true })
+  .sort('date', 'desc')
+  .limit(10)
+  .all()
+
+for (const post of posts) {
+  console.log(post.title, post.slug)
+}
+```

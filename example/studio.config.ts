@@ -9,6 +9,7 @@ import type { StudioConfig } from "../src/core/index.js";
 import type { ComponentDefinition } from "../src/shared/component-types.js";
 import { blogSchema } from "./schemas/blog.js";
 import { authorsSchema } from "./schemas/authors.js";
+import { testsSchema } from "./schemas/tests.js";
 
 const config: StudioConfig & { components?: ComponentDefinition[] } = {
   collections: {
@@ -20,6 +21,9 @@ const config: StudioConfig & { components?: ComponentDefinition[] } = {
     },
     authors: {
       schema: authorsSchema,
+    },
+    tests: {
+      schema: testsSchema,
     },
   },
   components: [

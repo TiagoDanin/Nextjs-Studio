@@ -47,8 +47,8 @@ export function MdxEditor({
   const init = useMdxEditorStore((s) => s.init);
 
   useEffect(() => {
-    init(collectionName, slug, filePath, frontmatter, body);
-  }, [collectionName, slug, filePath, frontmatter, body, init]);
+    init(collectionName, slug, filePath, frontmatter, body, fields);
+  }, [collectionName, slug, filePath, frontmatter, body, fields, init]);
 
   return (
     <div className="flex flex-1 overflow-hidden">
