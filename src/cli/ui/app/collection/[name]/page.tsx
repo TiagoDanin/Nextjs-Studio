@@ -30,11 +30,22 @@ export default async function CollectionPage({
 
   const { collection, entries, filePath } = result;
 
+  // Deduplicate entries by base slug for the sidebar — prefer the default locale
+  // (locale === undefined), falling back to the first available variant.
+  const sidebarEntries = (() => {
+    const seen = new Map<string, typeof entries[0]>();
+    for (const e of entries) {
+      if (!seen.has(e.slug) || e.locale === undefined) seen.set(e.slug, e);
+    }
+    return Array.from(seen.values());
+  })();
+
   const collectionsWithEntries = collections.map((collection) =>
     collection.name === name && collection.type === "mdx"
       ? {
           ...collection,
-          entries: entries.map((entry) => ({
+          sectionCount: sidebarEntries.length,
+          entries: sidebarEntries.map((entry) => ({
             slug: entry.slug,
             title: String(entry.data.title ?? entry.slug),
           })),

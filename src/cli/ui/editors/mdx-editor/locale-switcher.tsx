@@ -14,16 +14,15 @@ import { Globe } from "lucide-react";
 
 interface Props {
   collectionName: string;
-  currentSlug: string;
+  slug: string;
+  currentLocale: string;
   locales: { locale: string; slug: string }[];
 }
 
-export function LocaleSwitcher({ collectionName, currentSlug, locales }: Props) {
+export function LocaleSwitcher({ collectionName, slug, currentLocale, locales }: Props) {
   const router = useRouter();
 
   if (locales.length <= 1) return null;
-
-  const currentLocale = locales.find((l) => l.slug === currentSlug)?.locale ?? "";
 
   return (
     <div className="flex items-center gap-1.5">
@@ -31,13 +30,11 @@ export function LocaleSwitcher({ collectionName, currentSlug, locales }: Props) 
       <NativeSelect
         value={currentLocale}
         onChange={(value) => {
-          const target = locales.find((l) => l.locale === value);
-          if (target) {
-            router.push(`/collection/${collectionName}/${target.slug}`);
-          }
+          const params = value === "default" ? "" : `?locale=${value}`;
+          router.push(`/collection/${collectionName}/${slug}${params}`);
         }}
         options={locales.map((l) => ({ label: l.locale.toUpperCase(), value: l.locale }))}
-        className="h-6 w-16 px-1 text-xs"
+        className="h-6 w-auto min-w-16 px-1.5 text-xs"
       />
     </div>
   );

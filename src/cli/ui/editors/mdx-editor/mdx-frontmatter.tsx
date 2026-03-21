@@ -39,13 +39,11 @@ export function MdxFrontmatter() {
 const RE_ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const RE_ISO_DATETIME =
   /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?$/;
-const DATE_FIELD_NAMES = ["date", "publishedAt", "createdAt", "updatedAt", "published_at", "created_at", "updated_at"];
 
-function isDateValue(key: string, value: unknown): "date" | "datetime" | false {
+function isDateValue(_key: string, value: unknown): "date" | "datetime" | false {
   if (typeof value !== "string") return false;
   if (RE_ISO_DATETIME.test(value) && !RE_ISO_DATE.test(value)) return "datetime";
   if (RE_ISO_DATE.test(value)) return "date";
-  if (DATE_FIELD_NAMES.includes(key)) return "date";
   return false;
 }
 

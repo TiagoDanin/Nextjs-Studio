@@ -24,6 +24,10 @@ interface Props {
   frontmatter: Record<string, unknown>;
   body: string;
   registry?: ComponentDefinition[];
+  /** All locale variants for this slug — only present when more than one locale exists. */
+  locales?: { locale: string; slug: string }[];
+  /** The currently active locale identifier (e.g. "pt" or "default"). */
+  currentLocale?: string;
 }
 
 export function MdxEditor({
@@ -33,6 +37,8 @@ export function MdxEditor({
   frontmatter,
   body,
   registry = [],
+  locales,
+  currentLocale,
 }: Props) {
   const init = useMdxEditorStore((s) => s.init);
 
@@ -43,7 +49,7 @@ export function MdxEditor({
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className="flex flex-1 flex-col overflow-hidden">
-        <MdxToolbar />
+        <MdxToolbar locales={locales} currentLocale={currentLocale} />
         <div className="studio-canvas overflow-y-auto">
           <div className="min-h-full px-4 py-4">
             <div className="studio-surface flex min-h-full flex-col">

@@ -13,11 +13,17 @@ import { useMdxEditorStore } from "@/stores/mdx-editor-store";
 import { saveMdxFrontmatter } from "@/actions/collections";
 import { Button } from "@/components/ui/button";
 import { PreviewDialog } from "./preview-dialog";
+import { LocaleSwitcher } from "./locale-switcher";
 import { Eye, ChevronRight } from "lucide-react";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { toast } from "@/components/ui/toast";
 
-export function MdxToolbar() {
+interface MdxToolbarProps {
+  locales?: { locale: string; slug: string }[];
+  currentLocale?: string;
+}
+
+export function MdxToolbar({ locales, currentLocale }: MdxToolbarProps) {
   const isDirty = useMdxEditorStore((s) => s.isDirty);
   const slug = useMdxEditorStore((s) => s.slug);
   const collectionName = useMdxEditorStore((s) => s.collectionName);
@@ -55,6 +61,14 @@ export function MdxToolbar() {
           )}
         </div>
         <div className="flex items-center gap-1.5">
+          {locales && currentLocale && (
+            <LocaleSwitcher
+              collectionName={collectionName}
+              slug={slug}
+              currentLocale={currentLocale}
+              locales={locales}
+            />
+          )}
           <Button
             variant="ghost"
             size="sm"

@@ -129,8 +129,9 @@ export async function getCollectionEntries(
         collection: entry.collection,
         slug: entry.slug,
         path: entry.path,
-        filePath:
-          col.type === "mdx" ? fs.join(col.basePath, entry.slug + ".mdx") : "",
+        filePath: col.type === "mdx"
+          ? fs.join(col.basePath, entry.locale ? `${entry.slug}.${entry.locale}.mdx` : `${entry.slug}.mdx`)
+          : "",
         body: entry.body,
         data: entry.data,
         locale: entry.locale,
@@ -146,13 +147,21 @@ export async function getCollectionEntries(
 export async function getMdxEntry(
   collectionName: string,
   slug: string,
+  locale?: string,
 ): Promise<{ filePath: string; frontmatter: Record<string, unknown>; body: string } | null> {
   try {
     const contentsDir = getContentsDir();
     const config = await loadConfigForUI();
     const store = await loadContent(new FsAdapter(contentsDir), config);
     const entries: ContentEntry[] = store.getCollection(collectionName);
-    const entry = entries.find((entry) => entry.slug === slug);
+
+    // When locale is specified, match it exactly; otherwise prefer the default (no locale) entry,
+    // falling back to the first available entry for this slug.
+    const candidates = entries.filter((e) => e.slug === slug);
+    const entry = locale
+      ? (candidates.find((e) => e.locale === locale) ?? candidates[0])
+      : (candidates.find((e) => e.locale === undefined) ?? candidates[0]);
+
     if (!entry) return null;
 
     const collections = store.getCollections();
@@ -160,7 +169,9 @@ export async function getMdxEntry(
     if (!col) return null;
 
     const fs = new FsAdapter(contentsDir);
-    const filePath = fs.join(col.basePath, slug + ".mdx");
+    // Build the correct filename including the locale suffix when present
+    const fileName = entry.locale ? `${slug}.${entry.locale}.mdx` : `${slug}.mdx`;
+    const filePath = fs.join(col.basePath, fileName);
 
     return {
       filePath,

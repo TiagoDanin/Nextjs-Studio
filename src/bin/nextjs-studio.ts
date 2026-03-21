@@ -94,6 +94,7 @@ const configPath = resolveConfigPath(process.cwd());
 const serverEnv: NodeJS.ProcessEnv = {
   ...process.env,
   STUDIO_CONTENTS_DIR: contentsDir,
+  STUDIO_PROJECT_DIR: process.cwd(),
   PORT: String(port),
   HOSTNAME: "0.0.0.0",
   ...(configPath ? { STUDIO_CONFIG_PATH: configPath } : {}),
