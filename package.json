@@ -1,6 +1,6 @@
 {
     "name": "nextjs-studio",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "description": "A Git-based, local-first CMS for Next.js projects",
     "keywords": [
         "nextjs",
@@ -33,8 +33,11 @@
     "types": "./dist/core/index.d.ts",
     "bin": "dist/bin/nextjs-studio.js",
     "files": [
-        "dist/bin",
-        "dist/core",
+        "dist/bin/nextjs-studio.js",
+        "dist/core/index.js",
+        "dist/core/index.d.ts",
+        "dist/core/server.js",
+        "dist/core/server.d.ts",
         "dist/*.d.ts",
         "dist/cli/ui/standalone.tar.gz",
         "README.md",
