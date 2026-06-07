@@ -26,6 +26,10 @@ const config: NextConfig = {
   // ESM-only packages used server-side must be loaded natively — not bundled by webpack
   serverExternalPackages: ["@sindresorhus/slugify", "@sindresorhus/transliterate", "tsx"],
   webpack: (config) => {
+    // Node 24 detaches the WASM memory buffer webpack's default hasher relies on,
+    // crashing the build inside WasmHash._updateWithBuffer. Force native crypto.
+    config.output ??= {};
+    config.output.hashFunction = "sha256";
     config.resolve ??= {};
     config.resolve.alias = {
       ...config.resolve.alias,
