@@ -8,6 +8,12 @@ const config: NextConfig = {
   distDir: "../../../dist/cli/ui/.next",
   reactStrictMode: true,
   outputFileTracingRoot: projectRoot,
+  // tsx loads `tsx/dist/esm/index.mjs` through an internal dynamic require that
+  // Next's file tracer can't follow, so it ships an incomplete copy and runtime
+  // config loading (loadConfigFromPath) fails. Force the whole tsx package in.
+  outputFileTracingIncludes: {
+    "/**": ["../../../node_modules/tsx/**/*"],
+  },
   allowedDevOrigins: ["*"],
   // Fallback rewrite: any path not matched by a studio page/API is forwarded to
   // /api/public/…, which reads from the consumer project's public directory.

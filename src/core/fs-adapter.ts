@@ -96,22 +96,38 @@ export class FsAdapter implements IFsAdapter {
   }
 
   async listAllFiles(dirPath: string): Promise<DirectoryFileEntry[]> {
-    const fullPath = this.resolve(dirPath);
-
-    let entries: Dirent[];
-    try {
-      entries = await fs.readdir(fullPath, { withFileTypes: true });
-    } catch {
-      return [];
-    }
-
     const results: DirectoryFileEntry[] = [];
-    for (const entry of entries) {
-      if (!entry.isFile()) continue;
-      const relativePath = this.join(dirPath, entry.name);
-      const stats = await fs.stat(this.resolve(relativePath));
-      results.push({ name: entry.name, relativePath, size: stats.size, modifiedAt: stats.mtime });
-    }
+
+    // Walk recursively so media nested in per-entry subfolders
+    // (e.g. public/images/posts/<slug>/cover.png) is discovered too.
+    // `relativePath` is the POSIX path relative to `dirPath`.
+    const walk = async (subDir: string): Promise<void> => {
+      const fullPath = this.resolve(dirPath, subDir);
+
+      let entries: Dirent[];
+      try {
+        entries = await fs.readdir(fullPath, { withFileTypes: true });
+      } catch {
+        return;
+      }
+
+      for (const entry of entries) {
+        const rel = subDir ? this.join(subDir, entry.name) : entry.name;
+        if (entry.isDirectory()) {
+          await walk(rel);
+        } else if (entry.isFile()) {
+          const stats = await fs.stat(this.resolve(dirPath, rel));
+          results.push({
+            name: entry.name,
+            relativePath: rel.split(path.sep).join("/"),
+            size: stats.size,
+            modifiedAt: stats.mtime,
+          });
+        }
+      }
+    };
+
+    await walk("");
     return results;
   }
 

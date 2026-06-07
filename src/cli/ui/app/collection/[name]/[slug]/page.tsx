@@ -46,7 +46,14 @@ export default async function MdxEntryPage({
         if (e.locale === undefined) existing.entry = e;
       }
     }
-    return Array.from(seen.values());
+    return Array.from(seen.values()).sort((a, b) => {
+      const da = String(a.entry.data.date ?? "");
+      const db = String(b.entry.data.date ?? "");
+      if (da === db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return db.localeCompare(da); // newest first
+    });
   })();
 
   const collectionsWithEntries = collections.map((collection) =>

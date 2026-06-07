@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarCacheWriter } from "@/lib/sidebar-cache";
+import { SidebarEntries } from "@/components/sidebar-entries";
 
 interface CollectionItem {
   name: string;
@@ -103,38 +104,11 @@ export function AppSidebar({
                   </Link>
 
                   {hasSubItems && (
-                    <div className="ml-7 mt-1 flex flex-col gap-0.5 border-l border-sidebar-border pl-3 pb-1">
-                      {collection.entries!.map((entry) => (
-                        <Link
-                          key={entry.slug}
-                          href={`/collection/${collection.name}/${entry.slug}`}
-                          className={cn(
-                            "flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] transition-colors duration-100",
-                            "text-sidebar-foreground/50 hover:text-sidebar-foreground",
-                            activeSlug === entry.slug &&
-                              "text-sidebar-foreground font-medium",
-                            entry.draft && "opacity-50",
-                          )}
-                        >
-                          <span className="truncate">{entry.title}</span>
-                          {entry.locales && entry.locales.length > 1 && (
-                            <span className="ml-auto flex shrink-0 gap-0.5">
-                              {entry.locales.map((l) => (
-                                <span
-                                  key={l}
-                                  className="rounded bg-sidebar-foreground/5 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wide text-sidebar-foreground/40"
-                                >
-                                  {l}
-                                </span>
-                              ))}
-                            </span>
-                          )}
-                          {entry.draft && (
-                            <span className="ml-1.5 text-[10px] text-sidebar-foreground/30">draft</span>
-                          )}
-                        </Link>
-                      ))}
-                    </div>
+                    <SidebarEntries
+                      collectionName={collection.name}
+                      entries={collection.entries!}
+                      activeSlug={activeSlug}
+                    />
                   )}
                 </div>
               );

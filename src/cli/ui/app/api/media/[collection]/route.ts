@@ -26,16 +26,21 @@ export async function GET(
 
   let fs: FsAdapter;
   let mediaFolderPath: string;
-  let makeUrl: (name: string) => string;
+  // `subPath` is the file path relative to the media folder (POSIX, may include subfolders).
+  let makeUrl: (subPath: string) => string;
+
+  // Encode each path segment but keep the "/" separators intact.
+  const encodePath = (subPath: string) =>
+    subPath.split("/").map(encodeURIComponent).join("/");
 
   if (mediaDir) {
     fs = new FsAdapter(getProjectDir());
     mediaFolderPath = mediaDir;
-    makeUrl = (name) => `${urlPrefix}/${encodeURIComponent(name)}`;
+    makeUrl = (subPath) => `${urlPrefix}/${encodePath(subPath)}`;
   } else {
     fs = new FsAdapter(getContentsDir());
     mediaFolderPath = path.join(collection, MEDIA_DIR);
-    makeUrl = (name) => `/api/media/${collection}/${encodeURIComponent(name)}`;
+    makeUrl = (subPath) => `/api/media/${collection}/${encodePath(subPath)}`;
   }
 
   const files = await fs.listAllFiles(mediaFolderPath);
@@ -45,7 +50,7 @@ export async function GET(
     return {
       name: file.name,
       path: file.relativePath,
-      url: makeUrl(file.name),
+      url: makeUrl(file.relativePath),
       size: file.size,
       mimeType: mimeFromExtension(ext),
       kind: kindFromExtension(ext),
