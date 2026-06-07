@@ -67,8 +67,8 @@ export function JsonSheetEditor({ collection, entries, filePath, hasSync }: Prop
         selectedLocale={selectedLocale}
         onLocaleChange={setSelectedLocale}
       />
-      <div className="studio-canvas px-4 py-4 md:px-6">
-        <div className="h-full overflow-hidden rounded-xl border bg-card">
+      <div className="studio-canvas overflow-y-auto px-4 py-4 md:px-6">
+        <div className="overflow-hidden rounded-xl border bg-card">
           <SheetTable />
         </div>
       </div>

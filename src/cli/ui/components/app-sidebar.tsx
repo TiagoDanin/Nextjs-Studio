@@ -18,7 +18,7 @@ interface CollectionItem {
   type: "mdx" | "json-array" | "json-object";
   count: number;
   sectionCount?: number;
-  entries?: { slug: string; title: string; draft?: boolean }[];
+  entries?: { slug: string; title: string; draft?: boolean; locales?: string[] }[];
 }
 
 const typeIcons = {
@@ -109,14 +109,26 @@ export function AppSidebar({
                           key={entry.slug}
                           href={`/collection/${collection.name}/${entry.slug}`}
                           className={cn(
-                            "truncate rounded-md px-2 py-1.5 text-[12px] transition-colors duration-100",
+                            "flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] transition-colors duration-100",
                             "text-sidebar-foreground/50 hover:text-sidebar-foreground",
                             activeSlug === entry.slug &&
                               "text-sidebar-foreground font-medium",
                             entry.draft && "opacity-50",
                           )}
                         >
-                          {entry.title}
+                          <span className="truncate">{entry.title}</span>
+                          {entry.locales && entry.locales.length > 1 && (
+                            <span className="ml-auto flex shrink-0 gap-0.5">
+                              {entry.locales.map((l) => (
+                                <span
+                                  key={l}
+                                  className="rounded bg-sidebar-foreground/5 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wide text-sidebar-foreground/40"
+                                >
+                                  {l}
+                                </span>
+                              ))}
+                            </span>
+                          )}
                           {entry.draft && (
                             <span className="ml-1.5 text-[10px] text-sidebar-foreground/30">draft</span>
                           )}

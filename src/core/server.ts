@@ -18,6 +18,28 @@ if (!hasStore()) {
   const index = new ContentIndex(new FsAdapter(dir));
   index.buildSync();
   setStore(index);
+
+  // In dev mode, start a watcher so `queryCollection()` reflects edits without restart.
+  // Disabled when STUDIO_NO_WATCH=1 to allow opt-out (e.g. for builds running on dev env).
+  if (process.env.NODE_ENV === "development" && process.env.STUDIO_NO_WATCH !== "1") {
+    void startDevWatcher(dir, index);
+  }
+}
+
+async function startDevWatcher(dir: string, index: ContentIndex): Promise<void> {
+  try {
+    const { watch } = await import("chokidar");
+    const watcher = watch(dir, { ignoreInitial: true, persistent: true });
+    const reindex = (filePath: string) => {
+      const rel = path.relative(dir, filePath);
+      void index.reindexFile(rel).catch(() => {});
+    };
+    watcher.on("add", reindex);
+    watcher.on("change", reindex);
+    watcher.on("unlink", reindex);
+  } catch {
+    // chokidar not available — silently skip dev watcher
+  }
 }
 
 export { FsAdapter } from "./fs-adapter.js";

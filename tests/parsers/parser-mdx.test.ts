@@ -17,7 +17,7 @@ Some content here.`;
 
     expect(result.data.title).toBe("Hello World");
     expect(result.data.published).toBe(true);
-    expect(result.data.date).toBeInstanceOf(Date);
+    expect(result.data.date).toBe("2026-01-15");
     expect(result.body).toContain("# Hello World");
     expect(result.body).toContain("Some content here.");
   });

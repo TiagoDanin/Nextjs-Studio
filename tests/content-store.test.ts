@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-import { loadContent, getStore } from "../src/core/content-store.js";
+import { loadContent, getStore, ensureContentLoaded, resetStore } from "../src/core/content-store.js";
 import { FsAdapter } from "../src/core/fs-adapter.js";
 import type { ContentIndex } from "../src/core/indexer.js";
 
@@ -150,6 +150,30 @@ Content here`,
       const store = getStore();
 
       expect(store).toBe(index);
+    });
+
+    it("ensureContentLoaded returns the cached store on subsequent calls", async () => {
+      await writeContent("blog/post.mdx", "---\ntitle: First\n---\nBody");
+      resetStore();
+
+      const adapter = new FsAdapter(tmpDir);
+      const first = await ensureContentLoaded(adapter);
+      expect(first.getCollection("blog")).toHaveLength(1);
+
+      await writeContent("blog/second.mdx", "---\ntitle: Second\n---\nBody");
+      const second = await ensureContentLoaded(adapter);
+
+      expect(second).toBe(first);
+      expect(second.getCollection("blog")).toHaveLength(1);
+    });
+
+    it("ensureContentLoaded performs initial load when store is empty", async () => {
+      await writeContent("blog/post.mdx", "---\ntitle: Test\n---\nBody");
+      resetStore();
+
+      const adapter = new FsAdapter(tmpDir);
+      const index = await ensureContentLoaded(adapter);
+      expect(index.getCollection("blog")).toHaveLength(1);
     });
 
     it("should reflect the most recent loadContent call", async () => {

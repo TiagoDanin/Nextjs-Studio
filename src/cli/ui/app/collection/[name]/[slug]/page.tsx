@@ -33,13 +33,18 @@ export default async function MdxEntryPage({
 
   if (!entry) notFound();
 
-  // Deduplicate sidebar entries by base slug — prefer the default locale entry,
-  // falling back to the first available variant per slug.
+  // Group entries by base slug and aggregate locale variants for sidebar chips.
   const allEntries = collectionResult?.entries ?? [];
   const sidebarEntries = (() => {
-    const seen = new Map<string, typeof allEntries[0]>();
+    const seen = new Map<string, { entry: typeof allEntries[0]; locales: Set<string> }>();
     for (const e of allEntries) {
-      if (!seen.has(e.slug) || e.locale === undefined) seen.set(e.slug, e);
+      const existing = seen.get(e.slug);
+      if (!existing) {
+        seen.set(e.slug, { entry: e, locales: new Set([e.locale ?? "default"]) });
+      } else {
+        existing.locales.add(e.locale ?? "default");
+        if (e.locale === undefined) existing.entry = e;
+      }
     }
     return Array.from(seen.values());
   })();
@@ -49,9 +54,10 @@ export default async function MdxEntryPage({
       ? {
           ...collection,
           sectionCount: sidebarEntries.length,
-          entries: sidebarEntries.map((e) => ({
-            slug: e.slug,
-            title: String(e.data.title ?? e.slug),
+          entries: sidebarEntries.map(({ entry, locales }) => ({
+            slug: entry.slug,
+            title: String(entry.data.title ?? entry.slug),
+            locales: locales.size > 1 ? Array.from(locales).sort() : undefined,
           })),
         }
       : collection,

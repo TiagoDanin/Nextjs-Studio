@@ -64,7 +64,9 @@ export class ContentIndex {
 
   updateEntry(collectionName: string, entry: ContentEntry): void {
     const entries = this.entries.get(collectionName) ?? [];
-    const idx = entries.findIndex((e) => e.slug === entry.slug);
+    const idx = entries.findIndex(
+      (e) => e.slug === entry.slug && e.locale === entry.locale,
+    );
     if (idx >= 0) {
       entries[idx] = entry;
     } else {
@@ -72,6 +74,74 @@ export class ContentIndex {
     }
     this.entries.set(collectionName, entries);
     this.updateCollectionMeta(collectionName);
+  }
+
+  /**
+   * Re-parses a single file and updates the in-memory index in place.
+   * Used by the watcher for hot reload — avoids rebuilding the entire index.
+   *
+   * @param relativeFilePath path relative to the contents dir (e.g. "blog/post.mdx")
+   */
+  async reindexFile(relativeFilePath: string): Promise<void> {
+    const ext = this.fs.extname(relativeFilePath);
+    if (ext !== ".mdx" && ext !== ".json") return;
+
+    const parts = relativeFilePath.split(/[\\/]/);
+    if (parts.length < 2) return;
+    const dirName = parts[0];
+    const collectionName = slugify(dirName);
+
+    if (!(await this.fs.exists(relativeFilePath))) {
+      this.removeEntryByPath(collectionName, dirName, relativeFilePath);
+      return;
+    }
+
+    const fileName = this.fs.basename(relativeFilePath);
+    const content = await this.fs.readFile(relativeFilePath);
+    const relativePath = this.fs.relative(dirName, relativeFilePath);
+    const slug = this.fs
+      .normalizeSlug(relativePath, ext)
+      .split("/")
+      .map((segment) => slugify(segment))
+      .join("/");
+
+    if (ext === ".mdx") {
+      const entry = this.buildMdxEntry(collectionName, slug, fileName, content);
+      this.updateEntry(collectionName, entry);
+    } else {
+      const newEntries = this.buildJsonEntries(collectionName, slug, content);
+      const existing = this.entries.get(collectionName) ?? [];
+      const filtered = existing.filter((e) => !e.slug.startsWith(slug + "/") && e.slug !== slug);
+      this.entries.set(collectionName, [...filtered, ...newEntries]);
+      this.updateCollectionMeta(collectionName);
+    }
+  }
+
+  private removeEntryByPath(collectionName: string, dirName: string, relativeFilePath: string): void {
+    const ext = this.fs.extname(relativeFilePath);
+    const fileName = this.fs.basename(relativeFilePath);
+    const relativePath = this.fs.relative(dirName, relativeFilePath);
+    const baseSlug = this.fs
+      .normalizeSlug(relativePath, ext)
+      .split("/")
+      .map((segment) => slugify(segment))
+      .join("/");
+
+    if (ext === ".mdx") {
+      const locale = parseLocaleFromFilename(fileName);
+      const slug = stripLocaleFromSlug(baseSlug, locale);
+      const existing = this.entries.get(collectionName) ?? [];
+      const filtered = existing.filter(
+        (e) => !(e.slug === slug && e.locale === locale),
+      );
+      this.entries.set(collectionName, filtered);
+      this.updateCollectionMeta(collectionName);
+    } else {
+      const existing = this.entries.get(collectionName) ?? [];
+      const filtered = existing.filter((e) => !e.slug.startsWith(baseSlug + "/") && e.slug !== baseSlug);
+      this.entries.set(collectionName, filtered);
+      this.updateCollectionMeta(collectionName);
+    }
   }
 
   removeEntry(collectionName: string, slug: string): void {

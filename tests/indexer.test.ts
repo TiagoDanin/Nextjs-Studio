@@ -359,4 +359,67 @@ published: false
       expect(index.getCollections()).toEqual([]);
     });
   });
+
+  describe("reindexFile (incremental)", () => {
+    it("updates an MDX entry in place when its file changes", async () => {
+      await writeContent("blog/post.mdx", "---\ntitle: First\n---\nBody");
+      await index.build();
+      expect(index.getCollection("blog")[0].data.title).toBe("First");
+
+      await writeContent("blog/post.mdx", "---\ntitle: Second\n---\nBody");
+      await index.reindexFile(path.join("blog", "post.mdx"));
+
+      const entries = index.getCollection("blog");
+      expect(entries).toHaveLength(1);
+      expect(entries[0].data.title).toBe("Second");
+    });
+
+    it("adds a new MDX entry when the file is created", async () => {
+      await writeContent("blog/existing.mdx", "---\ntitle: Existing\n---\nBody");
+      await index.build();
+      expect(index.getCollection("blog")).toHaveLength(1);
+
+      await writeContent("blog/new.mdx", "---\ntitle: New\n---\nBody");
+      await index.reindexFile(path.join("blog", "new.mdx"));
+
+      const entries = index.getCollection("blog");
+      expect(entries).toHaveLength(2);
+      expect(entries.map((e) => e.data.title).sort()).toEqual(["Existing", "New"]);
+    });
+
+    it("removes an entry when the file is deleted", async () => {
+      await writeContent("blog/post.mdx", "---\ntitle: Post\n---\nBody");
+      await index.build();
+      expect(index.getCollection("blog")).toHaveLength(1);
+
+      await fs.rm(path.join(tmpDir, "blog/post.mdx"));
+      await index.reindexFile(path.join("blog", "post.mdx"));
+
+      expect(index.getCollection("blog")).toHaveLength(0);
+    });
+
+    it("respects locale stripping when reindexing", async () => {
+      await writeContent("blog/post.mdx", "---\ntitle: EN\n---\nBody");
+      await writeContent("blog/post.pt.mdx", "---\ntitle: PT v1\n---\nBody");
+      await index.build();
+
+      await writeContent("blog/post.pt.mdx", "---\ntitle: PT v2\n---\nBody");
+      await index.reindexFile(path.join("blog", "post.pt.mdx"));
+
+      const entries = index.getCollection("blog");
+      const pt = entries.find((e) => e.locale === "pt");
+      const en = entries.find((e) => e.locale === undefined);
+      expect(pt?.data.title).toBe("PT v2");
+      expect(en?.data.title).toBe("EN");
+    });
+
+    it("ignores non-mdx/non-json files", async () => {
+      await writeContent("blog/post.mdx", "---\ntitle: T\n---\nBody");
+      await index.build();
+      const before = index.getCollection("blog").length;
+
+      await index.reindexFile(path.join("blog", "ignored.txt"));
+      expect(index.getCollection("blog")).toHaveLength(before);
+    });
+  });
 });

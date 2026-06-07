@@ -10,6 +10,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/toast";
+import { CommandPalette } from "@/components/command-palette";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -33,6 +34,7 @@ export default function RootLayout({
       <body className={`${poppins.variable} font-sans antialiased`}>
         <Providers>
           <div className="flex h-screen overflow-hidden">{children}</div>
+          <CommandPalette />
           <Toaster />
         </Providers>
       </body>

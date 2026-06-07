@@ -30,12 +30,18 @@ export default async function CollectionPage({
 
   const { collection, entries, filePath } = result;
 
-  // Deduplicate entries by base slug for the sidebar — prefer the default locale
-  // (locale === undefined), falling back to the first available variant.
+  // Group entries by base slug — prefer the default locale entry as the
+  // sidebar representative, and collect all available locale variants.
   const sidebarEntries = (() => {
-    const seen = new Map<string, typeof entries[0]>();
+    const seen = new Map<string, { entry: typeof entries[0]; locales: Set<string> }>();
     for (const e of entries) {
-      if (!seen.has(e.slug) || e.locale === undefined) seen.set(e.slug, e);
+      const existing = seen.get(e.slug);
+      if (!existing) {
+        seen.set(e.slug, { entry: e, locales: new Set([e.locale ?? "default"]) });
+      } else {
+        existing.locales.add(e.locale ?? "default");
+        if (e.locale === undefined) existing.entry = e;
+      }
     }
     return Array.from(seen.values());
   })();
@@ -45,9 +51,10 @@ export default async function CollectionPage({
       ? {
           ...collection,
           sectionCount: sidebarEntries.length,
-          entries: sidebarEntries.map((entry) => ({
+          entries: sidebarEntries.map(({ entry, locales }) => ({
             slug: entry.slug,
             title: String(entry.data.title ?? entry.slug),
+            locales: locales.size > 1 ? Array.from(locales).sort() : undefined,
           })),
         }
       : collection,

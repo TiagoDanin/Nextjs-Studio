@@ -8,7 +8,9 @@
  * @dont     Never import client components or use browser APIs here — this is server-only code.
  */
 
-import { loadContent } from "@core/content-store";
+import { ensureContentLoaded } from "@core/content-store";
+import { getWatcher } from "@cli/adapters/watcher";
+import { installContentWatcherBridge } from "@cli/adapters/content-watcher-bridge";
 import { loadConfigFromPath } from "@core/config-loader";
 import { loadComponentRegistry } from "@core/component-registry";
 import { writeJsonFile, writeMdxEntries } from "@core/content-writer.js";
@@ -70,7 +72,10 @@ export async function getCollections(): Promise<CollectionSummary[]> {
   try {
     const contentsDir = getContentsDir();
     const config = await loadConfigForUI();
-    const store = await loadContent(new FsAdapter(contentsDir), config);
+    const store = await ensureContentLoaded(new FsAdapter(contentsDir), config);
+    const watcher = getWatcher(contentsDir);
+    if (!watcher.isRunning()) await watcher.start();
+    installContentWatcherBridge(watcher, store);
 
     return store.getCollections().map((collection) => {
       const base = { name: collection.name, type: collection.type, count: collection.count, basePath: collection.basePath };
@@ -91,7 +96,10 @@ export async function getCollectionEntries(
   try {
     const contentsDir = getContentsDir();
     const config = await loadConfigForUI();
-    const store = await loadContent(new FsAdapter(contentsDir), config);
+    const store = await ensureContentLoaded(new FsAdapter(contentsDir), config);
+    const watcher = getWatcher(contentsDir);
+    if (!watcher.isRunning()) await watcher.start();
+    installContentWatcherBridge(watcher, store);
     const collections = store.getCollections();
     const col = collections.find((collection) => collection.name === name);
 
@@ -153,7 +161,10 @@ export async function getMdxEntry(
   try {
     const contentsDir = getContentsDir();
     const config = await loadConfigForUI();
-    const store = await loadContent(new FsAdapter(contentsDir), config);
+    const store = await ensureContentLoaded(new FsAdapter(contentsDir), config);
+    const watcher = getWatcher(contentsDir);
+    if (!watcher.isRunning()) await watcher.start();
+    installContentWatcherBridge(watcher, store);
     const entries: ContentEntry[] = store.getCollection(collectionName);
 
     // When locale is specified, match it exactly; otherwise prefer the default (no locale) entry,
@@ -208,6 +219,44 @@ export async function saveMdxFrontmatter(
     const fs = new FsAdapter(getContentsDir());
     await writeMdxEntries(fs, sources);
     return { success: true };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
+}
+
+/**
+ * Creates an empty MDX file for a new locale variant of an existing slug.
+ * Inherits frontmatter from the default-locale entry when available.
+ */
+export async function createLocaleVariant(
+  collectionName: string,
+  slug: string,
+  locale: string,
+): Promise<{ success: boolean; error?: string; filePath?: string }> {
+  try {
+    const contentsDir = getContentsDir();
+    const config = await loadConfigForUI();
+    const store = await ensureContentLoaded(new FsAdapter(contentsDir), config);
+    const collections = store.getCollections();
+    const col = collections.find((c) => c.name === collectionName);
+    if (!col) return { success: false, error: "Collection not found" };
+
+    const fs = new FsAdapter(contentsDir);
+    const fileName = `${slug}.${locale}.mdx`;
+    const filePath = fs.join(col.basePath, fileName);
+
+    if (await fs.exists(filePath)) {
+      return { success: false, error: "Variant already exists" };
+    }
+
+    // Inherit frontmatter from the default-locale entry; fall back to any sibling.
+    const candidates = store.getCollection(collectionName).filter((e) => e.slug === slug);
+    const seed = candidates.find((e) => e.locale === undefined) ?? candidates[0];
+    const frontmatter = seed ? { ...seed.data } : {};
+
+    await writeMdxEntries(fs, [{ filePath, frontmatter, body: "" }]);
+    await store.reindexFile(filePath);
+    return { success: true, filePath };
   } catch (error) {
     return { success: false, error: String(error) };
   }

@@ -50,3 +50,23 @@ export function loadContentSync(
   store = index;
   return index;
 }
+
+/**
+ * Loads content only once. Subsequent calls return the existing store
+ * without re-reading the filesystem. Used by long-lived processes
+ * (the studio UI) to avoid rebuilding the entire index on every request.
+ *
+ * Pair with a watcher to keep the in-memory index fresh on file changes.
+ */
+export async function ensureContentLoaded(
+  fsAdapter: IFsAdapter,
+  config?: StudioConfig,
+): Promise<ContentIndex> {
+  if (store) return store;
+  return loadContent(fsAdapter, config);
+}
+
+/** Resets the singleton — primarily for tests. */
+export function resetStore(): void {
+  store = null;
+}

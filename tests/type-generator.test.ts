@@ -212,13 +212,15 @@ describe("generateCollectionTypes", () => {
 
   it("includes a CollectionTypeMap with all collections", () => {
     const output = generateCollectionTypes([blogSchema, authorSchema]);
-    expect(output).toContain("export interface CollectionTypeMap");
+    expect(output).toContain("interface CollectionTypeMap");
+    expect(output).toContain("declare module 'nextjs-studio'");
+    expect(output).toContain("declare module 'nextjs-studio/server'");
     expect(output).toContain('"blog": BlogEntry');
     expect(output).toContain('"author": AuthorEntry');
   });
 
   it("returns an empty CollectionTypeMap for an empty array", () => {
     const output = generateCollectionTypes([]);
-    expect(output).toContain("export interface CollectionTypeMap {");
+    expect(output).toContain("interface CollectionTypeMap {");
   });
 });

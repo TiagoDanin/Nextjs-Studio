@@ -27,6 +27,34 @@ interface Props {
   onClose: () => void;
 }
 
+const ASPECT_PRESETS: { label: string; ratio: number | null }[] = [
+  { label: "Free", ratio: null },
+  { label: "1:1", ratio: 1 },
+  { label: "4:3", ratio: 4 / 3 },
+  { label: "16:9", ratio: 16 / 9 },
+  { label: "3:4", ratio: 3 / 4 },
+  { label: "9:16", ratio: 9 / 16 },
+];
+
+function applyAspect(crop: CropRegion, aspect: number, maxW: number, maxH: number): CropRegion {
+  // Keep crop centered, constrain dimensions to the aspect ratio.
+  const cx = crop.x + crop.width / 2;
+  const cy = crop.y + crop.height / 2;
+  let w = crop.width || maxW * 0.8;
+  let h = w / aspect;
+  if (h > maxH) {
+    h = maxH;
+    w = h * aspect;
+  }
+  if (w > maxW) {
+    w = maxW;
+    h = w / aspect;
+  }
+  const x = Math.max(0, Math.min(maxW - w, cx - w / 2));
+  const y = Math.max(0, Math.min(maxH - h, cy - h / 2));
+  return { x: Math.round(x), y: Math.round(y), width: Math.round(w), height: Math.round(h) };
+}
+
 export function CropDialog({ imageUrl, imageName, onCrop, onClose }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
@@ -34,6 +62,7 @@ export function CropDialog({ imageUrl, imageName, onCrop, onClose }: Props) {
   const [crop, setCrop] = useState<CropRegion>({ x: 0, y: 0, width: 0, height: 0 });
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [aspect, setAspect] = useState<number | null>(null);
 
   useEffect(() => {
     const img = new Image();
@@ -133,9 +162,17 @@ export function CropDialog({ imageUrl, imageName, onCrop, onClose }: Props) {
     const img = imgRef.current;
     const x = Math.max(0, Math.min(dragStart.x, coords.x));
     const y = Math.max(0, Math.min(dragStart.y, coords.y));
-    const w = Math.min(Math.abs(coords.x - dragStart.x), img.naturalWidth - x);
-    const h = Math.min(Math.abs(coords.y - dragStart.y), img.naturalHeight - y);
-    setCrop({ x, y, width: w, height: h });
+    let w = Math.min(Math.abs(coords.x - dragStart.x), img.naturalWidth - x);
+    let h = Math.min(Math.abs(coords.y - dragStart.y), img.naturalHeight - y);
+    if (aspect) {
+      // Lock height to width by the chosen aspect, then clamp.
+      h = w / aspect;
+      if (y + h > img.naturalHeight) {
+        h = img.naturalHeight - y;
+        w = h * aspect;
+      }
+    }
+    setCrop({ x, y, width: Math.round(w), height: Math.round(h) });
   }
 
   function handleMouseUp() {
@@ -185,6 +222,35 @@ export function CropDialog({ imageUrl, imageName, onCrop, onClose }: Props) {
           <button type="button" onClick={onClose} className="rounded-sm p-1 hover:bg-accent">
             <X className="h-4 w-4" />
           </button>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-1 border-b px-4 py-2">
+          <span className="mr-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Aspect
+          </span>
+          {ASPECT_PRESETS.map((preset) => {
+            const isActive = aspect === preset.ratio;
+            return (
+              <button
+                key={preset.label}
+                onClick={() => {
+                  setAspect(preset.ratio);
+                  if (preset.ratio && imgRef.current) {
+                    setCrop((c) =>
+                      applyAspect(c, preset.ratio!, imgRef.current!.naturalWidth, imgRef.current!.naturalHeight),
+                    );
+                  }
+                }}
+                className={`rounded px-2 py-0.5 text-[11px] transition-colors ${
+                  isActive
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                {preset.label}
+              </button>
+            );
+          })}
         </div>
 
         <div className="flex-1 overflow-hidden p-4">

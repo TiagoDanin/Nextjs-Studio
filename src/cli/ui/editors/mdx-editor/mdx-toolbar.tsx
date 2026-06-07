@@ -68,14 +68,13 @@ export function MdxToolbar({ locales, currentLocale }: MdxToolbarProps) {
           )}
         </div>
         <div className="flex items-center gap-1.5">
-          {locales && currentLocale && (
-            <LocaleSwitcher
-              collectionName={collectionName}
-              slug={slug}
-              currentLocale={currentLocale}
-              locales={locales}
-            />
-          )}
+          <LocaleSwitcher
+            collectionName={collectionName}
+            slug={slug}
+            currentLocale={currentLocale ?? "default"}
+            locales={locales ?? [{ locale: "default", slug }]}
+          />
+
           <Button
             variant="ghost"
             size="sm"

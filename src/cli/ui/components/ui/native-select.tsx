@@ -13,6 +13,7 @@ interface NativeSelectProps {
   onChange: (value: string) => void;
   options: { label: string; value: string }[];
   className?: string;
+  placeholder?: string;
 }
 
 export function NativeSelect({
@@ -20,16 +21,24 @@ export function NativeSelect({
   onChange,
   options,
   className,
+  placeholder,
 }: NativeSelectProps) {
+  const hasValue = options.some((o) => o.value === value);
   return (
     <select
-      value={value}
+      value={hasValue ? value : ""}
       onChange={(event) => onChange(event.target.value)}
       className={cn(
         "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+        !hasValue && "text-muted-foreground",
         className,
       )}
     >
+      {!hasValue && (
+        <option value="" disabled>
+          {placeholder ?? "Select…"}
+        </option>
+      )}
       {options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}

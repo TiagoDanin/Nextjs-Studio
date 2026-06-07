@@ -178,19 +178,18 @@ export function SheetTable() {
             </TableCell>
           </TableRow>
         ) : (
-          table.getRowModel().rows.map((row) => (
-            <Fragment key={row.id}>
-              {selectedRowIndex === row.index ? (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="p-0">
-                    <SheetRowInspector rowIndex={row.index} />
-                  </TableCell>
-                </TableRow>
-              ) : (
+          table.getRowModel().rows.map((row) => {
+            const isSelected = selectedRowIndex === row.index;
+            return (
+              <Fragment key={row.id}>
                 <TableRow
-                  data-state={undefined}
-                  className={cn("cursor-pointer", row.original.draft === true && "opacity-50")}
-                  onClick={() => selectRow(row.index)}
+                  data-state={isSelected ? "selected" : undefined}
+                  className={cn(
+                    "cursor-pointer",
+                    row.original.draft === true && "opacity-50",
+                    isSelected && "bg-accent/40",
+                  )}
+                  onClick={() => selectRow(isSelected ? null : row.index)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -198,9 +197,16 @@ export function SheetTable() {
                     </TableCell>
                   ))}
                 </TableRow>
-              )}
-            </Fragment>
-          ))
+                {isSelected && (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={columns.length} className="p-0 border-b-0">
+                      <SheetRowInspector rowIndex={row.index} />
+                    </TableCell>
+                  </TableRow>
+                )}
+              </Fragment>
+            );
+          })
         )}
       </TableBody>
     </Table>
