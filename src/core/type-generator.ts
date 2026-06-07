@@ -36,6 +36,9 @@ function fieldToTsType(field: FieldDefinition): string {
     case "media":
       return "MediaPath";
 
+    case "color":
+      return "string";
+
     case "id":
       return "ID";
 

@@ -13,7 +13,10 @@ import type { CollectionSchema, FieldDefinition, SelectOption } from "../shared/
 const RE_ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const RE_ISO_DATETIME =
   /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?$/;
-const RE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Domain must be host-like (letters/digits/dots/hyphens) ending in a TLD, so
+// scp-style git remotes like `git@github.com:owner/repo.git` are NOT treated as
+// emails (the ":" and "/" disqualify the domain).
+const RE_EMAIL = /^[^\s@]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const RE_URL = /^https?:\/\/.+/;
 const LONG_TEXT_THRESHOLD = 200;
 const RICH_TEXT_FIELD_NAMES = ["description", "descriptions", "text", "content"];

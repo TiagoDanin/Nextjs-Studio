@@ -25,6 +25,11 @@ interface Props {
   data: Record<string, unknown>;
   filePath: string;
   hasSync?: boolean;
+  /**
+   * When set, the form edits a single row of a JSON array file instead of a
+   * whole json-object collection. Saving rewrites the full array.
+   */
+  arrayContext?: { allRows: Record<string, unknown>[]; index: number };
 }
 
 type DisplaySection =
@@ -84,15 +89,22 @@ function buildSections(data: Record<string, unknown>): DisplaySection[] {
   return sections;
 }
 
-export function JsonFormEditor({ collection, data, filePath, hasSync }: Props) {
+export function JsonFormEditor({ collection, data, filePath, hasSync, arrayContext }: Props) {
   const initForm = useEditorStore((s) => s.initForm);
+  const initArrayRow = useEditorStore((s) => s.initArrayRow);
   const formData = useEditorStore((s) => s.formData);
   const fieldDefs = useEditorStore((s) => s.fieldDefs);
   const reorderSection = useEditorStore((s) => s.reorderSection);
 
+  const arrayRows = arrayContext?.allRows;
+  const arrayIndex = arrayContext?.index;
   useEffect(() => {
-    initForm(collection.name, filePath, data, collection.fields);
-  }, [collection.name, filePath, data, collection.fields, initForm]);
+    if (arrayRows && arrayIndex !== undefined) {
+      initArrayRow(collection.name, filePath, arrayRows, arrayIndex, collection.fields);
+    } else {
+      initForm(collection.name, filePath, data, collection.fields);
+    }
+  }, [collection.name, filePath, data, collection.fields, arrayRows, arrayIndex, initForm, initArrayRow]);
 
   const sections = buildSections(formData);
   const primaryRichTextField = getPrimaryRichTextField(formData, fieldDefs);

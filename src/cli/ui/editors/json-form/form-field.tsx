@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
+import { ColorInput } from "@/components/ui/color-input";
 import { ImageIcon, Plus, Trash2 } from "lucide-react";
 import { keyLabel } from "@shared/field-utils";
 import { TreeNode } from "./tree-node";
@@ -362,6 +363,14 @@ export const FormField = memo(function FormField({ fieldKey, path, value, isRich
     );
   }
 
+  if (type === "color") {
+    return (
+      <FieldRow label={label}>
+        <ColorInput value={String(value ?? "")} onChange={(v) => updateField(path, v)} />
+      </FieldRow>
+    );
+  }
+
   if (type === "relation") {
     return (
       <FieldRow label={label}>
@@ -434,18 +443,23 @@ export const FormField = memo(function FormField({ fieldKey, path, value, isRich
               {itemFields.map((itemField) => {
                 const ifLabel = ("label" in itemField && itemField.label) ? String(itemField.label) : keyLabel(itemField.name);
                 const ifValue = typeof item === "object" && item !== null ? (item as Record<string, unknown>)[itemField.name] : "";
+                const setItemValue = (raw: unknown) => {
+                  const newItem = { ...(item as Record<string, unknown>), [itemField.name]: raw };
+                  const next = [...items];
+                  next[idx] = newItem;
+                  updateField(path, next);
+                };
                 return (
                   <FieldRow key={itemField.name} label={ifLabel}>
-                    <Input
-                      type={itemField.type === "url" ? "url" : itemField.type === "email" ? "email" : itemField.type === "number" ? "number" : "text"}
-                      value={String(ifValue ?? "")}
-                      onChange={(e) => {
-                        const newItem = { ...(item as Record<string, unknown>), [itemField.name]: itemField.type === "number" ? Number(e.target.value) || 0 : e.target.value };
-                        const next = [...items];
-                        next[idx] = newItem;
-                        updateField(path, next);
-                      }}
-                    />
+                    {itemField.type === "color" ? (
+                      <ColorInput value={String(ifValue ?? "")} onChange={setItemValue} />
+                    ) : (
+                      <Input
+                        type={itemField.type === "url" ? "url" : itemField.type === "email" ? "email" : itemField.type === "number" ? "number" : "text"}
+                        value={String(ifValue ?? "")}
+                        onChange={(e) => setItemValue(itemField.type === "number" ? Number(e.target.value) || 0 : e.target.value)}
+                      />
+                    )}
                   </FieldRow>
                 );
               })}

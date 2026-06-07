@@ -42,6 +42,11 @@ interface EditorState {
   // Form state
   formData: Record<string, unknown>;
   expandedSections: string[];
+  /**
+   * When set, the form edits a single row of a JSON array file. Serialization
+   * splices `formData` back into `allRows[index]` and writes the whole array.
+   */
+  arrayContext: { allRows: Record<string, unknown>[]; index: number } | null;
 
   // Init
   initSheet: (
@@ -50,11 +55,19 @@ interface EditorState {
     rows: Record<string, unknown>[],
     mdxSources?: { slug: string; filePath: string; body: string }[],
     fields?: FieldDefinition[],
+    slugs?: string[],
   ) => void;
   initForm: (
     collectionName: string,
     filePath: string,
     data: Record<string, unknown>,
+    fields?: FieldDefinition[],
+  ) => void;
+  initArrayRow: (
+    collectionName: string,
+    filePath: string,
+    allRows: Record<string, unknown>[],
+    index: number,
     fields?: FieldDefinition[],
   ) => void;
 
@@ -108,8 +121,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   formData: {},
   expandedSections: [],
+  arrayContext: null,
 
-  initSheet: (collectionName, filePath, rows, mdxSources, fields) => {
+  initSheet: (collectionName, filePath, rows, mdxSources, fields, slugs) => {
     // Restore persisted column visibility from localStorage
     let visibleColumns = new Set<string>();
     let hasCustomVisibility = false;
@@ -143,7 +157,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       isMdx: !!mdxSources,
       rowFilePaths: mdxSources?.map((source) => source.filePath) ?? [],
       rowBodies: mdxSources?.map((source) => source.body) ?? [],
-      rowSlugs: mdxSources?.map((source) => source.slug) ?? [],
+      // MDX carries its own slugs; non-MDX collections may pass `slugs` so rows
+      // can still be opened on a dedicated edit screen.
+      rowSlugs: mdxSources?.map((source) => source.slug) ?? slugs ?? [],
+      arrayContext: null,
       isDirty: false,
       isSaving: false,
       selectedRowIndex: null,
@@ -177,6 +194,25 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       filePath,
       formData: mergedData,
       expandedSections: sections,
+      arrayContext: null,
+      isDirty: false,
+      isSaving: false,
+      fieldDefs: Object.fromEntries((fields ?? []).map((field) => [field.name, field])),
+    });
+  },
+
+  initArrayRow: (collectionName, filePath, allRows, index, fields) => {
+    const data = structuredClone(allRows[index] ?? {});
+    const sections = Object.entries(data)
+      .filter(([, value]) => typeof value === "object" && value !== null && !Array.isArray(value))
+      .map(([key]) => key);
+    set({
+      editorType: "form",
+      collectionName,
+      filePath,
+      formData: data,
+      expandedSections: sections,
+      arrayContext: { allRows, index },
       isDirty: false,
       isSaving: false,
       fieldDefs: Object.fromEntries((fields ?? []).map((field) => [field.name, field])),
@@ -428,6 +464,13 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const state = get();
     if (state.editorType === "sheet") {
       return JSON.stringify(state.rows, null, 2);
+    }
+    // Editing a single row of a JSON array: splice the edited row back in and
+    // serialize the whole array so sibling rows are preserved.
+    if (state.arrayContext) {
+      const next = [...state.arrayContext.allRows];
+      next[state.arrayContext.index] = state.formData;
+      return JSON.stringify(next, null, 2);
     }
     return JSON.stringify(state.formData, null, 2);
   },

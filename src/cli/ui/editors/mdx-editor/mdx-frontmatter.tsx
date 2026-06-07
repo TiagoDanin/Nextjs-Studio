@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
+import { ColorInput } from "@/components/ui/color-input";
 import { ImageIcon, Plus, Trash2 } from "lucide-react";
 import {
   clientSlugify,
@@ -279,6 +280,13 @@ function SchemaField({
         </Row>
       );
     }
+
+    case "color":
+      return (
+        <Row label={label}>
+          <ColorInput value={String(value ?? "")} onChange={onChange} />
+        </Row>
+      );
 
     case "slug": {
       const fromField = (schema as SlugField).from;
@@ -564,6 +572,13 @@ function ObjectSubField({
         </Row>
       );
     }
+    case "color":
+      return (
+        <Row label={label}>
+          <ColorInput value={String(value ?? "")} onChange={onChange} />
+        </Row>
+      );
+
     default:
       return (
         <Row label={label}>

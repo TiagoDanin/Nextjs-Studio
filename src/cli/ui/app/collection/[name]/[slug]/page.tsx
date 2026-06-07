@@ -1,31 +1,64 @@
 /**
- * @context  MDX entry page in the studio UI (cli/ui/app/collection/[name]/[slug]).
- * @does     Loads a single MDX entry's frontmatter and body, then renders the full MDX editor.
- *           Accepts an optional `?locale=` query param to open a specific locale variant.
- * @depends  actions/collections for getMdxEntry, editors/mdx-editor for the TipTap-based editor.
+ * @context  Single-entry edit page in the studio UI (cli/ui/app/collection/[name]/[slug]).
+ * @does     Renders a dedicated edit screen for one entry: the MDX editor for MDX collections,
+ *           or a single-row JSON form for json-array collections (reached via the row's edit button).
+ *           Accepts an optional `?locale=` query param to open a specific MDX locale variant.
+ * @depends  actions/collections, editors/mdx-editor, editors/json-form for the form editor.
  * @do       Add entry-level metadata (word count, last saved) to this page.
- * @dont     Never render JSON editors here — this page is exclusively for MDX entries.
+ * @dont     Render the sheet/table here — that lives on the collection index page.
  */
 
 import { notFound } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { MdxEditor } from "@/editors/mdx-editor/mdx-editor";
-import { getCollections, getMdxEntry, getCollectionEntries, getComponentRegistry } from "@/actions/collections";
+import { JsonFormEditor } from "@/editors/json-form/json-form-editor";
+import { getCollections, getMdxEntry, getCollectionEntries, getCollectionScripts, getComponentRegistry } from "@/actions/collections";
 
 export const dynamic = "force-dynamic";
 
-export default async function MdxEntryPage({
+export default async function EntryEditPage({
   params,
   searchParams,
 }: {
   params: Promise<{ name: string; slug: string }>;
   searchParams: Promise<{ locale?: string }>;
 }) {
-  const { name, slug } = await params;
+  const { name, slug: rawSlug } = await params;
   const { locale } = await searchParams;
+  // json-array row slugs contain a "/" (e.g. "index/10"), encoded as %2F in the
+  // URL. Next keeps the param encoded, so decode it back to match entry slugs.
+  const slug = decodeURIComponent(rawSlug);
 
-  const [collections, entry, collectionResult, registry] = await Promise.all([
-    getCollections(),
+  const collections = await getCollections();
+  const col = collections.find((c) => c.name === name);
+
+  // json-array collections: edit a single row on its own form screen.
+  if (col?.type === "json-array") {
+    const [collectionResult, scripts] = await Promise.all([
+      getCollectionEntries(name),
+      getCollectionScripts(name),
+    ]);
+    const allEntries = collectionResult?.entries ?? [];
+    const index = allEntries.findIndex((e) => e.slug === slug);
+    if (!collectionResult || index === -1) notFound();
+
+    return (
+      <>
+        <AppSidebar collections={collections} activeCollection={name} activeSlug={slug} />
+        <main className="studio-main">
+          <JsonFormEditor
+            collection={collectionResult.collection}
+            data={allEntries[index].data}
+            filePath={collectionResult.filePath}
+            hasSync={!!scripts.sync}
+            arrayContext={{ allRows: allEntries.map((e) => e.data), index }}
+          />
+        </main>
+      </>
+    );
+  }
+
+  const [entry, collectionResult, registry] = await Promise.all([
     getMdxEntry(name, slug, locale),
     getCollectionEntries(name),
     getComponentRegistry(),

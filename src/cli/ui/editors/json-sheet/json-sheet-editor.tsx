@@ -55,7 +55,10 @@ export function JsonSheetEditor({ collection, entries, filePath, hasSync }: Prop
       collection.type === "mdx"
         ? filteredEntries.map((e) => ({ slug: e.slug, filePath: e.filePath, body: e.body ?? "" }))
         : undefined;
-    initSheet(collection.name, filePath, rows, mdxSources, collection.fields);
+    // JSON arrays expose row slugs so each row can be opened on its own edit screen.
+    const slugs =
+      collection.type === "json-array" ? filteredEntries.map((e) => e.slug) : undefined;
+    initSheet(collection.name, filePath, rows, mdxSources, collection.fields, slugs);
   }, [collection.name, collection.type, collection.fields, filePath, filteredEntries, initSheet]);
 
   return (

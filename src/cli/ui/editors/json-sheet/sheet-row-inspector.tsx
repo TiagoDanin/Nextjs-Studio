@@ -19,6 +19,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { X, Pencil, Trash2, ImageIcon, Plus } from "lucide-react";
 import { NativeSelect } from "@/components/ui/native-select";
+import { ColorInput } from "@/components/ui/color-input";
 import { keyLabel } from "@shared/field-utils";
 import {
   clientSlugify,
@@ -55,7 +56,6 @@ export function SheetRowInspector({ rowIndex }: Props) {
   const selectRow = useEditorStore((s) => s.selectRow);
   const deleteRow = useEditorStore((s) => s.deleteRow);
   const fieldDefs = useEditorStore((s) => s.fieldDefs);
-  const isMdx = useEditorStore((s) => s.isMdx);
   const collectionName = useEditorStore((s) => s.collectionName);
   const rowSlugs = useEditorStore((s) => s.rowSlugs);
 
@@ -398,6 +398,22 @@ export function SheetRowInspector({ rowIndex }: Props) {
       );
     }
 
+    if (type === "color") {
+      return (
+        <div key={key} className="flex items-center gap-3">
+          <Label className="w-36 shrink-0 truncate text-xs font-semibold text-muted-foreground">
+            {label}
+          </Label>
+          <ColorInput
+            value={String(value ?? "")}
+            onChange={(v) => updateCell(rowIndex, key, v)}
+            className="flex-1"
+            inputClassName="h-7 text-sm"
+          />
+        </div>
+      );
+    }
+
     if (type === "relation") {
       return (
         <div key={key} className="flex items-center gap-3">
@@ -477,20 +493,31 @@ export function SheetRowInspector({ rowIndex }: Props) {
                 {itemFields.map((itemField) => {
                   const ifValue = typeof item === "object" && item !== null ? (item as Record<string, unknown>)[itemField.name] : "";
                   const ifLabel = ("label" in itemField && itemField.label) ? String(itemField.label) : keyLabel(itemField.name);
+                  const setItemValue = (raw: unknown) => {
+                    const newItem = { ...(item as Record<string, unknown>), [itemField.name]: raw };
+                    const next = [...items];
+                    next[idx] = newItem;
+                    updateCell(rowIndex, key, next);
+                  };
                   return (
                     <div key={itemField.name} className="flex items-center gap-2">
                       <Label className="w-20 shrink-0 truncate text-[10px] text-muted-foreground">{ifLabel}</Label>
-                      <Input
-                        type={itemField.type === "url" ? "url" : itemField.type === "email" ? "email" : itemField.type === "number" ? "number" : "text"}
-                        value={String(ifValue ?? "")}
-                        onChange={(e) => {
-                          const newItem = { ...(item as Record<string, unknown>), [itemField.name]: itemField.type === "number" ? Number(e.target.value) || 0 : e.target.value };
-                          const next = [...items];
-                          next[idx] = newItem;
-                          updateCell(rowIndex, key, next);
-                        }}
-                        className="h-6 flex-1 text-xs"
-                      />
+                      {itemField.type === "color" ? (
+                        <ColorInput
+                          value={String(ifValue ?? "")}
+                          onChange={setItemValue}
+                          className="flex-1"
+                          inputClassName="h-6 text-xs"
+                          swatchSize={24}
+                        />
+                      ) : (
+                        <Input
+                          type={itemField.type === "url" ? "url" : itemField.type === "email" ? "email" : itemField.type === "number" ? "number" : "text"}
+                          value={String(ifValue ?? "")}
+                          onChange={(e) => setItemValue(itemField.type === "number" ? Number(e.target.value) || 0 : e.target.value)}
+                          className="h-6 flex-1 text-xs"
+                        />
+                      )}
                     </div>
                   );
                 })}
@@ -637,13 +664,13 @@ export function SheetRowInspector({ rowIndex }: Props) {
           Row details - {rowIndex + 1}
         </h3>
         <div className="flex items-center gap-0.5">
-          {isMdx && (
+          {rowSlugs[rowIndex] && (
             <Button
               variant="ghost"
               size="icon"
               className="h-7 w-7 text-muted-foreground hover:text-foreground"
               title="Edit entry"
-              onClick={() => router.push(`/collection/${collectionName}/${rowSlugs[rowIndex] ?? ""}`)}
+              onClick={() => router.push(`/collection/${collectionName}/${encodeURIComponent(rowSlugs[rowIndex])}`)}
             >
               <Pencil className="h-3.5 w-3.5" />
             </Button>

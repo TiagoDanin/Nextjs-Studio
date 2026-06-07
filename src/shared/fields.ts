@@ -123,6 +123,12 @@ export interface MediaField extends BaseField {
   accept?: string[];
 }
 
+export interface ColorField extends BaseField {
+  type: "color";
+  /** Default value used when creating a new entry, e.g. `"#000000"`. */
+  defaultValue?: string;
+}
+
 // Structured field types
 
 export interface ObjectField extends BaseField {
@@ -197,6 +203,7 @@ export type FieldDefinition =
   | UrlField
   | EmailField
   | MediaField
+  | ColorField
   | ObjectField
   | ArrayField
   | IdField
