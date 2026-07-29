@@ -39,6 +39,7 @@ next-env.d.ts
 /dist
 
 # yarn
+.yarnrc.yml
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
