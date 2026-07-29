@@ -27,6 +27,11 @@
         "./server": {
             "types": "./dist/core/server.d.ts",
             "import": "./dist/core/server.js"
+        },
+        "./next": {
+            "types": "./dist/core/next-config.d.ts",
+            "import": "./dist/core/next-config.js",
+            "require": "./dist/core/next-config.cjs"
         }
     },
     "main": "./dist/core/index.js",
@@ -38,6 +43,11 @@
         "dist/core/index.d.ts",
         "dist/core/server.js",
         "dist/core/server.d.ts",
+        "dist/core/next-config.js",
+        "dist/core/next-config.cjs",
+        "dist/core/next-config.d.ts",
+        "dist/core/next-config.d.cts",
+        "dist/core/content-stamp-loader.cjs",
         "dist/*.d.ts",
         "dist/cli/ui/standalone.tar.gz",
         "README.md",

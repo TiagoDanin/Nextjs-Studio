@@ -23,6 +23,13 @@ Content lives in your repository as plain files. No database, no backend, no syn
 yarn add nextjs-studio
 ```
 
+```ts
+// next.config.ts — makes contents/ hot reload in next dev
+import { withStudio } from "nextjs-studio/next";
+
+export default withStudio({});
+```
+
 ```bash
 npx nextjs-studio
 ```
@@ -119,6 +126,7 @@ export default config;
 
 - [Query API](./docs/reference/query-api.md)
 - [Field Types](./docs/reference/fields.md)
+- [Hot Reload](./docs/reference/hot-reload.md)
 
 **AI**
 

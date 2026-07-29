@@ -61,7 +61,20 @@ export default function BlogPage() {
 
 Note: no `async`, no `await` — `queryCollection` is synchronous. Import from `nextjs-studio/server` in server components; it auto-initializes the content store on import.
 
-### 4. Start the CMS
+### 4. Wrap your Next.js config
+
+```ts
+// next.config.ts
+import { withStudio } from "nextjs-studio/next";
+
+export default withStudio({
+  // your existing config
+});
+```
+
+Without this, editing a file in `contents/` does not refresh the browser during `next dev`: content is read through `fs`, so it never enters the module graph and Next has nothing to detect. See [Hot Reload](../reference/hot-reload.md).
+
+### 5. Start the CMS
 
 ```bash
 npx nextjs-studio
@@ -86,3 +99,4 @@ your-project/
 - [Configuration](./configuration.md) — define schemas and import scripts
 - [Collections](../collections/overview.md) — MDX, JSON array, and JSON object collections
 - [Query API](../reference/query-api.md) — filtering, sorting, pagination
+- [Hot Reload](../reference/hot-reload.md) — why `withStudio()` is needed and what it does
